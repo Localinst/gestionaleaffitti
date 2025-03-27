@@ -15,32 +15,44 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:8080';
 
-// Middleware
-// Nota: Non è possibile usare credentials:true con origin:'*'
-// Utilizziamo una funzione di callback per origin per accettare tutte le origini
-app.use(cors({
-  origin: function(origin, callback) {
-    // Consenti tutte le origini
-    callback(null, true);
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
-}));
+// CORS Preflight
+app.options('*', cors());
 
-console.log('CORS configurato con opzione callback per accettare richieste da tutti i domini');
+// Middleware CORS più semplificato
+app.use(cors());
 
-// Middleware aggiuntivo per i preflight headers
+// Middleware di debug per logging delle richieste
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.originalUrl} - Origin: ${req.headers.origin}`);
+  next();
+});
+
+// Middleware aggiuntivo per assicurarsi che gli header CORS siano sempre presenti
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  
+  // Gestione delle richieste preflight OPTIONS
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
   next();
 });
 
 app.use(express.json());
 app.use(cookieParser());
+
+// Route di test per verificare che il server funzioni
+app.get('/api/ping', (req, res) => {
+  return res.json({
+    message: 'Server API disponibile',
+    timestamp: new Date().toISOString(),
+    headers: req.headers,
+    cors: 'enabled'
+  });
+});
 
 // Rotte pubbliche
 app.use('/api/auth', authRouter);
@@ -53,5 +65,5 @@ app.use('/api/dashboard', authenticate, dashboardRouter);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log(`Accettando richieste dal client: ${CLIENT_URL}`);
+  console.log(`Server pronto ad accettare richieste da qualsiasi client (CORS permissivo)`);
 }); 
