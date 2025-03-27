@@ -1,6 +1,9 @@
 import { Pool, PoolConfig } from 'pg';
 import dotenv from 'dotenv';
 
+// Forza Node.js a utilizzare IPv4
+process.env.NODE_OPTIONS = '--dns-result-order=ipv4first';
+
 dotenv.config();
 
 // Funzione per verificare e correggere la stringa di connessione
