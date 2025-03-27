@@ -93,7 +93,7 @@ const LandingPage = () => {
               <div className="relative w-full aspect-video overflow-hidden rounded-lg shadow-xl">
                 <div className="glass-card hover-scale animate-fade-in w-full h-full flex items-center justify-center">
                   <img 
-                    src="https://via.placeholder.com/800x500?text=Anteprima+Dashboard" 
+                    src="/placeholder.svg" 
                     alt="Anteprima Dashboard" 
                     className="w-full h-auto rounded-lg"
                   />
@@ -139,7 +139,7 @@ const LandingPage = () => {
                 <div className="p-6 animate-fade-in">
                   <h3 className="text-xl font-semibold mb-4">Gestisci tutte le proprietà</h3>
                   <img 
-                    src="https://via.placeholder.com/600x400?text=Gestione+Proprietà" 
+                    src="/placeholder.svg" 
                     alt="Gestione Proprietà" 
                     className="rounded-lg w-full shadow-lg"
                   />
@@ -163,7 +163,7 @@ const LandingPage = () => {
                 <div className="p-6 animate-fade-in">
                   <h3 className="text-xl font-semibold mb-4">Gestione completa degli inquilini</h3>
                   <img 
-                    src="https://via.placeholder.com/600x400?text=Gestione+Inquilini" 
+                    src="/placeholder.svg" 
                     alt="Gestione Inquilini" 
                     className="rounded-lg w-full shadow-lg"
                   />
@@ -187,7 +187,7 @@ const LandingPage = () => {
                 <div className="p-6 animate-fade-in">
                   <h3 className="text-xl font-semibold mb-4">Analytics avanzate</h3>
                   <img 
-                    src="https://via.placeholder.com/600x400?text=Analisi+Finanziaria" 
+                    src="/placeholder.svg" 
                     alt="Analisi Finanziaria" 
                     className="rounded-lg w-full shadow-lg"
                   />
@@ -211,7 +211,7 @@ const LandingPage = () => {
                 <div className="p-6 animate-fade-in">
                   <h3 className="text-xl font-semibold mb-4">Sistema di notifiche</h3>
                   <img 
-                    src="https://via.placeholder.com/600x400?text=Sistema+Promemoria" 
+                    src="/placeholder.svg" 
                     alt="Sistema Promemoria" 
                     className="rounded-lg w-full shadow-lg"
                   />
