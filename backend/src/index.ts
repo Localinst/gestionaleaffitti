@@ -16,28 +16,13 @@ const PORT = process.env.PORT || 3000;
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:8080';
 
 // Middleware
+// Configurazione CORS più permissiva per il deployment
 app.use(cors({
-  origin: [
-    CLIENT_URL,
-    'http://localhost:5173', 
-    'http://localhost:8080', 
-    'http://localhost:8081',
-    'https://gestionaleaffitti.netlify.app',
-    'https://67e570f94387435b6d081ea9--statuesque-malabi-216764.netlify.app',
-    'https://statuesque-malabi-216764.netlify.app'
-  ],
+  origin: '*', // Permette richieste da qualsiasi origine
   credentials: true // Necessario per i cookie
 }));
 
-console.log('CORS configurato per accettare richieste da:', [
-  CLIENT_URL,
-  'http://localhost:5173', 
-  'http://localhost:8080', 
-  'http://localhost:8081',
-  'https://gestionaleaffitti.netlify.app',
-  'https://67e570f94387435b6d081ea9--statuesque-malabi-216764.netlify.app',
-  'https://statuesque-malabi-216764.netlify.app'
-]);
+console.log('CORS configurato per accettare richieste da tutti i domini');
 
 app.use(express.json());
 app.use(cookieParser());
