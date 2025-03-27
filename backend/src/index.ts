@@ -23,7 +23,8 @@ app.use(cors({
     'http://localhost:8080', 
     'http://localhost:8081',
     'https://gestionaleaffitti.netlify.app',
-    'https://67e570f94387435b6d081ea9--statuesque-malabi-216764.netlify.app'
+    'https://67e570f94387435b6d081ea9--statuesque-malabi-216764.netlify.app',
+    'https://statuesque-malabi-216764.netlify.app'
   ],
   credentials: true // Necessario per i cookie
 }));
@@ -34,7 +35,8 @@ console.log('CORS configurato per accettare richieste da:', [
   'http://localhost:8080', 
   'http://localhost:8081',
   'https://gestionaleaffitti.netlify.app',
-  'https://67e570f94387435b6d081ea9--statuesque-malabi-216764.netlify.app'
+  'https://67e570f94387435b6d081ea9--statuesque-malabi-216764.netlify.app',
+  'https://statuesque-malabi-216764.netlify.app'
 ]);
 
 app.use(express.json());
