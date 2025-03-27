@@ -5,7 +5,7 @@ import { resolve } from "path";
 
 // https://vitejs.dev/config/
 export default defineConfig(() => ({
-  base: '/gestionale-affitti/',  // Base path per GitHub Pages
+  base: '/',  // Base path per Netlify (senza prefisso)
   build: {
     // Assicura che i percorsi siano relativi nel file HTML generato
     assetsDir: 'assets',
