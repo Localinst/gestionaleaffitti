@@ -24,23 +24,55 @@ let poolConfig = {
 
 // Se viene fornito un URL del pooler completo, usa quello invece
 if (POOLER_URL) {
-  console.log('Utilizzo URL del pooler fornito:', POOLER_URL);
+  console.log('Utilizzo URL del pooler fornito');
   
-  // Analizza l'URL per estrarre i componenti
-  const url = new URL(POOLER_URL);
-  
-  poolConfig = {
-    user: url.username,
-    password: url.password,
-    host: url.hostname,
-    port: parseInt(url.port),
-    database: url.pathname.substring(1), // Rimuove lo slash iniziale
-    ssl: {
-      rejectUnauthorized: false
+  try {
+    // Estrai i componenti manualmente anziché con URL parser per evitare problemi con caratteri speciali
+    const connectionParts = parseConnectionString(POOLER_URL);
+    if (connectionParts) {
+      poolConfig = {
+        user: connectionParts.user,
+        password: connectionParts.password,
+        host: connectionParts.host,
+        port: connectionParts.port,
+        database: connectionParts.database,
+        ssl: {
+          rejectUnauthorized: false
+        }
+      };
+      console.log('Configurazione pooler estratta correttamente');
     }
-  };
+  } catch (error) {
+    console.error('Errore nel parsing dell\'URL del pooler:', error);
+    console.log('Fallback alla connessione diretta al database');
+  }
 } else {
   console.log('Utilizzo connessione diretta al database:', SUPABASE_DB_HOST);
+}
+
+// Funzione per analizzare la connection string manualmente
+function parseConnectionString(connectionString: string) {
+  try {
+    // Formato: postgres://user:password@host:port/database
+    const regex = /postgres:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/(.+)/;
+    const match = connectionString.match(regex);
+    
+    if (!match) {
+      console.error('Formato della connection string non valido');
+      return null;
+    }
+    
+    return {
+      user: match[1],
+      password: match[2],
+      host: match[3],
+      port: parseInt(match[4]),
+      database: match[5]
+    };
+  } catch (error) {
+    console.error('Errore durante il parsing della connection string:', error);
+    return null;
+  }
 }
 
 // Crea il pool di connessione
@@ -51,6 +83,7 @@ console.log('Configurazione database:', {
   host: poolConfig.host,
   database: poolConfig.database,
   port: poolConfig.port,
+  user: poolConfig.user,
   ssl: poolConfig.ssl ? 'configurato' : 'non configurato'
 });
 
