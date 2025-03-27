@@ -1,8 +1,11 @@
 import { Pool, PoolConfig } from 'pg';
 import dotenv from 'dotenv';
+import dns from 'dns';
 
 // Forza Node.js a utilizzare IPv4
 process.env.NODE_OPTIONS = '--dns-result-order=ipv4first';
+// Forza il resolver DNS a usare solo IPv4
+dns.setDefaultResultOrder('ipv4first');
 
 dotenv.config();
 
@@ -44,6 +47,23 @@ const POOLER_URL = process.env.POOLER_URL;
 // Definisco un'interfaccia per il tipo di configurazione che include connectionString
 interface ExtendedPoolConfig extends PoolConfig {
   connectionString?: string;
+  // Proprietà avanzate per pg-node
+  family?: number; // 4 per IPv4, 6 per IPv6
+}
+
+// SOLUZIONE PER FORZARE IPV4: Ricava l'indirizzo IPv4 dal nome host
+async function getIPv4Address(hostname: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    dns.lookup(hostname, { family: 4 }, (err, address) => {
+      if (err) {
+        console.error(`Errore risolvendo ${hostname} in IPv4:`, err);
+        reject(err);
+      } else {
+        console.log(`Risolto ${hostname} in IPv4: ${address}`);
+        resolve(address);
+      }
+    });
+  });
 }
 
 // Configurazione di base che potrebbe essere sovrascritta
@@ -55,10 +75,12 @@ let poolConfig: ExtendedPoolConfig = {
   port: parseInt(process.env.DB_PORT || '5432'),
   ssl: {
     rejectUnauthorized: false
-  }
+  },
+  // Forza l'uso di IPv4
+  family: 4
 };
 
-// Prova a usare la connessione diretta prima
+// Log della configurazione iniziale
 console.log('Tentativo di connessione diretta al database:', SUPABASE_DB_HOST);
 
 // Se viene fornito un URL del database completo, usa quello
@@ -71,7 +93,9 @@ if (process.env.DATABASE_URL) {
     connectionString: safeConnectionString,
     ssl: {
       rejectUnauthorized: false
-    }
+    },
+    // Forza l'uso di IPv4
+    family: 4
   };
 }
 
@@ -84,7 +108,8 @@ console.log('Configurazione database:', {
   database: poolConfig.database || 'da connection string',
   port: poolConfig.port || 'da connection string',
   user: poolConfig.user || 'da connection string',
-  ssl: poolConfig.ssl ? 'configurato' : 'non configurato'
+  ssl: poolConfig.ssl ? 'configurato' : 'non configurato',
+  family: poolConfig.family
 });
 
 // Gestione degli errori di connessione
@@ -104,18 +129,46 @@ async function testConnection() {
   } catch (err) {
     console.error('✗ Errore nella connessione al database:', err);
     
-    // Se fallisce e c'è un POOLER_URL, prova con quello
-    if (POOLER_URL && !process.env.DATABASE_URL) {
+    // SOLUZIONE ALTERNATIVA: Prova a risolvere manualmente l'indirizzo IPv4 e connettersi
+    if (poolConfig.host && !poolConfig.connectionString) {
+      try {
+        console.log('Tentativo di risoluzione IPv4 manuale...');
+        const ipv4Address = await getIPv4Address(poolConfig.host);
+        
+        // Crea un nuovo pool con l'indirizzo IPv4
+        pool.end();
+        const ipv4PoolConfig: ExtendedPoolConfig = {
+          ...poolConfig,
+          host: ipv4Address
+        };
+        
+        console.log('Tentativo con indirizzo IPv4 risolto:', ipv4Address);
+        const ipv4Pool = new Pool(ipv4PoolConfig);
+        
+        const ipv4Client = await ipv4Pool.connect();
+        console.log('✓ Connessione con IPv4 risolto riuscita!');
+        const result = await ipv4Client.query('SELECT version()');
+        console.log('Versione database:', result.rows[0].version);
+        ipv4Client.release();
+        return true;
+      } catch (ipv4Err) {
+        console.error('✗ Anche la connessione con IPv4 risolto fallita:', ipv4Err);
+      }
+    }
+    
+    // Se fallisce e c'è DATABASE_URL, prova con quello come fallback
+    if (process.env.DATABASE_URL && !poolConfig.connectionString) {
       console.log('Tentativo con DATABASE_URL...');
       // Aggiorna la configurazione per usare la connessione diretta
       pool.end();
       
       // Usa la connection string diretta
       const directPoolConfig: ExtendedPoolConfig = {
-        connectionString: process.env.DATABASE_URL ? createSafeConnectionString(process.env.DATABASE_URL) : '',
+        connectionString: createSafeConnectionString(process.env.DATABASE_URL),
         ssl: {
           rejectUnauthorized: false
-        }
+        },
+        family: 4
       };
       
       const directPool = new Pool(directPoolConfig);
@@ -129,7 +182,6 @@ async function testConnection() {
         return true;
       } catch (directErr) {
         console.error('✗ Anche la connessione con DATABASE_URL fallita:', directErr);
-        return false;
       }
     }
     
