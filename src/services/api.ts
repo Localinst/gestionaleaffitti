@@ -65,15 +65,15 @@ interface DashboardSummary {
 
 import { DashboardSummaryResponse } from '@/components/dashboard/DashboardPage';
 
-// Configurazione dell'URL API di base, usa lo stesso host dell'app client ma porta 3000
-const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:3000/api`;
-
-// Fallback se la porta diventa un problema
+// Configurazione intelligente dell'URL API di base
 function getAPIBaseUrl() {
-  // Usa l'hostname corrente (localhost o IP)
-  const hostname = window.location.hostname;
-  // Ma usa la porta fissa per il backend
-  return `${window.location.protocol}//${hostname}:3000/api`;
+  // In ambiente di produzione, usa l'URL di Render
+  if (window.location.hostname !== 'localhost') {
+    return 'https://gestionaleaffitti.onrender.com/api'; // SOSTITUISCI con il tuo vero URL di Render
+  }
+  
+  // In ambiente di sviluppo, usa localhost
+  return `${window.location.protocol}//${window.location.hostname}:3000/api`;
 }
 
 // URL base dell'API con gestione degli errori
@@ -143,7 +143,7 @@ const handleApiError = (endpoint: string, status: number, error: any) => {
 
 // API Auth
 export async function login(credentials: LoginRequest): Promise<AuthResponse> {
-  const response = await fetch(`${API_BASE_URL}/auth/login`, {
+  const response = await fetch(`${API_URL}/auth/login`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -161,7 +161,7 @@ export async function login(credentials: LoginRequest): Promise<AuthResponse> {
 }
 
 export async function register(userData: RegisterRequest): Promise<AuthResponse> {
-  const response = await fetch(`${API_BASE_URL}/auth/register`, {
+  const response = await fetch(`${API_URL}/auth/register`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -179,7 +179,7 @@ export async function register(userData: RegisterRequest): Promise<AuthResponse>
 }
 
 export async function logout(): Promise<{ message: string }> {
-  const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+  const response = await fetch(`${API_URL}/auth/logout`, {
     method: 'POST',
     headers: getAuthHeaders(),
     credentials: 'include',
@@ -194,7 +194,7 @@ export async function logout(): Promise<{ message: string }> {
 }
 
 export async function getCurrentUser(): Promise<{ user: AuthUser }> {
-  const response = await fetch(`${API_BASE_URL}/auth/me`, {
+  const response = await fetch(`${API_URL}/auth/me`, {
     method: 'GET',
     headers: getAuthHeaders(),
     credentials: 'include',
@@ -212,7 +212,7 @@ export async function getCurrentUser(): Promise<{ user: AuthUser }> {
 }
 
 export async function changePassword(currentPassword: string, newPassword: string): Promise<{ message: string }> {
-  const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
+  const response = await fetch(`${API_URL}/auth/change-password`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -232,7 +232,7 @@ export async function changePassword(currentPassword: string, newPassword: strin
 // API Properties
 export async function getProperties(): Promise<Property[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/properties`, getRequestOptions());
+    const response = await fetch(`${API_URL}/properties`, getRequestOptions());
     
     if (!response.ok) {
       handleApiError('properties', response.status, null);
@@ -255,7 +255,7 @@ export async function getProperties(): Promise<Property[]> {
 
 export async function getPropertyById(id: number): Promise<Property | null> {
   try {
-    const response = await fetch(`${API_BASE_URL}/properties/${id}`, getRequestOptions());
+    const response = await fetch(`${API_URL}/properties/${id}`, getRequestOptions());
     
     if (!response.ok) {
       console.error('Errore nella richiesta property by id:', response.status);
@@ -272,7 +272,7 @@ export async function getPropertyById(id: number): Promise<Property | null> {
 // API Tenants
 export async function getTenants(): Promise<Tenant[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/tenants`, getRequestOptions());
+    const response = await fetch(`${API_URL}/tenants`, getRequestOptions());
     
     if (!response.ok) {
       handleApiError('tenants', response.status, response.statusText);
@@ -296,7 +296,7 @@ export async function getTenants(): Promise<Tenant[]> {
 export async function getTenantsByProperty(propertyId: number | string): Promise<Tenant[]> {
   try {
     console.log('Richiesta getTenantsByProperty con ID:', propertyId, 'di tipo:', typeof propertyId);
-    const response = await fetch(`${API_BASE_URL}/tenants?propertyId=${propertyId}`, getRequestOptions());
+    const response = await fetch(`${API_URL}/tenants?propertyId=${propertyId}`, getRequestOptions());
     
     if (!response.ok) {
       console.error('Errore nella richiesta tenants by property:', response.status);
@@ -321,7 +321,7 @@ export async function getTenantsByProperty(propertyId: number | string): Promise
 // API Transactions
 export async function getTransactions(): Promise<Transaction[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/transactions`, getRequestOptions());
+    const response = await fetch(`${API_URL}/transactions`, getRequestOptions());
     
     if (!response.ok) {
       handleApiError('transactions', response.status, null);
@@ -344,7 +344,7 @@ export async function getTransactions(): Promise<Transaction[]> {
 
 export async function getTransactionsByProperty(propertyId: number): Promise<Transaction[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/transactions?propertyId=${propertyId}`, getRequestOptions());
+    const response = await fetch(`${API_URL}/transactions?propertyId=${propertyId}`, getRequestOptions());
     
     if (!response.ok) {
       console.error('Errore nella richiesta transactions by property:', response.status);
@@ -368,7 +368,7 @@ export async function getTransactionsByProperty(propertyId: number): Promise<Tra
 // API Dashboard
 export async function getDashboardSummary(): Promise<DashboardSummaryResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/dashboard/summary`, getRequestOptions());
+    const response = await fetch(`${API_URL}/dashboard/summary`, getRequestOptions());
     
     if (!response.ok) {
       handleApiError('dashboard/summary', response.status, null);
@@ -392,7 +392,7 @@ export async function getDashboardSummary(): Promise<DashboardSummaryResponse> {
 // Debug function per verificare l'autenticazione
 export async function debugAuth(): Promise<any> {
   try {
-    const response = await fetch(`${API_BASE_URL}/dashboard/debug`, getRequestOptions());
+    const response = await fetch(`${API_URL}/dashboard/debug`, getRequestOptions());
     
     if (!response.ok) {
       handleApiError('dashboard/debug', response.status, null);
@@ -413,10 +413,10 @@ export async function debugAuth(): Promise<any> {
 export async function createProperty(property: any): Promise<Property> {
   try {
     console.log('Invio dati al server:', property);
-    console.log('API_BASE_URL:', API_BASE_URL);
+    console.log('API_URL:', API_URL);
     console.log('authToken:', localStorage.getItem('authToken') ? 'presente' : 'mancante');
     
-    const response = await fetch(`${API_BASE_URL}/properties`, {
+    const response = await fetch(`${API_URL}/properties`, {
       method: 'POST',
       headers: getAuthHeaders(),
       credentials: 'include',
@@ -443,7 +443,7 @@ export async function createProperty(property: any): Promise<Property> {
 
 export async function updateProperty(id: number, property: Partial<Property>): Promise<Property | null> {
   try {
-    const response = await fetch(`${API_BASE_URL}/properties/${id}`, {
+    const response = await fetch(`${API_URL}/properties/${id}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       credentials: 'include',
@@ -464,7 +464,7 @@ export async function updateProperty(id: number, property: Partial<Property>): P
 
 export async function deleteProperty(id: number): Promise<boolean> {
   try {
-    const response = await fetch(`${API_BASE_URL}/properties/${id}`, {
+    const response = await fetch(`${API_URL}/properties/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
       credentials: 'include',
@@ -497,7 +497,7 @@ export async function createTenant(tenant: Omit<Tenant, 'id'>): Promise<Tenant> 
       status: "active"
     };
 
-    const response = await fetch(`${API_BASE_URL}/tenants`, {
+    const response = await fetch(`${API_URL}/tenants`, {
       method: 'POST',
       headers: getAuthHeaders(),
       credentials: 'include',
@@ -518,7 +518,7 @@ export async function createTenant(tenant: Omit<Tenant, 'id'>): Promise<Tenant> 
 
 export async function createTransaction(transaction: Omit<Transaction, 'id'>): Promise<Transaction> {
   try {
-    const response = await fetch(`${API_BASE_URL}/transactions`, {
+    const response = await fetch(`${API_URL}/transactions`, {
       method: 'POST',
       headers: getAuthHeaders(),
       credentials: 'include',
@@ -548,7 +548,7 @@ export async function createTransaction(transaction: Omit<Transaction, 'id'>): P
 // API Contracts
 export async function getContracts(): Promise<Contract[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/contracts`, {
+    const response = await fetch(`${API_URL}/contracts`, {
       credentials: 'include',
     });
     
@@ -573,7 +573,7 @@ export async function getContracts(): Promise<Contract[]> {
 
 export async function getContractsByProperty(propertyId: number): Promise<Contract[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/contracts?propertyId=${propertyId}`, {
+    const response = await fetch(`${API_URL}/contracts?propertyId=${propertyId}`, {
       credentials: 'include',
     });
     
@@ -599,7 +599,7 @@ export async function getContractsByProperty(propertyId: number): Promise<Contra
 // API Owners
 export async function getOwners(): Promise<Owner[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/owners`, {
+    const response = await fetch(`${API_URL}/owners`, {
       credentials: 'include',
     });
     
