@@ -22,7 +22,7 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <Router basename="/gestionale-affitti">
+        <Router>
           <AuthProvider>
             <Routes>
               {/* Rotte pubbliche */}
