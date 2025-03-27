@@ -1,4 +1,4 @@
-import { Pool } from 'pg';
+import { Pool, PoolConfig } from 'pg';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -10,8 +10,14 @@ const PROJECT_ID = SUPABASE_DB_HOST.split('.')[1] || 'fdufcrgckojbaghdvhgj';
 
 // Controlla se è definito un URL del pooler completo
 const POOLER_URL = process.env.POOLER_URL;
+
+// Definisco un'interfaccia per il tipo di configurazione che include connectionString
+interface ExtendedPoolConfig extends PoolConfig {
+  connectionString?: string;
+}
+
 // Configurazione di base che potrebbe essere sovrascritta
-let poolConfig = {
+let poolConfig: ExtendedPoolConfig = {
   user: process.env.DB_USER || 'postgres',
   host: SUPABASE_DB_HOST,
   database: process.env.DB_NAME || 'postgres',
@@ -72,7 +78,7 @@ async function testConnection() {
       pool.end();
       
       // Usa la connection string diretta
-      const directPoolConfig = {
+      const directPoolConfig: ExtendedPoolConfig = {
         connectionString: process.env.DATABASE_URL,
         ssl: {
           rejectUnauthorized: false
