@@ -15,11 +15,34 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:8080';
 
-// CORS Preflight
-app.options('*', cors());
+// Domini consentiti in un array per maggiore flessibilità
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:8080',
+  'http://localhost:8081',
+  'https://statuesque-malabi-216764.netlify.app',
+  'https://gestionaleaffitti.netlify.app'
+];
 
-// Middleware CORS più semplificato
-app.use(cors());
+// Configurazione CORS che supporta credentials
+app.use(cors({
+  origin: function(origin, callback) {
+    // Consenti richieste senza origin (come app mobile o curl)
+    if (!origin) return callback(null, true);
+    
+    // Controlla se l'origin è nella lista dei permessi
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, origin);
+    } else {
+      // Per sviluppo, accetta anche altre origini sconosciute
+      console.log('Richiesta da origine non nella whitelist:', origin);
+      callback(null, origin);
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
 
 // Middleware di debug per logging delle richieste
 app.use((req, res, next) => {
@@ -27,9 +50,15 @@ app.use((req, res, next) => {
   next();
 });
 
-// Middleware aggiuntivo per assicurarsi che gli header CORS siano sempre presenti
+// Middleware aggiuntivo per assicurarsi che gli header CORS siano corretti per le credenziali
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  // Imposta l'origin specifico invece del wildcard '*'
+  const origin = req.headers.origin;
+  if (origin) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  
+  res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   
@@ -49,8 +78,8 @@ app.get('/api/ping', (req, res) => {
   return res.json({
     message: 'Server API disponibile',
     timestamp: new Date().toISOString(),
-    headers: req.headers,
-    cors: 'enabled'
+    origin: req.headers.origin,
+    cors: 'enabled with credentials'
   });
 });
 
@@ -65,5 +94,6 @@ app.use('/api/dashboard', authenticate, dashboardRouter);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log(`Server pronto ad accettare richieste da qualsiasi client (CORS permissivo)`);
+  console.log(`Server configurato per accettare richieste con credentials dai seguenti domini:`);
+  console.log(allowedOrigins);
 }); 
