@@ -3,6 +3,33 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// Funzione per verificare e correggere la stringa di connessione
+const createSafeConnectionString = (connectionString: string) => {
+  try {
+    // Prova a creare un URL per vedere se è valido
+    new URL(connectionString);
+    return connectionString;
+  } catch (error) {
+    // Se la stringa non è un URL valido, prova a correggerla
+    console.log('Correzione della stringa di connessione in corso...');
+    
+    // Formato tipico: postgres://username:password@host:port/database
+    const match = connectionString.match(/^postgres:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/(.+)$/);
+    
+    if (match) {
+      const [, username, password, host, port, database] = match;
+      // Codifica la password per URL
+      const encodedPassword = encodeURIComponent(password);
+      const safeConnectionString = `postgres://${username}:${encodedPassword}@${host}:${port}/${database}`;
+      console.log('Stringa di connessione corretta generata');
+      return safeConnectionString;
+    }
+    
+    console.log('Impossibile correggere la stringa di connessione');
+    return connectionString;
+  }
+};
+
 // Verifica se utilizzare l'URL di connessione diretto o il pooler
 const SUPABASE_DB_HOST = process.env.DB_HOST || "db.fdufcrgckojbaghdvhgj.supabase.co";
 // L'ID del progetto è l'identificativo nella URL, ad esempio fdufcrgckojbaghdvhgj
@@ -34,8 +61,11 @@ console.log('Tentativo di connessione diretta al database:', SUPABASE_DB_HOST);
 // Se viene fornito un URL del database completo, usa quello
 if (process.env.DATABASE_URL) {
   console.log('Utilizzo DATABASE_URL fornito');
+  
+  const safeConnectionString = createSafeConnectionString(process.env.DATABASE_URL);
+  
   poolConfig = {
-    connectionString: process.env.DATABASE_URL,
+    connectionString: safeConnectionString,
     ssl: {
       rejectUnauthorized: false
     }
@@ -79,7 +109,7 @@ async function testConnection() {
       
       // Usa la connection string diretta
       const directPoolConfig: ExtendedPoolConfig = {
-        connectionString: process.env.DATABASE_URL,
+        connectionString: process.env.DATABASE_URL ? createSafeConnectionString(process.env.DATABASE_URL) : '',
         ssl: {
           rejectUnauthorized: false
         }
