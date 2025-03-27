@@ -1,4 +1,14 @@
-const API_URL = 'http://localhost:3000/api';
+// Funzione per determinare l'URL dell'API in base all'ambiente
+const getApiUrl = () => {
+  // In produzione, usa l'URL del backend su Render
+  if (window.location.hostname !== 'localhost') {
+    return 'https://gestionaleaffitti.onrender.com/api';
+  }
+  // In sviluppo, usa localhost
+  return 'http://localhost:3000/api';
+};
+
+const API_URL = getApiUrl();
 
 // Funzione per ottenere gli headers con autenticazione
 const getAuthHeaders = () => {
