@@ -10,11 +10,11 @@ const PROJECT_ID = SUPABASE_DB_HOST.split('.')[1] || 'fdufcrgckojbaghdvhgj';
 
 // Controlla se è definito un URL del pooler completo
 const POOLER_URL = process.env.POOLER_URL;
-
+// Configurazione di base che potrebbe essere sovrascritta
 let poolConfig = {
-  user: process.env.DB_USER,
+  user: process.env.DB_USER || 'postgres',
   host: SUPABASE_DB_HOST,
-  database: process.env.DB_NAME,
+  database: process.env.DB_NAME || 'postgres',
   password: process.env.DB_PASSWORD,
   port: parseInt(process.env.DB_PORT || '5432'),
   ssl: {
@@ -22,57 +22,18 @@ let poolConfig = {
   }
 };
 
-// Se viene fornito un URL del pooler completo, usa quello invece
-if (POOLER_URL) {
-  console.log('Utilizzo URL del pooler fornito');
-  
-  try {
-    // Estrai i componenti manualmente anziché con URL parser per evitare problemi con caratteri speciali
-    const connectionParts = parseConnectionString(POOLER_URL);
-    if (connectionParts) {
-      poolConfig = {
-        user: connectionParts.user,
-        password: connectionParts.password,
-        host: connectionParts.host,
-        port: connectionParts.port,
-        database: connectionParts.database,
-        ssl: {
-          rejectUnauthorized: false
-        }
-      };
-      console.log('Configurazione pooler estratta correttamente');
-    }
-  } catch (error) {
-    console.error('Errore nel parsing dell\'URL del pooler:', error);
-    console.log('Fallback alla connessione diretta al database');
-  }
-} else {
-  console.log('Utilizzo connessione diretta al database:', SUPABASE_DB_HOST);
-}
+// Prova a usare la connessione diretta prima
+console.log('Tentativo di connessione diretta al database:', SUPABASE_DB_HOST);
 
-// Funzione per analizzare la connection string manualmente
-function parseConnectionString(connectionString: string) {
-  try {
-    // Formato: postgres://user:password@host:port/database
-    const regex = /postgres:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/(.+)/;
-    const match = connectionString.match(regex);
-    
-    if (!match) {
-      console.error('Formato della connection string non valido');
-      return null;
+// Se viene fornito un URL del database completo, usa quello
+if (process.env.DATABASE_URL) {
+  console.log('Utilizzo DATABASE_URL fornito');
+  poolConfig = {
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+      rejectUnauthorized: false
     }
-    
-    return {
-      user: match[1],
-      password: match[2],
-      host: match[3],
-      port: parseInt(match[4]),
-      database: match[5]
-    };
-  } catch (error) {
-    console.error('Errore durante il parsing della connection string:', error);
-    return null;
-  }
+  };
 }
 
 // Crea il pool di connessione
@@ -80,10 +41,10 @@ const pool = new Pool(poolConfig);
 
 // Log della configurazione
 console.log('Configurazione database:', {
-  host: poolConfig.host,
-  database: poolConfig.database,
-  port: poolConfig.port,
-  user: poolConfig.user,
+  host: poolConfig.host || 'da connection string',
+  database: poolConfig.database || 'da connection string',
+  port: poolConfig.port || 'da connection string',
+  user: poolConfig.user || 'da connection string',
   ssl: poolConfig.ssl ? 'configurato' : 'non configurato'
 });
 
@@ -91,5 +52,53 @@ console.log('Configurazione database:', {
 pool.on('error', (err) => {
   console.error('Errore imprevisto nel pool di connessione:', err);
 });
+
+// Test di connessione iniziale
+async function testConnection() {
+  try {
+    const client = await pool.connect();
+    console.log('✓ Connessione al database riuscita!');
+    const result = await client.query('SELECT version()');
+    console.log('Versione database:', result.rows[0].version);
+    client.release();
+    return true;
+  } catch (err) {
+    console.error('✗ Errore nella connessione al database:', err);
+    
+    // Se fallisce e c'è un POOLER_URL, prova con quello
+    if (POOLER_URL && !process.env.DATABASE_URL) {
+      console.log('Tentativo con DATABASE_URL...');
+      // Aggiorna la configurazione per usare la connessione diretta
+      pool.end();
+      
+      // Usa la connection string diretta
+      const directPoolConfig = {
+        connectionString: process.env.DATABASE_URL,
+        ssl: {
+          rejectUnauthorized: false
+        }
+      };
+      
+      const directPool = new Pool(directPoolConfig);
+      
+      try {
+        const client = await directPool.connect();
+        console.log('✓ Connessione con DATABASE_URL riuscita!');
+        const result = await client.query('SELECT version()');
+        console.log('Versione database:', result.rows[0].version);
+        client.release();
+        return true;
+      } catch (directErr) {
+        console.error('✗ Anche la connessione con DATABASE_URL fallita:', directErr);
+        return false;
+      }
+    }
+    
+    return false;
+  }
+}
+
+// Esegui il test di connessione all'avvio
+testConnection();
 
 export default pool; 
