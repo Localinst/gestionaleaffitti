@@ -76,14 +76,14 @@ export const getDashboardSummary = async (req: Request, res: Response) => {
     console.log("Occupancy rate:", results.data.occupancyRate);
 
     try {
-      // Get monthly rent income with user filter
-      const currentMonth = new Date().toISOString().slice(0, 7);
+      // Ottieni il mese corrente in modo che PostgreSQL lo interpreti correttamente
+      const currentMonth = new Date();
       const incomeResult = await pool.query(
         `SELECT COALESCE(SUM(amount), 0) as total 
          FROM transactions t
          JOIN properties p ON t.property_id = p.id
          WHERE t.type = 'income' AND t.category = 'Rent' 
-         AND date_trunc('month', t.date) = $1
+         AND date_trunc('month', t.date) = date_trunc('month', $1::timestamp)
          AND p.user_id = $2`,
         [currentMonth, userId]
       );
@@ -93,6 +93,7 @@ export const getDashboardSummary = async (req: Request, res: Response) => {
       console.error("Errore nella query del reddito:", err);
       results.errors.push({ query: 'income', error: err.message });
     }
+    
 
     // Imposta il flag di successo se almeno alcune query hanno funzionato
     results.success = results.data && Object.keys(results.data).length > 0;
