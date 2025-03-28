@@ -75,6 +75,11 @@ function getAPIBaseUrl() {
 
 // La funzione interna che determina l'URL effettivo
 function getActualAPIBaseUrl() {
+  // Usa sempre un URL relativo, che verrà gestito dal proxy Netlify
+  return '/api';
+  
+  // Il vecchio codice è commentato qui sotto
+  /*
   // In ambiente di produzione, usa l'URL diretto del backend
   if (window.location.hostname !== 'localhost') {
     return 'https://gestionale-affitti-api.onrender.com/api';
@@ -82,6 +87,7 @@ function getActualAPIBaseUrl() {
   
   // In ambiente di sviluppo locale, usa localhost
   return `${window.location.protocol}//${window.location.hostname}:3000/api`;
+  */
 }
 
 // URL base dell'API
