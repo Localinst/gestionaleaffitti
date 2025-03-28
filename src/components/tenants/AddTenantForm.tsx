@@ -34,8 +34,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+// Interfaccia per le opzioni di unità
+interface UnitOption {
+  id: string;
+  propertyId: number; 
+  name: string;
+  displayName: string;
+}
+
 const tenantFormSchema = z.object({
-  property_id: z.string().min(1, "Seleziona una proprietà"),
+  unit_id: z.string().min(1, "Seleziona un'unità immobiliare"),
   name: z.string().min(1, "Il nome è obbligatorio"),
   email: z.string().email("Inserisci un'email valida"),
   phone: z.string().min(1, "Il numero di telefono è obbligatorio"),
@@ -56,12 +64,60 @@ export function AddTenantForm({
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [properties, setProperties] = useState<Property[]>([]);
+  const [unitOptions, setUnitOptions] = useState<UnitOption[]>([]);
   
   useEffect(() => {
     async function loadProperties() {
       try {
         const data = await getProperties();
         setProperties(data);
+        
+        // Creiamo le opzioni per le unità
+        const options: UnitOption[] = [];
+        
+        data.forEach(property => {
+          // Se la proprietà ha più di 1 unità e unit_names è definito
+          if (property.units > 1 && property.unit_names) {
+            try {
+              // Proviamo a parsificare i nomi delle unità
+              const unitNames = Array.isArray(property.unit_names) 
+                ? property.unit_names 
+                : JSON.parse(property.unit_names as string);
+              
+              // Aggiungiamo un'opzione per ogni unità
+              unitNames.forEach((unitName: string, index: number) => {
+                options.push({
+                  id: `${property.id}-${index}`,
+                  propertyId: property.id,
+                  name: unitName || `Unità ${index + 1}`,
+                  displayName: `${property.name} - ${unitName || `Unità ${index + 1}`}`
+                });
+              });
+            } catch (e) {
+              console.error("Errore nel parsing dei nomi delle unità:", e);
+              
+              // Fallback: creiamo unità numerate
+              for (let i = 0; i < property.units; i++) {
+                options.push({
+                  id: `${property.id}-${i}`,
+                  propertyId: property.id,
+                  name: `Unità ${i + 1}`,
+                  displayName: `${property.name} - Unità ${i + 1}`
+                });
+              }
+            }
+          } else {
+            // Se la proprietà ha solo 1 unità, aggiungiamo solo la proprietà
+            options.push({
+              id: `${property.id}-0`,
+              propertyId: property.id,
+              name: property.name,
+              displayName: property.name
+            });
+          }
+        });
+        
+        setUnitOptions(options);
       } catch (error) {
         console.error("Errore durante il caricamento delle proprietà:", error);
         toast.error("Errore nel caricamento delle proprietà");
@@ -73,7 +129,7 @@ export function AddTenantForm({
   const form = useForm<TenantFormValues>({
     resolver: zodResolver(tenantFormSchema),
     defaultValues: {
-      property_id: "",
+      unit_id: "",
       name: "",
       email: "",
       phone: "",
@@ -87,8 +143,11 @@ export function AddTenantForm({
     try {
       setIsSubmitting(true);
       
+      // Estraiamo l'ID della proprietà e il numero dell'unità dalla stringa unit_id
+      const [propertyId, unitIndex] = data.unit_id.split('-');
+      
       const tenantData: Omit<Tenant, 'id'> = {
-        property_id: data.property_id,
+        property_id: propertyId,
         name: data.name,
         email: data.email,
         phone: data.phone,
@@ -96,11 +155,11 @@ export function AddTenantForm({
         lease_end: data.lease_end,
         rent: data.rent,
         rent_amount: data.rent,
-        unit: "1",
+        unit: unitIndex || "0",
         status: "active"
       };
 
-      // Salviamo l'inquilino normalmente
+      // Salviamo l'inquilino
       const tenant = await createTenant(tenantData);
       
       toast.success("Inquilino aggiunto con successo", {
@@ -140,23 +199,23 @@ export function AddTenantForm({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="property_id"
+              name="unit_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Proprietà</FormLabel>
+                  <FormLabel>Unità Immobiliare</FormLabel>
                   <Select 
                     onValueChange={(value) => field.onChange(value)}
                     defaultValue={field.value || ""}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Seleziona una proprietà" />
+                        <SelectValue placeholder="Seleziona un'unità immobiliare" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {properties.map((property) => (
-                        <SelectItem key={property.id} value={property.id.toString()}>
-                          {property.name}
+                      {unitOptions.map((unit) => (
+                        <SelectItem key={unit.id} value={unit.id}>
+                          {unit.displayName}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -248,9 +307,10 @@ export function AddTenantForm({
                   <FormLabel>Importo Affitto Mensile (€)</FormLabel>
                   <FormControl>
                     <Input 
-                      type="number" 
-                      min="0" 
-                      placeholder="es. 1000" 
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="es. 850"
                       {...field}
                     />
                   </FormControl>
@@ -259,11 +319,8 @@ export function AddTenantForm({
               )}
             />
 
-            <DialogFooter>
-              <Button 
-                type="submit" 
-                disabled={isSubmitting}
-              >
+            <DialogFooter className="pt-4">
+              <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? "Aggiunta in corso..." : "Aggiungi Inquilino"}
               </Button>
             </DialogFooter>

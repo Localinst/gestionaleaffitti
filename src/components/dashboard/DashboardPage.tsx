@@ -13,9 +13,10 @@ import {
   Cell,
   BarChart,
   Bar,
-  Legend
+  Legend,
+  ComposedChart
 } from "recharts";
-import { ArrowUpRight, ArrowDownRight, Building2, Users, DollarSign } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Building2, Users, DollarSign, ChevronRight, Receipt } from "lucide-react";
 import { 
   AppLayout, 
   PageHeader, 
@@ -30,8 +31,14 @@ import {
   getRentCollectionStatus,
   getRecentActivities
 } from "@/lib/data";
-import { getDashboardSummary, getTransactions } from "@/services/api";
+import { getDashboardSummary } from "@/services/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Toggle } from "../ui/toggle";
+import { Skeleton } from "@/components/ui/skeleton";
+import { api, Transaction } from "@/services/api";
+import { Button } from "@/components/ui/button";
+import { Table, TableHeader, TableBody, TableCell, TableHead, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 // Definisci un tipo per il riepilogo della dashboard
 interface DashboardSummaryData {
@@ -114,149 +121,156 @@ function StatCard({
 
 // Chart components
 function IncomeChart() {
-  const [chartData, setChartData] = useState([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [showNet, setShowNet] = useState(false);
   
   useEffect(() => {
-    async function loadTransactionData() {
+    const fetchData = async () => {
       try {
         setIsLoading(true);
-        // Ottieni le transazioni dall'API
-        const transactions = await getTransactions();
-        
-        // Raggruppa le transazioni per mese
-        const monthlyData = processTransactionsIntoMonthlyData(transactions);
-        
-        setChartData(monthlyData);
-      } catch (err) {
-        console.error("Errore durante il caricamento dei dati del grafico:", err);
-        setError("Si è verificato un errore durante il caricamento del grafico.");
+        const response = await api.transactions.getAll();
+        setTransactions(response);
+      } catch (error) {
+        console.error('Errore nel caricamento delle transazioni:', error);
       } finally {
         setIsLoading(false);
       }
-    }
+    };
     
-    loadTransactionData();
+    fetchData();
   }, []);
   
-  // Funzione per processare le transazioni in dati mensili
-  function processTransactionsIntoMonthlyData(transactions) {
-    // Crea un oggetto per tenere traccia dei dati mensili
-    const monthlyTotals = {};
+  // Processa le transazioni in dati mensili per il grafico
+  const processTransactionsIntoMonthlyData = (transactions: Transaction[]) => {
+    const monthlyTotals: { [key: string]: { month: string, income: number, expenses: number, net: number } } = {};
     
-    // Definisci i nomi dei mesi in italiano
-    const monthNames = [
-      'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
-      'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'
-    ];
-    
-    // Ottieni l'anno corrente
-    const currentYear = new Date().getFullYear();
-    
-    // Inizializza i dati per tutti i mesi dell'anno corrente
-    for (let i = 0; i < 12; i++) {
-      monthlyTotals[i] = {
-        name: monthNames[i],
-        income: 0,
-        expenses: 0
-      };
+    // Inizializza i totali mensili per gli ultimi 12 mesi
+    const today = new Date();
+    for (let i = 11; i >= 0; i--) {
+      const date = new Date(today);
+      date.setMonth(today.getMonth() - i);
+      const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
+      const monthName = date.toLocaleDateString('it-IT', { month: 'short' });
+      monthlyTotals[monthYear] = { month: monthName, income: 0, expenses: 0, net: 0 };
     }
     
-    // Elabora le transazioni
+    // Aggrega le transazioni per mese
     transactions.forEach(transaction => {
       const date = new Date(transaction.date);
-      // Considera solo le transazioni dell'anno corrente
-      if (date.getFullYear() === currentYear) {
-        const month = date.getMonth();
-        
+      const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
+      
+      if (monthlyTotals[monthYear]) {
         if (transaction.type === 'income') {
-          monthlyTotals[month].income += Number(transaction.amount);
+          monthlyTotals[monthYear].income += transaction.amount;
         } else if (transaction.type === 'expense') {
-          monthlyTotals[month].expenses += Number(transaction.amount);
+          monthlyTotals[monthYear].expenses += transaction.amount;
         }
+        
+        // Calcola il valore netto (entrate - uscite)
+        monthlyTotals[monthYear].net = monthlyTotals[monthYear].income - monthlyTotals[monthYear].expenses;
       }
     });
     
-    // Converti l'oggetto in un array per il grafico
     return Object.values(monthlyTotals);
-  }
+  };
+  
+  const data = processTransactionsIntoMonthlyData(transactions);
   
   if (isLoading) {
-    return (
-      <CardContainer className="h-[300px] md:h-[400px]">
-        <SectionHeader title="Entrate e Spese" />
-        <div className="h-full flex items-center justify-center">
-          <p>Caricamento dati in corso...</p>
-        </div>
-      </CardContainer>
-    );
-  }
-  
-  if (error) {
-    return (
-      <CardContainer className="h-[300px] md:h-[400px]">
-        <SectionHeader title="Entrate e Spese" />
-        <div className="h-full flex items-center justify-center">
-          <p className="text-red-500">{error}</p>
-        </div>
-      </CardContainer>
-    );
-  }
-  
-  if (chartData.length === 0) {
-    return (
-      <CardContainer className="h-[300px] md:h-[400px]">
-        <SectionHeader title="Entrate e Spese" />
-        <div className="h-full flex items-center justify-center flex-col">
-          <p>Nessun dato disponibile.</p>
-          <p className="text-sm text-muted-foreground mt-2">
-            Aggiungi transazioni per visualizzare il grafico.
-          </p>
-        </div>
-      </CardContainer>
-    );
+    return <Skeleton className="h-[350px] w-full" />;
   }
   
   return (
-    <CardContainer className="h-[300px] md:h-[400px]">
-      <SectionHeader title="Entrate e Spese" />
-      <ResponsiveContainer width="100%" height="90%">
-        <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-          <defs>
-            <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
-              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-            </linearGradient>
-            <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8} />
-              <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          <XAxis dataKey="name" fontSize={12} />
-          <YAxis fontSize={12} />
-          <CartesianGrid strokeDasharray="3 3" vertical={false} />
-          <Tooltip formatter={(value) => `€${value.toLocaleString()}`} />
-          <Legend formatter={(value) => value === 'income' ? 'Entrate' : 'Uscite'} />
-          <Area
-            type="monotone"
-            dataKey="income"
-            stroke="#3b82f6"
-            fillOpacity={1}
-            fill="url(#colorIncome)"
-            name="income"
-          />
-          <Area
-            type="monotone"
-            dataKey="expenses"
-            stroke="#ef4444"
-            fillOpacity={1}
-            fill="url(#colorExpenses)"
-            name="expenses"
-          />
-        </AreaChart>
-      </ResponsiveContainer>
-    </CardContainer>
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <div className="flex flex-col space-y-1">
+          <CardTitle className="text-base font-normal">
+            {showNet ? 'Reddito Netto Mensile' : 'Reddito Lordo Mensile'}
+          </CardTitle>
+          <CardDescription>
+            {showNet 
+              ? 'Visualizzazione del reddito netto (entrate - uscite)' 
+              : 'Visualizzazione dettagliata di entrate e uscite'}
+          </CardDescription>
+        </div>
+        <div className="flex rounded-md overflow-hidden border">
+          <Button 
+            variant={showNet ? "outline" : "default"} 
+            className={`rounded-none border-0 ${!showNet ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+            onClick={() => setShowNet(false)}
+            size="sm"
+          >
+            Lordo
+          </Button>
+          <Button 
+            variant={showNet ? "default" : "outline"} 
+            className={`rounded-none border-0 ${showNet ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+            onClick={() => setShowNet(true)}
+            size="sm"
+          >
+            Netto
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="h-[300px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={data}>
+              <defs>
+                <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.2} />
+                </linearGradient>
+                <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="#ef4444" stopOpacity={0.2} />
+                </linearGradient>
+                <linearGradient id="colorNet" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0.2} />
+                </linearGradient>
+              </defs>
+              <XAxis dataKey="month" />
+              <YAxis />
+              <Tooltip />
+              <CartesianGrid stroke="#eee" strokeDasharray="5 5" />
+              <Legend />
+              
+              {showNet ? (
+                <Area 
+                  type="monotone" 
+                  dataKey="net" 
+                  stroke="#10b981" 
+                  fillOpacity={1} 
+                  fill="url(#colorNet)" 
+                  name="Netto" 
+                />
+              ) : (
+                <>
+                  <Area 
+                    type="monotone" 
+                    dataKey="income" 
+                    stroke="#3b82f6" 
+                    fillOpacity={1} 
+                    fill="url(#colorIncome)" 
+                    name="Entrate" 
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="expenses" 
+                    stroke="#ef4444" 
+                    fillOpacity={1} 
+                    fill="url(#colorExpenses)" 
+                    name="Uscite" 
+                  />
+                </>
+              )}
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -377,13 +391,7 @@ function RecentActivities() {
 }
 
 export default function DashboardPage() {
-  const [summary, setSummary] = useState<DashboardSummaryResponse>({
-    totalProperties: 0,
-    totalUnits: 0,
-    totalTenants: 0,
-    occupancyRate: "0.0",
-    rentIncome: 0
-  });
+  const [summary, setSummary] = useState<DashboardSummaryResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const location = useLocation();
@@ -396,61 +404,60 @@ export default function DashboardPage() {
     occupancy: { trend: "neutral" as "up" | "down" | "neutral", value: "0%" }
   });
 
-  // Carica i dati dal database all'avvio del componente e alla navigazione
   useEffect(() => {
-    async function loadDashboardData() {
-      try {
-        setLoading(true);
-        console.log("Iniziando caricamento dati dashboard...");
-        // Cast esplicito a DashboardSummaryResponse
-        const data = await getDashboardSummary() as unknown as DashboardSummaryResponse;
-        console.log("Dati dashboard ricevuti:", data);
-        setSummary(data);
-        
-        // Calcola i trend in base ai dati storici
-        if (data.historicalData) {
-          const propertyTrend = calculateTrend(data.totalProperties, data.historicalData.previousMonthProperties);
-          const tenantsTrend = calculateTrend(data.totalTenants, data.historicalData.previousMonthTenants);
-          const incomeTrend = calculateTrend(data.rentIncome, data.historicalData.previousMonthIncome);
-          const occupancyTrend = calculateTrend(parseFloat(data.occupancyRate), data.historicalData.previousMonthOccupancy);
-          
-          setTrends({
-            properties: {
-              trend: propertyTrend.direction,
-              value: propertyTrend.isPercentage 
-                ? `${Math.abs(propertyTrend.value).toFixed(1)}%` 
-                : `${Math.abs(propertyTrend.value)} ${propertyTrend.value === 1 ? 'nuova' : 'nuove'} questo mese`
-            },
-            tenants: {
-              trend: tenantsTrend.direction,
-              value: tenantsTrend.isPercentage 
-                ? `${Math.abs(tenantsTrend.value).toFixed(1)}%` 
-                : `${Math.abs(tenantsTrend.value)} ${tenantsTrend.value === 1 ? 'nuovo' : 'nuovi'} questo mese`
-            },
-            income: {
-              trend: incomeTrend.direction,
-              value: `${Math.abs(incomeTrend.value).toFixed(1)}% di ${incomeTrend.direction === 'up' ? 'aumento' : 'diminuzione'}`
-            },
-            occupancy: {
-              trend: occupancyTrend.direction,
-              value: `${Math.abs(occupancyTrend.value).toFixed(1)}% di ${occupancyTrend.direction === 'up' ? 'aumento' : 'diminuzione'}`
-            }
-          });
-        }
-      } catch (err) {
-        console.error("Errore durante il caricamento dei dati della dashboard:", err);
-        // Log più dettagliato dell'errore
-        if (err instanceof Error) {
-          console.error("Dettaglio errore:", err.message, err.stack);
-        }
-        setError("Si è verificato un errore durante il caricamento dei dati.");
-      } finally {
-        setLoading(false);
-      }
-    }
-
     loadDashboardData();
-  }, [location.pathname]); // Ricarica quando cambia il percorso
+  }, []);
+  
+  async function loadDashboardData() {
+    try {
+      setLoading(true);
+      console.log("Iniziando caricamento dati dashboard...");
+      // Cast esplicito a DashboardSummaryResponse
+      const data = await getDashboardSummary() as unknown as DashboardSummaryResponse;
+      console.log("Dati dashboard ricevuti:", data);
+      setSummary(data);
+      
+      // Calcola i trend in base ai dati storici
+      if (data.historicalData) {
+        const propertyTrend = calculateTrend(data.totalProperties, data.historicalData.previousMonthProperties);
+        const tenantsTrend = calculateTrend(data.totalTenants, data.historicalData.previousMonthTenants);
+        const incomeTrend = calculateTrend(data.rentIncome, data.historicalData.previousMonthIncome);
+        const occupancyTrend = calculateTrend(parseFloat(data.occupancyRate), data.historicalData.previousMonthOccupancy);
+        
+        setTrends({
+          properties: {
+            trend: propertyTrend.direction,
+            value: propertyTrend.isPercentage 
+              ? `${Math.abs(propertyTrend.value).toFixed(1)}%` 
+              : `${Math.abs(propertyTrend.value)} ${propertyTrend.value === 1 ? 'nuova' : 'nuove'} questo mese`
+          },
+          tenants: {
+            trend: tenantsTrend.direction,
+            value: tenantsTrend.isPercentage 
+              ? `${Math.abs(tenantsTrend.value).toFixed(1)}%` 
+              : `${Math.abs(tenantsTrend.value)} ${tenantsTrend.value === 1 ? 'nuovo' : 'nuovi'} questo mese`
+          },
+          income: {
+            trend: incomeTrend.direction,
+            value: `${Math.abs(incomeTrend.value).toFixed(1)}% di ${incomeTrend.direction === 'up' ? 'aumento' : 'diminuzione'}`
+          },
+          occupancy: {
+            trend: occupancyTrend.direction,
+            value: `${Math.abs(occupancyTrend.value).toFixed(1)}% di ${occupancyTrend.direction === 'up' ? 'aumento' : 'diminuzione'}`
+          }
+        });
+      }
+    } catch (err) {
+      console.error("Errore durante il caricamento dei dati della dashboard:", err);
+      // Log più dettagliato dell'errore
+      if (err instanceof Error) {
+        console.error("Dettaglio errore:", err.message, err.stack);
+      }
+      setError("Si è verificato un errore durante il caricamento dei dati.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   // Funzione per calcolare trend
   function calculateTrend(currentValue, previousValue) {

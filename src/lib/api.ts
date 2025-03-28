@@ -101,5 +101,31 @@ export const api = {
     debug: () => fetch(`${API_URL}/dashboard/debug`, {
       headers: getAuthHeaders()
     }).then(res => res.json())
+  },
+  reports: {
+    getSummary: (params: any) => fetch(`${API_URL}/reports/summary${formatQueryParams(params)}`, {
+      headers: getAuthHeaders()
+    }).then(res => res.json()),
+    getPropertyPerformance: (params: any) => fetch(`${API_URL}/reports/properties${formatQueryParams(params)}`, {
+      headers: getAuthHeaders()
+    }).then(res => res.json()),
+    getFinancialData: (params: any) => fetch(`${API_URL}/reports/financial${formatQueryParams(params)}`, {
+      headers: getAuthHeaders()
+    }).then(res => res.json()),
+    exportReport: (format: string, params: any) => fetch(`${API_URL}/reports/export/${format}${formatQueryParams(params)}`, {
+      headers: getAuthHeaders()
+    }).then(res => res.blob())
   }
-}; 
+};
+
+// Funzione per formattare i parametri di query URL
+function formatQueryParams(params: Record<string, any>): string {
+  if (!params || Object.keys(params).length === 0) return '';
+  
+  const queryString = Object.entries(params)
+    .filter(([_, value]) => value !== undefined && value !== null)
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+    .join('&');
+    
+  return queryString ? `?${queryString}` : '';
+} 

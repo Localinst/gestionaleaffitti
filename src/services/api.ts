@@ -9,6 +9,10 @@ export interface Property {
   purchase_price: number;
   current_value: number;
   image_url?: string;
+  unit_names?: string[] | string;
+  created_at?: string;
+  updated_at?: string;
+  description?: string;
 }
 
 export interface Tenant {
@@ -28,6 +32,8 @@ export interface Tenant {
 export interface Transaction {
   id: number;
   property_id: number;
+  tenant_id?: number | null;
+  unit_index?: string;
   date: Date;
   amount: number;
   type: 'income' | 'expense';
@@ -378,24 +384,21 @@ export async function getTransactions(): Promise<Transaction[]> {
 
 export async function getTransactionsByProperty(propertyId: number): Promise<Transaction[]> {
   try {
-    const response = await fetch(`${API_URL}/transactions?propertyId=${propertyId}`, getRequestOptions());
+    const response = await fetch(`${API_URL}/transactions/property/${propertyId}`, getRequestOptions());
     
     if (!response.ok) {
-      console.error('Errore nella richiesta transactions by property:', response.status);
-      throw new Error(`Errore nel caricamento delle transazioni per proprietà: ${response.status}`);
+      if (response.status === 401) {
+        handleApiError('getTransactionsByProperty', 401, 'Non autenticato');
+        throw new Error('Non autenticato');
+      }
+      const error = await response.json();
+      throw new Error(error.error || `Errore durante il recupero delle transazioni per la proprietà ${propertyId}`);
     }
     
-    const data = await response.json();
-    
-    if (!Array.isArray(data)) {
-      console.error('La risposta non è un array:', data);
-      return [];
-    }
-    
-    return data;
+    return response.json();
   } catch (error) {
-    console.error('Exception in getTransactionsByProperty:', error);
-    return [];
+    console.error(`Errore durante il recupero delle transazioni per la proprietà:`, error);
+    throw error;
   }
 }
 
@@ -634,3 +637,42 @@ export async function getOwners(): Promise<Owner[]> {
     return [];
   }
 }
+
+// Oggetto API con tutti i metodi per semplificare le chiamate
+export const api = {
+  auth: {
+    login,
+    register,
+    logout,
+    getCurrentUser,
+    changePassword,
+    debugAuth
+  },
+  properties: {
+    getAll: getProperties,
+    getById: getPropertyById,
+    create: createProperty,
+    update: updateProperty,
+    delete: deleteProperty
+  },
+  tenants: {
+    getAll: getTenants,
+    getByProperty: getTenantsByProperty,
+    create: createTenant
+  },
+  transactions: {
+    getAll: getTransactions,
+    getByProperty: getTransactionsByProperty,
+    create: createTransaction
+  },
+  contracts: {
+    getAll: getContracts,
+    getByProperty: getContractsByProperty
+  },
+  owners: {
+    getAll: getOwners
+  },
+  dashboard: {
+    getSummary: getDashboardSummary
+  }
+};

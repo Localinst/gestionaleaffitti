@@ -13,6 +13,7 @@ import PropertiesPage from "./components/properties/PropertiesPage";
 import TenantsPage from "./components/tenants/TenantsPage";
 import TransactionsPage from "./components/transactions/TransactionsPage";
 import DashboardPage from '@/components/dashboard/DashboardPage';
+import ReportPage from "./components/dashboard/ReportPage";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +50,11 @@ const App = () => {
               <Route path="/transactions" element={
                 <ProtectedRoute>
                   <TransactionsPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/reports" element={
+                <ProtectedRoute>
+                  <ReportPage />
                 </ProtectedRoute>
               } />
               

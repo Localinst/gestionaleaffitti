@@ -8,7 +8,8 @@ import {
   Menu, 
   X, 
   Home, 
-  LogOut
+  LogOut,
+  LineChart
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -62,6 +63,7 @@ export function Sidebar() {
     { path: "/properties", label: "Proprietà", icon: Building2 },
     { path: "/tenants", label: "Inquilini", icon: Users },
     { path: "/transactions", label: "Transazioni", icon: Receipt },
+    { path: "/reports", label: "Report & Analytics", icon: LineChart },
   ];
   
   return (

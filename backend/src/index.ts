@@ -7,6 +7,7 @@ import { tenantsRouter } from './routes/tenants';
 import { transactionsRouter } from './routes/transactions';
 import { dashboardRouter } from './routes/dashboard';
 import { authRouter } from './routes/auth';
+import { reportsRouter } from './routes/reports';
 import { authenticate } from './middleware/auth';
 
 dotenv.config();
@@ -133,6 +134,7 @@ app.use('/api/properties', authenticate, propertiesRouter);
 app.use('/api/tenants', authenticate, tenantsRouter);
 app.use('/api/transactions', authenticate, transactionsRouter);
 app.use('/api/dashboard', authenticate, dashboardRouter);
+app.use('/api/reports', authenticate, reportsRouter);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

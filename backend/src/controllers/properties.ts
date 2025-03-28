@@ -44,13 +44,19 @@ export const getPropertyById = async (req: Request, res: Response) => {
 
 export const createProperty = async (req: Request, res: Response) => {
   try {
-    const { name, address, city, type, units } = req.body;
+    const { name, address, city, type, units, unitNames } = req.body;
     // Ottengo l'user_id dall'utente autenticato
     const userId = req.user?.id;
     
+    // Preparo i nomi delle unità come array JSON
+    let unitNamesJson = null;
+    if (unitNames && Array.isArray(unitNames) && unitNames.length > 0) {
+      unitNamesJson = JSON.stringify(unitNames);
+    }
+    
     const result = await pool.query(
-      'INSERT INTO properties (name, address, city, type, units, value, image_url, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
-      [name, address, city, type, units, 0, null, userId]
+      'INSERT INTO properties (name, address, city, type, units, value, image_url, unit_names, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
+      [name, address, city, type, units, 0, null, unitNamesJson, userId]
     );
     
     res.status(201).json(result.rows[0]);

@@ -5,7 +5,7 @@ import { z } from "zod";
 import { useNavigate } from "react-router-dom";
 import { Receipt } from "lucide-react";
 import { toast } from "sonner";
-import { createTransaction, getProperties, getTenantsByProperty } from "@/services/api";
+import { createTransaction, getProperties, getTenantsByProperty, Transaction } from "@/services/api";
 
 import {
   Form,
@@ -33,8 +33,22 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+// Interfaccia per le opzioni di unità
+interface UnitOption {
+  id: string;
+  propertyId: number | string; 
+  unitIndex: string;
+  name: string;
+  displayName: string;
+}
+
+// Estendo l'interfaccia Transaction per includere unit_index
+type TransactionWithUnit = Omit<Transaction, 'id'> & {
+  unit_index?: string;
+};
+
 const transactionFormSchema = z.object({
-  property_id: z.string().min(1, "Seleziona una proprietà"),
+  unit_id: z.string().min(1, "Seleziona un'unità immobiliare"),
   tenant_id: z.string().optional(),
   date: z.string().min(1, "La data è obbligatoria"),
   amount: z.coerce.number().positive("L'importo deve essere positivo"),
@@ -73,6 +87,7 @@ export function AddTransactionForm({
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [properties, setProperties] = useState([]);
+  const [unitOptions, setUnitOptions] = useState<UnitOption[]>([]);
   const [tenants, setTenants] = useState([]);
   const [selectedType, setSelectedType] = useState<"income" | "expense">("income");
   
@@ -83,13 +98,58 @@ export function AddTransactionForm({
         console.log("Proprietà caricate:", data);
         
         if (Array.isArray(data) && data.length > 0) {
-          // Non filtriamo più le proprietà, accettiamo tutte quelle restituite dall'API
           setProperties(data);
           
-          // Log di debug per verificare le proprietà
-          data.forEach((p, index) => {
-            console.log(`Proprietà ${index+1}:`, p.name, "ID:", p.id, "Tipo ID:", typeof p.id);
+          // Creiamo le opzioni per le unità
+          const options: UnitOption[] = [];
+          
+          data.forEach(property => {
+            // Se la proprietà ha più di 1 unità e unit_names è definito
+            if (property.units > 1 && property.unit_names) {
+              try {
+                // Proviamo a parsificare i nomi delle unità
+                const unitNames = Array.isArray(property.unit_names) 
+                  ? property.unit_names 
+                  : JSON.parse(property.unit_names as string);
+                
+                // Aggiungiamo un'opzione per ogni unità
+                unitNames.forEach((unitName: string, index: number) => {
+                  options.push({
+                    id: `${property.id}-${index}`,
+                    propertyId: property.id,
+                    unitIndex: index.toString(),
+                    name: unitName || `Unità ${index + 1}`,
+                    displayName: `${property.name} - ${unitName || `Unità ${index + 1}`}`
+                  });
+                });
+              } catch (e) {
+                console.error("Errore nel parsing dei nomi delle unità:", e);
+                
+                // Fallback: creiamo unità numerate
+                for (let i = 0; i < property.units; i++) {
+                  options.push({
+                    id: `${property.id}-${i}`,
+                    propertyId: property.id,
+                    unitIndex: i.toString(),
+                    name: `Unità ${i + 1}`,
+                    displayName: `${property.name} - Unità ${i + 1}`
+                  });
+                }
+              }
+            } else {
+              // Se la proprietà ha solo 1 unità, aggiungiamo solo la proprietà
+              options.push({
+                id: `${property.id}-0`,
+                propertyId: property.id,
+                unitIndex: "0",
+                name: property.name,
+                displayName: property.name
+              });
+            }
           });
+          
+          setUnitOptions(options);
+          
         } else {
           console.warn("Nessuna proprietà trovata o risposta non valida");
           toast.warning("Nessuna proprietà disponibile", {
@@ -107,7 +167,7 @@ export function AddTransactionForm({
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionFormSchema),
     defaultValues: {
-      property_id: "",
+      unit_id: "",
       tenant_id: "none",
       date: new Date().toISOString().split('T')[0],
       amount: 0,
@@ -117,15 +177,17 @@ export function AddTransactionForm({
     },
   });
 
-  // Carica gli inquilini quando cambia la proprietà
-  const loadTenants = async (propertyId: string) => {
-    console.log("Tentativo di caricamento inquilini per proprietà ID:", propertyId, "tipo:", typeof propertyId);
-
-    if (!propertyId || propertyId === "") {
-      console.log("PropertyId vuoto o non definito, nessun inquilino da caricare");
+  // Carica gli inquilini quando cambia la proprietà/unità
+  const loadTenants = async (unitId: string) => {
+    if (!unitId || unitId === "") {
+      console.log("UnitId vuoto o non definito, nessun inquilino da caricare");
       setTenants([]);
       return;
     }
+
+    // Estraiamo l'ID della proprietà dalla stringa unit_id
+    const [propertyId] = unitId.split('-');
+    console.log("Tentativo di caricamento inquilini per proprietà ID:", propertyId);
 
     try {
       console.log("Invio richiesta getTenantsByProperty con ID:", propertyId);
@@ -165,36 +227,24 @@ export function AddTransactionForm({
         return;
       }
 
-      // Verifica che property_id sia un valore valido
-      if (!data.property_id || data.property_id.trim() === "" || data.property_id === "invalid" || data.property_id === "nessuna") {
-        toast.error("Proprietà non selezionata", {
-          description: "Seleziona una proprietà valida prima di procedere"
+      // Verifica che unit_id sia un valore valido
+      if (!data.unit_id || data.unit_id.trim() === "") {
+        toast.error("Unità immobiliare non selezionata", {
+          description: "Seleziona un'unità immobiliare valida prima di procedere"
         });
         setIsSubmitting(false);
         return;
       }
       
-      console.log("Proprietà ID selezionata:", data.property_id);
-      
-      // Cerca la proprietà nell'array delle proprietà
-      const selectedProperty = properties.find(p => 
-        p.id?.toString() === data.property_id
-      );
-      
-      if (!selectedProperty) {
-        toast.error("Proprietà non trovata", {
-          description: "La proprietà selezionata non è nell'elenco"
-        });
-        setIsSubmitting(false);
-        return;
-      }
-      
-      console.log("Proprietà trovata:", selectedProperty);
+      // Estraiamo l'ID della proprietà e il numero dell'unità dalla stringa unit_id
+      const [propertyId, unitIndex] = data.unit_id.split('-');
+      console.log("Proprietà ID selezionata:", propertyId, "Unità:", unitIndex);
       
       // Crea un oggetto che corrisponde all'interfaccia Omit<Transaction, 'id'>
-      const transactionData = {
-        property_id: selectedProperty.id,
-        tenant_id: data.tenant_id && data.tenant_id !== "none" ? data.tenant_id : null,
+      const transactionData: TransactionWithUnit = {
+        property_id: Number(propertyId),
+        unit_index: unitIndex || "0",
+        tenant_id: data.tenant_id && data.tenant_id !== "none" ? Number(data.tenant_id) : null,
         date: new Date(data.date),
         amount: data.amount,
         type: data.type,
@@ -248,45 +298,28 @@ export function AddTransactionForm({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="property_id"
+              name="unit_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Proprietà</FormLabel>
+                  <FormLabel>Unità Immobiliare</FormLabel>
                   <Select 
                     onValueChange={(value) => {
-                      console.log("Proprietà selezionata, valore:", value);
                       field.onChange(value);
-                      // Resetta l'inquilino quando cambia la proprietà
-                      form.setValue("tenant_id", "none");
-                      // Carica gli inquilini della proprietà selezionata
                       loadTenants(value);
                     }}
-                    defaultValue={field.value || ""}>
+                    defaultValue={field.value || ""}
+                  >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Seleziona una proprietà" />
+                        <SelectValue placeholder="Seleziona un'unità immobiliare" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {properties.length > 0 ? (
-                        properties.map((property) => {
-                          // Usa l'ID direttamente come stringa (UUID)
-                          const idValue = property.id?.toString() || "invalid";
-                          
-                          return (
-                            <SelectItem 
-                              key={idValue}
-                              value={idValue}
-                            >
-                              {property.name}
-                            </SelectItem>
-                          );
-                        })
-                      ) : (
-                        <SelectItem value="nessuna" disabled>
-                          Nessuna proprietà disponibile
+                      {unitOptions.map((unit) => (
+                        <SelectItem key={unit.id} value={unit.id}>
+                          {unit.displayName}
                         </SelectItem>
-                      )}
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -294,7 +327,6 @@ export function AddTransactionForm({
               )}
             />
 
-            {/* Campo di selezione inquilino */}
             <FormField
               control={form.control}
               name="tenant_id"
@@ -302,42 +334,21 @@ export function AddTransactionForm({
                 <FormItem>
                   <FormLabel>Inquilino (opzionale)</FormLabel>
                   <Select 
-                    onValueChange={(value) => {
-                      console.log("Inquilino selezionato, valore:", value);
-                      field.onChange(value);
-                    }}
-                    value={field.value || "none"}
-                    disabled={!form.getValues("property_id") || tenants.length === 0}
+                    onValueChange={field.onChange}
+                    defaultValue={field.value || "none"}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Seleziona un inquilino" />
+                        <SelectValue placeholder="Seleziona un inquilino (opzionale)" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="none">Nessun inquilino</SelectItem>
-                      {tenants.length > 0 ? (
-                        tenants.map((tenant) => {
-                          // Visualizza i valori dell'inquilino per debug
-                          console.log("Rendering inquilino:", tenant.id, tenant.name);
-                          const idValue = tenant.id?.toString();
-                          
-                          return (
-                            <SelectItem 
-                              key={idValue}
-                              value={idValue}
-                            >
-                              {tenant.name || "Nome non disponibile"}
-                            </SelectItem>
-                          );
-                        })
-                      ) : (
-                        <SelectItem value="nessuno" disabled>
-                          {form.getValues("property_id") 
-                            ? "Nessun inquilino per questa proprietà" 
-                            : "Seleziona prima una proprietà"}
+                      {tenants.map((tenant) => (
+                        <SelectItem key={tenant.id} value={tenant.id.toString()}>
+                          {tenant.name}
                         </SelectItem>
-                      )}
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
