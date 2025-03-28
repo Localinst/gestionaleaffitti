@@ -13,7 +13,7 @@ import {
   AlertTriangle,
   RefreshCw
 } from "lucide-react";
-import { getProperties, getTenants } from "@/lib/data";
+import { getProperties, getTenants, getTransactionsData } from "@/lib/data";
 import { 
   AppLayout, 
   PageHeader, 
@@ -63,6 +63,17 @@ export default function TransactionsPage() {
     loadData();
   }, []);
 
+  // Effetto di debug per monitorare lo stato
+  useEffect(() => {
+    console.log("Stato corrente:", {
+      loading,
+      error,
+      transactionsCount: transactions.length,
+      propertiesCount: properties.length,
+      tenantsCount: tenants.length
+    });
+  }, [loading, error, transactions, properties, tenants]);
+
   async function loadData() {
     try {
       setLoading(true);
@@ -70,7 +81,7 @@ export default function TransactionsPage() {
       
       // Carica tutti i dati in parallelo
       const [transactionsData, propertiesData, tenantsData] = await Promise.all([
-        getTransactions(),
+        getTransactionsData(),
         getProperties(),
         getTenants()
       ]);
@@ -81,20 +92,33 @@ export default function TransactionsPage() {
         inquilini: tenantsData?.length || 0 
       });
       
-      setTransactions(transactionsData || []);
-      setProperties(propertiesData || []);
-      setTenants(tenantsData || []);
+      if (!Array.isArray(transactionsData)) {
+        console.error("transactionsData non è un array:", transactionsData);
+        setTransactions([]);
+      } else {
+        setTransactions(transactionsData);
+      }
+      
+      if (!Array.isArray(propertiesData)) {
+        console.error("propertiesData non è un array:", propertiesData);
+        setProperties([]);
+      } else {
+        setProperties(propertiesData);
+      }
+      
+      if (!Array.isArray(tenantsData)) {
+        console.error("tenantsData non è un array:", tenantsData);
+        setTenants([]);
+      } else {
+        setTenants(tenantsData);
+      }
+      
     } catch (err: any) {
       console.error("Errore durante il caricamento dei dati:", err);
-      
-      // Messaggio di errore specifico per l'utente
-      if (err.message?.includes("500")) {
-        setError("Errore del server (500). Il server non risponde correttamente. Contatta l'amministratore.");
-      } else if (err.message?.includes("404")) {
-        setError("API non trovata (404). Verifica che il backend sia in esecuzione.");
-      } else {
-        setError(`Si è verificato un errore durante il caricamento dei dati: ${err.message || 'Errore sconosciuto'}`);
-      }
+      setError(err.message || "Errore durante il caricamento dei dati");
+      setTransactions([]);
+      setProperties([]);
+      setTenants([]);
     } finally {
       setLoading(false);
     }
