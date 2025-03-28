@@ -29,19 +29,17 @@ app.use(cors({
   origin: function(origin: string | undefined, callback: (err: Error | null, origin?: string | boolean) => void) {
     // Per richieste senza origin (come quelle da Postman o cURL)
     if (!origin) {
-      if (process.env.NODE_ENV === 'production') {
-        return callback(new Error('Non sono consentite richieste senza origine in produzione'), false);
-      } else {
-        return callback(null, true);
-      }
+      console.warn('Richiesta senza origine ricevuta in ambiente:', process.env.NODE_ENV || 'development');
+      return callback(null, true); // Consenti richieste senza origine in tutti gli ambienti
     }
     
     // Controlla se l'origin è nella lista dei permessi
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, origin);
     } else {
-      // In produzione, rifiuta origini non autorizzate
-      callback(new Error('Origine non autorizzata dal CORS'), false);
+      // In produzione, logga ma consenti le origini non autorizzate
+      console.warn('Richiesta da origine non nella whitelist:', origin);
+      callback(null, origin);
     }
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
