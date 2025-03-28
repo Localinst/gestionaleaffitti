@@ -575,9 +575,7 @@ export async function createTransaction(transaction: Omit<Transaction, 'id'>): P
 // API Contracts
 export async function getContracts(): Promise<Contract[]> {
   try {
-    const response = await fetch(`${API_URL}/contracts`, {
-      credentials: 'include',
-    });
+    const response = await fetch(`${API_URL}/contracts`, getRequestOptions());
     
     if (!response.ok) {
       console.error('Errore nella richiesta contracts:', response.status);
@@ -600,9 +598,7 @@ export async function getContracts(): Promise<Contract[]> {
 
 export async function getContractsByProperty(propertyId: number): Promise<Contract[]> {
   try {
-    const response = await fetch(`${API_URL}/contracts?propertyId=${propertyId}`, {
-      credentials: 'include',
-    });
+    const response = await fetch(`${API_URL}/contracts?propertyId=${propertyId}`, getRequestOptions());
     
     if (!response.ok) {
       console.error('Errore nella richiesta contracts by property:', response.status);
@@ -626,9 +622,7 @@ export async function getContractsByProperty(propertyId: number): Promise<Contra
 // API Owners
 export async function getOwners(): Promise<Owner[]> {
   try {
-    const response = await fetch(`${API_URL}/owners`, {
-      credentials: 'include',
-    });
+    const response = await fetch(`${API_URL}/owners`, getRequestOptions());
     
     if (!response.ok) {
       console.error('Errore nella richiesta owners:', response.status);

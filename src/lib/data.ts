@@ -211,7 +211,7 @@ export const getTenants = async (): Promise<Tenant[]> => {
     // Usa lo stesso URL base usato in api.ts
     const hostname = window.location.hostname;
     const API_BASE_URL = hostname !== 'localhost' 
-      ? '/api'  // In produzione usa URL relativo
+      ? 'https://gestionale-affitti-api.onrender.com/api'  // In produzione usa URL diretto
       : `${window.location.protocol}//${hostname}:3000/api`;
     
     console.log('Richiesta tenants a:', `${API_BASE_URL}/tenants`);
@@ -242,7 +242,7 @@ export const getTransactionsData = async (): Promise<Transaction[]> => {
     // Usa lo stesso URL base usato in api.ts
     const hostname = window.location.hostname;
     const API_BASE_URL = hostname !== 'localhost' 
-      ? '/api'  // In produzione usa URL relativo
+      ? 'https://gestionale-affitti-api.onrender.com/api'  // In produzione usa URL diretto
       : `${window.location.protocol}//${hostname}:3000/api`;
     
     console.log('Richiesta transactions a:', `${API_BASE_URL}/transactions`);
