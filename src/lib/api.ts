@@ -1,8 +1,8 @@
 // Funzione per determinare l'URL dell'API in base all'ambiente
 const getApiUrl = () => {
-  // In produzione, usa l'URL del backend su Render
+  // In produzione, usa URL relativo
   if (window.location.hostname !== 'localhost') {
-    return 'https://gestionaleaffitti.onrender.com/api';
+    return '/api';
   }
   // In sviluppo, usa localhost
   return 'http://localhost:3000/api';

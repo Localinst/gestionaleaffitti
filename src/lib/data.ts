@@ -165,7 +165,9 @@ export const getProperties = async (): Promise<Property[]> => {
   try {
     // Usa lo stesso URL base usato in api.ts
     const hostname = window.location.hostname;
-    const API_BASE_URL = `${window.location.protocol}//${hostname}:3000/api`;
+    const API_BASE_URL = hostname !== 'localhost' 
+      ? '/api'  // In produzione usa URL relativo
+      : `${window.location.protocol}//${hostname}:3000/api`;
     
     console.log('Richiesta properties a:', `${API_BASE_URL}/properties`);
     const response = await fetch(`${API_BASE_URL}/properties`);
@@ -192,7 +194,9 @@ export const getTenants = async (): Promise<Tenant[]> => {
   try {
     // Usa lo stesso URL base usato in api.ts
     const hostname = window.location.hostname;
-    const API_BASE_URL = `${window.location.protocol}//${hostname}:3000/api`;
+    const API_BASE_URL = hostname !== 'localhost' 
+      ? '/api'  // In produzione usa URL relativo
+      : `${window.location.protocol}//${hostname}:3000/api`;
     
     console.log('Richiesta tenants a:', `${API_BASE_URL}/tenants`);
     const response = await fetch(`${API_BASE_URL}/tenants`);
@@ -219,7 +223,9 @@ export const getTransactionsData = async (): Promise<Transaction[]> => {
   try {
     // Usa lo stesso URL base usato in api.ts
     const hostname = window.location.hostname;
-    const API_BASE_URL = `${window.location.protocol}//${hostname}:3000/api`;
+    const API_BASE_URL = hostname !== 'localhost' 
+      ? '/api'  // In produzione usa URL relativo
+      : `${window.location.protocol}//${hostname}:3000/api`;
     
     console.log('Richiesta transactions a:', `${API_BASE_URL}/transactions`);
     const response = await fetch(`${API_BASE_URL}/transactions`);

@@ -67,9 +67,9 @@ import { DashboardSummaryResponse } from '@/components/dashboard/DashboardPage';
 
 // Configurazione intelligente dell'URL API di base
 function getAPIBaseUrl() {
-  // In ambiente di produzione, usa l'URL di Render
+  // In ambiente di produzione, usa URL relativo
   if (window.location.hostname !== 'localhost') {
-    return 'https://gestionaleaffitti.onrender.com/api'; // SOSTITUISCI con il tuo vero URL di Render
+    return '/api'; // URL relativo in produzione
   }
   
   // In ambiente di sviluppo, usa localhost
