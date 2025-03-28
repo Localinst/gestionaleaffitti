@@ -75,11 +75,6 @@ function getAPIBaseUrl() {
 
 // La funzione interna che determina l'URL effettivo
 function getActualAPIBaseUrl() {
-  // Usa sempre un URL relativo, che verrà gestito dal proxy Netlify
-  return '/api';
-  
-  // Il vecchio codice è commentato qui sotto
-  /*
   // In ambiente di produzione, usa l'URL diretto del backend
   if (window.location.hostname !== 'localhost') {
     return 'https://gestionale-affitti-api.onrender.com/api';
@@ -87,7 +82,6 @@ function getActualAPIBaseUrl() {
   
   // In ambiente di sviluppo locale, usa localhost
   return `${window.location.protocol}//${window.location.hostname}:3000/api`;
-  */
 }
 
 // URL base dell'API
@@ -450,14 +444,13 @@ export async function debugAuth(): Promise<any> {
 // Funzioni per la creazione, aggiornamento ed eliminazione di dati
 export async function createProperty(property: any): Promise<Property> {
   try {
-    console.log('Invio dati al server:', property);
     console.log('API_URL:', API_URL);
-    console.log('authToken:', localStorage.getItem('authToken') ? 'presente' : 'mancante');
+    console.log('Property data being sent:', property);
     
     const response = await fetch(`${API_URL}/properties`, {
       method: 'POST',
       headers: getAuthHeaders(),
-      body: JSON.stringify(property),
+      body: JSON.stringify(property)
     });
     
     // Controlla la risposta della preflight CORS
@@ -483,7 +476,7 @@ export async function updateProperty(id: number, property: Partial<Property>): P
     const response = await fetch(`${API_URL}/properties/${id}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
-      body: JSON.stringify(property),
+      body: JSON.stringify(property)
     });
     
     if (!response.ok) {
@@ -502,7 +495,7 @@ export async function deleteProperty(id: number): Promise<boolean> {
   try {
     const response = await fetch(`${API_URL}/properties/${id}`, {
       method: 'DELETE',
-      headers: getAuthHeaders(),
+      headers: getAuthHeaders()
     });
     
     if (!response.ok) {
@@ -519,23 +512,12 @@ export async function deleteProperty(id: number): Promise<boolean> {
 
 export async function createTenant(tenant: Omit<Tenant, 'id'>): Promise<Tenant> {
   try {
-    // Adattare i nomi dei campi per il backend
-    const backendData = {
-      name: tenant.name,
-      email: tenant.email,
-      phone: tenant.phone,
-      lease_start: tenant.lease_start,
-      lease_end: tenant.lease_end,
-      rent: tenant.rent,  // utilizziamo direttamente il campo rent
-      property_id: tenant.property_id,
-      unit: "",                  // valori di default per campi richiesti
-      status: "active"
-    };
-
+    console.log('Tenant data being sent:', tenant);
+    
     const response = await fetch(`${API_URL}/tenants`, {
       method: 'POST',
       headers: getAuthHeaders(),
-      body: JSON.stringify(backendData),
+      body: JSON.stringify(tenant)
     });
     
     if (!response.ok) {
@@ -552,10 +534,12 @@ export async function createTenant(tenant: Omit<Tenant, 'id'>): Promise<Tenant> 
 
 export async function createTransaction(transaction: Omit<Transaction, 'id'>): Promise<Transaction> {
   try {
+    console.log('Transaction data being sent:', transaction);
+    
     const response = await fetch(`${API_URL}/transactions`, {
       method: 'POST',
       headers: getAuthHeaders(),
-      body: JSON.stringify(transaction),
+      body: JSON.stringify(transaction)
     });
     
     if (!response.ok) {
