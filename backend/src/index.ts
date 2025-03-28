@@ -15,7 +15,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:8080';
 
-// Domini consentiti in un array per maggiore flessibilità
+// Domini consentiti - conservati per riferimento futuro
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:8080',
@@ -24,23 +24,13 @@ const allowedOrigins = [
   'https://gestionaleaffitti.netlify.app'
 ];
 
-// Configurazione CORS più sicura
+// Configurazione CORS semplificata che accetta tutte le origini ma registra le richieste
 app.use(cors({
-  origin: function(origin: string | undefined, callback: (err: Error | null, origin?: string | boolean) => void) {
-    // Per richieste senza origin (come quelle da Postman o cURL)
-    if (!origin) {
-      console.warn('Richiesta senza origine ricevuta in ambiente:', process.env.NODE_ENV || 'development');
-      return callback(null, true); // Consenti richieste senza origine in tutti gli ambienti
-    }
-    
-    // Controlla se l'origin è nella lista dei permessi
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, origin);
-    } else {
-      // In produzione, logga ma consenti le origini non autorizzate
-      console.warn('Richiesta da origine non nella whitelist:', origin);
-      callback(null, origin);
-    }
+  origin: function(origin: string | undefined, callback: (err: Error | null, origin?: boolean | string) => void) {
+    // Log per tracciare le origini delle richieste
+    console.log(`Richiesta CORS da origine: ${origin || 'nessuna origine'} - ${new Date().toISOString()}`);
+    // Consenti tutte le origini
+    callback(null, true);
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -48,7 +38,7 @@ app.use(cors({
 
 // Middleware di debug per logging delle richieste
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.originalUrl} - Origin: ${req.headers.origin}`);
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.originalUrl} - Origin: ${req.headers.origin || 'nessuna origine'}`);
   next();
 });
 
@@ -62,7 +52,7 @@ app.get('/api/ping', (req, res) => {
   return res.json({
     message: 'Server API disponibile',
     timestamp: new Date().toISOString(),
-    origin: req.headers.origin
+    origin: req.headers.origin || 'nessuna origine'
   });
 });
 
@@ -77,6 +67,5 @@ app.use('/api/dashboard', authenticate, dashboardRouter);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log(`Server configurato per accettare richieste dai seguenti domini:`);
-  console.log(allowedOrigins);
+  console.log(`Server configurato per accettare richieste da TUTTE le origini (CORS aperto)`);
 }); 
