@@ -123,8 +123,8 @@ async function setupTransactionPooler() {
   
   console.log('Configurato per utilizzare il Transaction Pooler (compatibile con IPv4)');
   console.log('Stringa connessione utilizzata:', connectionString.replace(/:[^:@]+@/, ':****@'));
-  
-  // Crea il pool di connessione
+
+// Crea il pool di connessione
   const poolerPool = new Pool(poolerConfig);
   
   // Test di connessione
@@ -192,13 +192,13 @@ async function setupDirectConnection() {
   });
   
   const directPool = new Pool(directConfig);
-  
-  try {
-    const client = await directPool.connect();
+      
+      try {
+        const client = await directPool.connect();
     console.log('✓ Connessione diretta al database riuscita!');
-    const result = await client.query('SELECT version()');
-    console.log('Versione database:', result.rows[0].version);
-    client.release();
+        const result = await client.query('SELECT version()');
+        console.log('Versione database:', result.rows[0].version);
+        client.release();
     return directPool;
   } catch (err) {
     console.error('✗ Anche la connessione diretta fallita:', err);
