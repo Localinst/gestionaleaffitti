@@ -75,7 +75,7 @@ function getAPIBaseUrl() {
 
 // La funzione interna che determina l'URL effettivo
 function getActualAPIBaseUrl() {
-  // In ambiente di produzione, usa sempre l'URL hardcoded per evitare problemi
+  // In ambiente di produzione, usa l'URL diretto del backend
   if (window.location.hostname !== 'localhost') {
     return 'https://gestionale-affitti-api.onrender.com/api';
   }

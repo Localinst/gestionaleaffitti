@@ -15,7 +15,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:8080';
 
-// Domini consentiti - conservati per riferimento futuro
+// Domini consentiti
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:8080',
@@ -24,29 +24,14 @@ const allowedOrigins = [
   'https://gestionaleaffitti.netlify.app'
 ];
 
-// Configurazione CORS semplificata che ammette tutte le origini
-app.use((req, res, next) => {
-  // Permetti tutte le origini senza restrizioni
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  
-  // Registro l'origine della richiesta per debug
-  const origin = req.headers.origin;
-  console.log(`Richiesta da origine: ${origin || 'nessuna origine'} - ${new Date().toISOString()}`);
-  
-  // Altri header CORS necessari
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-  // Non impostare credentials su true quando si usa '*' come origin
-  // res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Max-Age', '86400'); // 24 ore
-  
-  // Gestione richieste preflight OPTIONS
-  if (req.method === 'OPTIONS') {
-    return res.status(204).end();
-  }
-  
-  next();
-});
+// Configurazione CORS corretta
+app.use(cors({
+  origin: allowedOrigins,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: true,
+  maxAge: 86400 // 24 ore di cache per le richieste preflight
+}));
 
 // Middleware di debug per logging delle richieste
 app.use((req, res, next) => {
@@ -79,5 +64,5 @@ app.use('/api/dashboard', authenticate, dashboardRouter);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log(`Server configurato per accettare richieste da TUTTE le origini (CORS aperto)`);
+  console.log(`Server configurato per accettare richieste da origini definite nella lista allowedOrigins`);
 }); 
