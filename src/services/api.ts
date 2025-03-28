@@ -65,18 +65,26 @@ interface DashboardSummary {
 
 import { DashboardSummaryResponse } from '@/components/dashboard/DashboardPage';
 
-// Configurazione intelligente dell'URL API di base
+// Configurazione dell'URL API di base
 function getAPIBaseUrl() {
-  // In ambiente di produzione, usa URL relativo
+  // Per debugging, mostra sempre quale URL viene usato
+  const result = getActualAPIBaseUrl();
+  console.log('API Base URL configurato:', result);
+  return result;
+}
+
+// La funzione interna che determina l'URL effettivo
+function getActualAPIBaseUrl() {
+  // In ambiente di produzione, usa sempre l'URL hardcoded per evitare problemi
   if (window.location.hostname !== 'localhost') {
-    return '/api'; // URL relativo in produzione
+    return 'https://gestionale-affitti-api.onrender.com/api';
   }
   
-  // In ambiente di sviluppo, usa localhost
+  // In ambiente di sviluppo locale, usa localhost
   return `${window.location.protocol}//${window.location.hostname}:3000/api`;
 }
 
-// URL base dell'API con gestione degli errori
+// URL base dell'API
 const API_URL = getAPIBaseUrl();
 
 console.log('API Base URL:', API_URL);
@@ -142,20 +150,50 @@ const handleApiError = (endpoint: string, status: number, error: any) => {
 
 // API Auth
 export async function login(credentials: LoginRequest): Promise<AuthResponse> {
-  const response = await fetch(`${API_URL}/auth/login`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(credentials),
-  });
+  console.log('Effettuando login a:', `${API_URL}/auth/login`);
+  try {
+    const response = await fetch(`${API_URL}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(credentials),
+    });
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Errore durante il login');
+    // Log dettagliato della risposta
+    console.log('Login response status:', response.status);
+    
+    if (!response.ok) {
+      let errorMessage = `Errore durante il login (${response.status})`;
+      
+      try {
+        // Prova a interpretare la risposta come JSON
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const error = await response.json();
+          errorMessage = error.error || errorMessage;
+        } else {
+          // Se non è JSON, prova a leggere il testo
+          const errorText = await response.text();
+          console.error('Risposta non-JSON ricevuta:', errorText.substring(0, 200) + '...');
+          if (response.status === 404) {
+            errorMessage = 'Server API non raggiungibile. Verifica la configurazione del server.';
+          }
+        }
+      } catch (parseError) {
+        console.error('Errore nel parsing della risposta:', parseError);
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+    console.log('Login riuscito, dati utente ricevuti');
+    return data;
+  } catch (error) {
+    console.error('Errore durante il login:', error);
+    throw error;
   }
-
-  return response.json();
 }
 
 export async function register(userData: RegisterRequest): Promise<AuthResponse> {
