@@ -5,16 +5,21 @@ export const getTransactions = async (req: Request, res: Response) => {
   try {
     // Ottengo l'user_id dall'utente autenticato
     const userId = req.user?.id;
+    console.log('Recupero transazioni per user_id:', userId);
     
     // Query con join a properties e filtro user_id in properties
-    const result = await pool.query(`
+    const query = `
       SELECT t.*, p.name as property_name, tn.name as tenant_name
       FROM transactions t
       JOIN properties p ON t.property_id = p.id
       LEFT JOIN tenants tn ON t.tenant_id = tn.id
       WHERE p.user_id = $1
       ORDER BY t.date DESC
-    `, [userId]);
+    `;
+    console.log('Query eseguita:', query);
+    
+    const result = await pool.query(query, [userId]);
+    console.log('Numero di transazioni trovate:', result.rows.length);
     
     res.json(result.rows);
   } catch (error) {

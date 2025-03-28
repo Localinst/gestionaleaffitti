@@ -6,12 +6,8 @@ import {
   updateTransaction,
   deleteTransaction
 } from '../controllers/transactions';
-import { authenticate } from '../middleware/auth';
 
 const router = Router();
-
-// Applico il middleware di autenticazione a tutte le rotte
-router.use(authenticate);
 
 router.get('/', getTransactions);
 router.get('/:id', getTransactionById);
