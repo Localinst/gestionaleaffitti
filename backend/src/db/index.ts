@@ -20,13 +20,14 @@ const createSafeConnectionString = (connectionString: string) => {
     console.log('Correzione della stringa di connessione in corso...');
     
     // Formato tipico: postgres://username:password@host:port/database
-    const match = connectionString.match(/^postgres:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/(.+)$/);
+    const match = connectionString.match(/^postgres(ql)?:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/(.+)$/);
     
     if (match) {
-      const [, username, password, host, port, database] = match;
+      const [, protocol, username, password, host, port, database] = match;
       // Codifica la password per URL
       const encodedPassword = encodeURIComponent(password);
-      const safeConnectionString = `postgres://${username}:${encodedPassword}@${host}:${port}/${database}`;
+      const protocolStr = protocol ? 'postgresql' : 'postgres';
+      const safeConnectionString = `${protocolStr}://${username}:${encodedPassword}@${host}:${port}/${database}`;
       console.log('Stringa di connessione corretta generata');
       return safeConnectionString;
     }
@@ -36,160 +37,257 @@ const createSafeConnectionString = (connectionString: string) => {
   }
 };
 
-// Verifica se utilizzare l'URL di connessione diretto o il pooler
-const SUPABASE_DB_HOST = process.env.DB_HOST || "db.fdufcrgckojbaghdvhgj.supabase.co";
-// L'ID del progetto è l'identificativo nella URL, ad esempio fdufcrgckojbaghdvhgj
-const PROJECT_ID = SUPABASE_DB_HOST.split('.')[1] || 'fdufcrgckojbaghdvhgj';
-
-// Controlla se è definito un URL del pooler completo
-const POOLER_URL = process.env.POOLER_URL;
-
-// Definisco un'interfaccia per il tipo di configurazione che include connectionString
-interface ExtendedPoolConfig extends PoolConfig {
-  connectionString?: string;
-  // Proprietà avanzate per pg-node
-  family?: number; // 4 per IPv4, 6 per IPv6
-}
-
-// SOLUZIONE PER FORZARE IPV4: Ricava l'indirizzo IPv4 dal nome host
-async function getIPv4Address(hostname: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    dns.lookup(hostname, { family: 4 }, (err, address) => {
-      if (err) {
-        console.error(`Errore risolvendo ${hostname} in IPv4:`, err);
-        reject(err);
-      } else {
-        console.log(`Risolto ${hostname} in IPv4: ${address}`);
-        resolve(address);
+// Ottieni l'ID del progetto Supabase dalla stringa di connessione o da altre fonti
+const getProjectId = (): string => {
+  try {
+    if (process.env.DATABASE_URL) {
+      const urlObj = new URL(process.env.DATABASE_URL);
+      const hostParts = urlObj.hostname.split('.');
+      // Nel formato standard di Supabase, il project ID è nella seconda parte dell'hostname
+      if (hostParts.length >= 2) {
+        return hostParts[1];
       }
-    });
-  });
-}
-
-// Configurazione di base che potrebbe essere sovrascritta
-let poolConfig: ExtendedPoolConfig = {
-  user: process.env.DB_USER || 'postgres',
-  host: SUPABASE_DB_HOST,
-  database: process.env.DB_NAME || 'postgres',
-  password: process.env.DB_PASSWORD,
-  port: parseInt(process.env.DB_PORT || '5432'),
-  ssl: {
-    rejectUnauthorized: false
-  },
-  // Forza l'uso di IPv4
-  family: 4
+    }
+    
+    // Fallback all'estrazione dall'URL Supabase
+    if (process.env.SUPABASE_URL) {
+      const urlObj = new URL(process.env.SUPABASE_URL);
+      const hostParts = urlObj.hostname.split('.');
+      if (hostParts.length >= 1) {
+        return hostParts[0];
+      }
+    }
+    
+    // Valore hardcoded come fallback finale
+    return 'fdufcrgckojbaghdvhgj';
+  } catch (error) {
+    console.error('Errore nell\'estrazione del project ID:', error);
+    return 'fdufcrgckojbaghdvhgj';
+  }
 };
 
-// Log della configurazione iniziale
-console.log('Tentativo di connessione diretta al database:', SUPABASE_DB_HOST);
+const PROJECT_ID = getProjectId();
+console.log('Project ID individuato:', PROJECT_ID);
 
-// Se viene fornito un URL del database completo, usa quello
-if (process.env.DATABASE_URL) {
-  console.log('Utilizzo DATABASE_URL fornito');
+// Configurazione per l'utilizzo del Transaction Pooler (compatibile con IPv4)
+const TRANSACTION_POOLER_HOST = `aws-0-eu-central-1.pooler.supabase.com`;
+const TRANSACTION_POOLER_PORT = 6543;
+
+// PRIMA TENTATIVO: Configurazione Transaction Pooler
+async function setupTransactionPooler() {
+  console.log('Tentativo di connessione tramite Transaction Pooler...');
   
-  const safeConnectionString = createSafeConnectionString(process.env.DATABASE_URL);
+  let connectionString: string;
   
-  poolConfig = {
-    connectionString: safeConnectionString,
-    ssl: {
-      rejectUnauthorized: false
-    },
-    // Forza l'uso di IPv4
+  // Controlla se è già impostato un URL del pooler
+  if (process.env.POOLER_URL) {
+    console.log('Utilizzo POOLER_URL esplicitamente fornito');
+    // Assicuriamoci che la password sia codificata correttamente
+    try {
+      const poolerUrl = process.env.POOLER_URL;
+      // Estrai le parti dell'URL
+      const urlMatch = poolerUrl.match(/^(postgresql):\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/(.+)$/);
+      if (urlMatch) {
+        const [, protocol, username, password, host, port, database] = urlMatch;
+        // Codifica la password per URL
+        const encodedPassword = encodeURIComponent(password);
+        connectionString = `${protocol}://${username}:${encodedPassword}@${host}:${port}/${database}`;
+        console.log('POOLER_URL con password codificata');
+      } else {
+        connectionString = poolerUrl;
+        console.log('Formato POOLER_URL non riconosciuto, uso originale');
+      }
+    } catch (error) {
+      console.error('Errore nella codifica della password di POOLER_URL:', error);
+      connectionString = process.env.POOLER_URL;
+    }
+  } else {
+    // Verifica se DATABASE_URL è già un URL del pooler
+    if (process.env.DATABASE_URL && process.env.DATABASE_URL.includes('pooler.supabase.com')) {
+      console.log('DATABASE_URL già configurato per il pooler');
+      connectionString = process.env.DATABASE_URL;
+    } else {
+      // Costruisci una stringa di connessione del pooler
+      console.log('Costruzione nuova stringa di connessione del pooler');
+      connectionString = constructPoolerUrl();
+      console.log('Stringa di connessione del pooler creata');
+    }
+  }
+  
+  // Configura il pool usando la stringa di connessione del pooler
+  const poolerConfig = {
+    connectionString: createSafeConnectionString(connectionString),
+    // Forza l'uso di IPv4 come ulteriore sicurezza
     family: 4
   };
-}
-
-// Crea il pool di connessione
-const pool = new Pool(poolConfig);
-
-// Log della configurazione
-console.log('Configurazione database:', {
-  host: poolConfig.host || 'da connection string',
-  database: poolConfig.database || 'da connection string',
-  port: poolConfig.port || 'da connection string',
-  user: poolConfig.user || 'da connection string',
-  ssl: poolConfig.ssl ? 'configurato' : 'non configurato',
-  family: poolConfig.family
-});
-
-// Gestione degli errori di connessione
-pool.on('error', (err) => {
-  console.error('Errore imprevisto nel pool di connessione:', err);
-});
-
-// Test di connessione iniziale
-async function testConnection() {
+  
+  console.log('Configurato per utilizzare il Transaction Pooler (compatibile con IPv4)');
+  console.log('Stringa connessione utilizzata:', connectionString.replace(/:[^:@]+@/, ':****@'));
+  
+  // Crea il pool di connessione
+  const poolerPool = new Pool(poolerConfig);
+  
+  // Test di connessione
   try {
-    const client = await pool.connect();
-    console.log('✓ Connessione al database riuscita!');
+    console.log('Tentativo di connessione al Transaction Pooler...');
+    const client = await poolerPool.connect();
+    console.log('✓ Connessione al database tramite Transaction Pooler riuscita!');
     const result = await client.query('SELECT version()');
     console.log('Versione database:', result.rows[0].version);
     client.release();
-    return true;
+    return poolerPool;
   } catch (err) {
-    console.error('✗ Errore nella connessione al database:', err);
+    console.error('✗ Errore nella connessione al Transaction Pooler:', err);
     
-    // SOLUZIONE ALTERNATIVA: Prova a risolvere manualmente l'indirizzo IPv4 e connettersi
-    if (poolConfig.host && !poolConfig.connectionString) {
-      try {
-        console.log('Tentativo di risoluzione IPv4 manuale...');
-        const ipv4Address = await getIPv4Address(poolConfig.host);
-        
-        // Crea un nuovo pool con l'indirizzo IPv4
-        pool.end();
-        const ipv4PoolConfig: ExtendedPoolConfig = {
-          ...poolConfig,
-          host: ipv4Address
-        };
-        
-        console.log('Tentativo con indirizzo IPv4 risolto:', ipv4Address);
-        const ipv4Pool = new Pool(ipv4PoolConfig);
-        
-        const ipv4Client = await ipv4Pool.connect();
-        console.log('✓ Connessione con IPv4 risolto riuscita!');
-        const result = await ipv4Client.query('SELECT version()');
-        console.log('Versione database:', result.rows[0].version);
-        ipv4Client.release();
-        return true;
-      } catch (ipv4Err) {
-        console.error('✗ Anche la connessione con IPv4 risolto fallita:', ipv4Err);
-      }
-    }
+    // Chiudi il pool per evitare memory leak
+    poolerPool.end();
     
-    // Se fallisce e c'è DATABASE_URL, prova con quello come fallback
-    if (process.env.DATABASE_URL && !poolConfig.connectionString) {
-      console.log('Tentativo con DATABASE_URL...');
-      // Aggiorna la configurazione per usare la connessione diretta
-      pool.end();
-      
-      // Usa la connection string diretta
-      const directPoolConfig: ExtendedPoolConfig = {
-        connectionString: createSafeConnectionString(process.env.DATABASE_URL),
-        ssl: {
-          rejectUnauthorized: false
-        },
-        family: 4
-      };
-      
-      const directPool = new Pool(directPoolConfig);
-      
-      try {
-        const client = await directPool.connect();
-        console.log('✓ Connessione con DATABASE_URL riuscita!');
-        const result = await client.query('SELECT version()');
-        console.log('Versione database:', result.rows[0].version);
-        client.release();
-        return true;
-      } catch (directErr) {
-        console.error('✗ Anche la connessione con DATABASE_URL fallita:', directErr);
-      }
-    }
+    // Tentativo di fallback alla connessione diretta
+    console.log('Non è possibile connettersi tramite Transaction Pooler. Possibili cause:');
+    console.log('1. La password nel pooler URL è errata');
+    console.log('2. Il progetto Supabase non ha il Transaction Pooler abilitato');
+    console.log('3. Le credenziali non hanno accesso al Transaction Pooler');
     
-    return false;
+    // Prova con la connessione diretta
+    return null;
   }
 }
 
-// Esegui il test di connessione all'avvio
-testConnection();
+// Costruisci la stringa di connessione per il Transaction Pooler
+const constructPoolerUrl = (): string => {
+  const username = `postgres.${PROJECT_ID}`;
+  const password = process.env.DB_PASSWORD || process.env.SUPABASE_DB_PASSWORD || '';
+  const database = 'postgres';
+  
+  return `postgresql://${username}:${encodeURIComponent(password)}@${TRANSACTION_POOLER_HOST}:${TRANSACTION_POOLER_PORT}/${database}`;
+};
 
-export default pool; 
+// SECONDO TENTATIVO: Configurazione connessione diretta
+async function setupDirectConnection() {
+  console.log('Tentativo di connessione diretta al database...');
+  
+  // Configurazione per connessione diretta
+  let directConfig: PoolConfig;
+  
+  if (process.env.DATABASE_URL) {
+    // Usa la stringa di connessione fornita
+    const safeConnectionString = createSafeConnectionString(process.env.DATABASE_URL);
+    directConfig = {
+      connectionString: safeConnectionString
+    };
+  } else {
+    // Usa i parametri individuali
+    directConfig = {
+      user: process.env.DB_USER || 'postgres',
+      host: process.env.DB_HOST || 'db.fdufcrgckojbaghdvhgj.supabase.co',
+      database: process.env.DB_NAME || 'postgres',
+      password: process.env.DB_PASSWORD,
+      port: parseInt(process.env.DB_PORT || '5432')
+    };
+  }
+  
+  console.log('Configurazione connessione diretta:', {
+    connectionString: directConfig.connectionString ? 'impostato' : 'non impostato',
+    host: directConfig.host || 'da connection string'
+  });
+  
+  const directPool = new Pool(directConfig);
+  
+  try {
+    const client = await directPool.connect();
+    console.log('✓ Connessione diretta al database riuscita!');
+    const result = await client.query('SELECT version()');
+    console.log('Versione database:', result.rows[0].version);
+    client.release();
+    return directPool;
+  } catch (err) {
+    console.error('✗ Anche la connessione diretta fallita:', err);
+    
+    // Chiudi il pool per evitare memory leak
+    directPool.end();
+    
+    // Non è possibile connettersi in nessun modo
+    console.error('Non è possibile connettersi al database Supabase. Verifica:');
+    console.error('1. Le credenziali sono corrette');
+    console.error('2. La rete supporta il tipo di connessione (IPv4/IPv6)');
+    console.error('3. Il database è attivo e raggiungibile');
+    
+    return null;
+  }
+}
+
+// Funzione principale per ottenere una connessione valida
+async function getDbPool() {
+  // Prima prova con il Transaction Pooler (compatibile con IPv4)
+  let pool = await setupTransactionPooler();
+  
+  // Se fallisce, prova con la connessione diretta
+  if (!pool) {
+    console.log('Fallback alla connessione diretta...');
+    pool = await setupDirectConnection();
+  }
+  
+  // Se entrambi falliscono, restituisci un pool dummy che genererà errori all'uso
+  if (!pool) {
+    console.error('CRITICO: Tutte le connessioni al database sono fallite!');
+    
+    // Crea un pool dummy che lancerà errori quando utilizzato
+    pool = new Pool({
+      host: 'localhost',
+      port: 5432,
+      user: 'postgres',
+      password: 'postgres',
+      database: 'postgres'
+    });
+    
+    // Sovrascrivi il metodo connect per mostrare un errore chiaro
+    const originalConnect = pool.connect.bind(pool);
+    pool.connect = function() {
+      console.error('ERRORE: Tentativo di connessione al database fallito. Database non configurato correttamente.');
+      return originalConnect().then(() => {
+        throw new Error('Connessione riuscita ma non dovrebbe essere possibile.');
+      }).catch((err: Error) => {
+        console.error('Dettagli errore di connessione:', err);
+        throw new Error('Database non disponibile. Verificare la configurazione.');
+      });
+    };
+  }
+  
+  // Gestione degli errori di connessione
+  pool.on('error', (err) => {
+    console.error('Errore imprevisto nel pool di connessione:', err);
+  });
+  
+  return pool;
+}
+
+// Esegui la funzione per ottenere un pool di connessione valido
+let pool: Pool;
+
+// Inizializza il pool in modo asincrono ma esporta un oggetto sincrono
+getDbPool().then(p => {
+  if (p) {
+    pool = p;
+    console.log('Pool di connessione al database inizializzato e pronto');
+  } else {
+    console.error('Impossibile inizializzare il pool di connessione al database');
+  }
+}).catch(err => {
+  console.error('Errore durante l\'inizializzazione del pool di connessione:', err);
+});
+
+// Esporta un oggetto proxy che inoltrerà le chiamate al pool effettivo quando sarà pronto
+const poolProxy = new Proxy({} as Pool, {
+  get: function(target, prop) {
+    if (!pool) {
+      if (prop === 'connect' || prop === 'query') {
+        return function() {
+          return Promise.reject(new Error('Il pool di connessione al database non è ancora inizializzato'));
+        };
+      }
+    }
+    return pool[prop as keyof Pool];
+  }
+});
+
+export default poolProxy; 
