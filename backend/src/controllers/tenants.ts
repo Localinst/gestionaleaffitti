@@ -34,14 +34,20 @@ export const getTenantsByProperty = async (req: Request, res: Response) => {
   try {
     // Ottengo l'user_id dall'utente autenticato
     const userId = req.user?.id;
-    const propertyId = req.query.propertyId;
+    const propertyId = req.query.propertyId as string;
     
     if (!propertyId) {
       return res.status(400).json({ error: 'Property ID is required' });
     }
     
-    // Non c'è più bisogno di verificare se è NaN perché usiamo il valore come stringa
-    // Verifica che la proprietà appartenga all'utente - NOTA: usiamo $1 direttamente senza conversione
+    // Validazione UUID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(propertyId)) {
+      console.error(`ID proprietà non valido: ${propertyId}`);
+      return res.status(400).json({ error: 'Invalid property ID format. Expected UUID format.' });
+    }
+    
+    // Verifica che la proprietà appartenga all'utente
     console.log("Cerco proprietà con ID:", propertyId, "di tipo:", typeof propertyId);
     const propertyCheck = await pool.query(
       'SELECT id FROM properties WHERE id = $1 AND user_id = $2',
@@ -52,7 +58,7 @@ export const getTenantsByProperty = async (req: Request, res: Response) => {
       return res.status(403).json({ error: 'Property not found or not owned by user' });
     }
     
-    // Query per ottenere gli inquilini della proprietà specificata - NOTA: usiamo $1 direttamente
+    // Query per ottenere gli inquilini della proprietà specificata
     console.log("Cerco inquilini per proprietà ID:", propertyId);
     const result = await pool.query(`
       SELECT 

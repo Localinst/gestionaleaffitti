@@ -92,3 +92,4 @@ NOTES.md
 *.secret.*
 secrets/
 .vercel
+.qodo

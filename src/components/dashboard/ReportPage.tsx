@@ -4,6 +4,7 @@ import { AppLayout, PageHeader, Grid } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building2, Users, DollarSign, Download, CalendarDays, PieChart, TrendingUp, LineChart } from "lucide-react";
+import { addMonths, subMonths } from "date-fns";
 import { 
   AreaChart, 
   Area, 
@@ -34,6 +35,47 @@ interface FinancialData {
   income: number;
   expenses: number;
   net: number;
+}
+
+// Helper function to ensure we have data for each month in the range
+function ensureMonthlyData(data: FinancialData[], startDate: Date, endDate: Date): FinancialData[] {
+  const result: FinancialData[] = [];
+  const currentDate = new Date(startDate);
+  
+  // Create a map of existing data by month
+  const dataMap = new Map<string, FinancialData>();
+  data.forEach(item => {
+    const itemDate = typeof item.date === 'string' ? item.date : format(item.date, 'yyyy-MM');
+    dataMap.set(itemDate.substring(0, 7), item); // Get yyyy-MM format
+  });
+  
+  // Generate entries for each month in the range
+  while (currentDate <= endDate) {
+    const monthKey = format(currentDate, 'yyyy-MM');
+    const monthLabel = format(currentDate, 'MMM yyyy');
+    
+    if (dataMap.has(monthKey)) {
+      // Use existing data
+      const existingData = dataMap.get(monthKey)!;
+      result.push({
+        ...existingData,
+        date: monthLabel // Format for display
+      });
+    } else {
+      // Create empty data for this month
+      result.push({
+        date: monthLabel,
+        income: 0,
+        expenses: 0,
+        net: 0
+      });
+    }
+    
+    // Move to next month
+    currentDate.setMonth(currentDate.getMonth() + 1);
+  }
+  
+  return result;
 }
 
 // Interfaccia per i dati del riepilogo
@@ -83,14 +125,61 @@ export default function ReportPage() {
       try {
         setLoadingFinancial(true);
         
+        let queryStartDate: Date;
+        let queryEndDate: Date;
+        
+        // Determine the date range based on filter type
+        if (filters.periodType === "custom" && filters.startDate && filters.endDate) {
+          // Use custom dates if provided
+          queryStartDate = filters.startDate;
+          queryEndDate = filters.endDate;
+        } else {
+          // For non-custom periods, calculate the last 12 months
+          queryEndDate = new Date();
+          queryStartDate = new Date();
+          queryStartDate.setMonth(queryStartDate.getMonth() - 11); // Go back 11 months
+          
+          // Only update filters if they don't match our calculated dates
+          // This prevents the infinite loop
+          const currentStartMonth = filters.startDate?.getMonth();
+          const currentEndMonth = filters.endDate?.getMonth();
+          const currentStartYear = filters.startDate?.getFullYear();
+          const currentEndYear = filters.endDate?.getFullYear();
+          const targetStartMonth = queryStartDate.getMonth();
+          const targetEndMonth = queryEndDate.getMonth();
+          const targetStartYear = queryStartDate.getFullYear();
+          const targetEndYear = queryEndDate.getFullYear();
+          
+          if (currentStartMonth !== targetStartMonth || 
+              currentEndMonth !== targetEndMonth ||
+              currentStartYear !== targetStartYear ||
+              currentEndYear !== targetEndYear) {
+            // Update filters outside of the render cycle
+            setTimeout(() => {
+              setFilters(prev => ({
+                ...prev,
+                startDate: queryStartDate,
+                endDate: queryEndDate
+              }));
+            }, 0);
+          }
+        }
+        
         const queryParams = {
-          startDate: filters.startDate ? format(filters.startDate, "yyyy-MM-dd") : undefined,
-          endDate: filters.endDate ? format(filters.endDate, "yyyy-MM-dd") : undefined,
+          startDate: format(queryStartDate, "yyyy-MM-dd"),
+          endDate: format(queryEndDate, "yyyy-MM-dd"),
           propertyId: filters.propertyId !== "all" ? filters.propertyId : undefined
         };
         
         const data = await api.reports.getFinancialData(queryParams);
-        setFinancialData(data);
+        
+        // Ensure we have data for each month in the range
+        const formattedData = ensureMonthlyData(
+          data, 
+          queryStartDate, 
+          queryEndDate
+        );
+        setFinancialData(formattedData);
       } catch (error) {
         console.error("Errore nel caricamento dei dati finanziari:", error);
         toast({
@@ -106,7 +195,7 @@ export default function ReportPage() {
     }
 
     loadFinancialData();
-  }, [filters]);
+  }, [filters.periodType, filters.propertyId, filters.startDate?.getTime(), filters.endDate?.getTime()]);
   
   // Carica i dati di riepilogo
   useEffect(() => {
@@ -114,9 +203,22 @@ export default function ReportPage() {
       try {
         setLoadingSummary(true);
         
+        // Use the same date logic as in loadFinancialData
+        let queryStartDate = filters.startDate;
+        let queryEndDate = filters.endDate;
+        
+        if (filters.periodType !== "custom") {
+          // For non-custom periods, use the current dates without updating filters
+          if (!queryStartDate || !queryEndDate) {
+            queryEndDate = new Date();
+            queryStartDate = new Date();
+            queryStartDate.setMonth(queryStartDate.getMonth() - 11);
+          }
+        }
+        
         const queryParams = {
-          startDate: filters.startDate ? format(filters.startDate, "yyyy-MM-dd") : undefined,
-          endDate: filters.endDate ? format(filters.endDate, "yyyy-MM-dd") : undefined,
+          startDate: queryStartDate ? format(queryStartDate, "yyyy-MM-dd") : undefined,
+          endDate: queryEndDate ? format(queryEndDate, "yyyy-MM-dd") : undefined,
           propertyId: filters.propertyId !== "all" ? filters.propertyId : undefined
         };
         
@@ -137,7 +239,7 @@ export default function ReportPage() {
     }
 
     loadSummaryData();
-  }, [filters]);
+  }, [filters.periodType, filters.propertyId, filters.startDate?.getTime(), filters.endDate?.getTime()]);
   
   // Carica i dati delle proprietà
   useEffect(() => {
@@ -145,9 +247,22 @@ export default function ReportPage() {
       try {
         setLoadingProperty(true);
         
+        // Use the same date logic as in loadFinancialData
+        let queryStartDate = filters.startDate;
+        let queryEndDate = filters.endDate;
+        
+        if (filters.periodType !== "custom") {
+          // For non-custom periods, use the current dates without updating filters
+          if (!queryStartDate || !queryEndDate) {
+            queryEndDate = new Date();
+            queryStartDate = new Date();
+            queryStartDate.setMonth(queryStartDate.getMonth() - 11);
+          }
+        }
+        
         const queryParams = {
-          startDate: filters.startDate ? format(filters.startDate, "yyyy-MM-dd") : undefined,
-          endDate: filters.endDate ? format(filters.endDate, "yyyy-MM-dd") : undefined,
+          startDate: queryStartDate ? format(queryStartDate, "yyyy-MM-dd") : undefined,
+          endDate: queryEndDate ? format(queryEndDate, "yyyy-MM-dd") : undefined,
           propertyId: filters.propertyId !== "all" ? filters.propertyId : undefined
         };
         
@@ -168,7 +283,7 @@ export default function ReportPage() {
     }
 
     loadPropertyData();
-  }, [filters]);
+  }, [filters.periodType, filters.propertyId, filters.startDate?.getTime(), filters.endDate?.getTime()]);
 
   // Funzione per esportare il report
   const handleExport = async (fileFormat: string) => {
@@ -266,7 +381,11 @@ export default function ReportPage() {
                     <stop offset="95%" stopColor="#10b981" stopOpacity={0.1} />
                   </linearGradient>
                 </defs>
-                <XAxis dataKey="date" />
+                <XAxis 
+                  dataKey="date" 
+                  tick={{ fontSize: 12 }}
+                  interval="preserveStartEnd"
+                />
                 <YAxis />
                 <CartesianGrid stroke="#eee" strokeDasharray="5 5" />
                 <Tooltip 

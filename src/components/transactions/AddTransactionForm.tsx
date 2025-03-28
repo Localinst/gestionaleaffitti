@@ -177,18 +177,24 @@ export function AddTransactionForm({
     },
   });
 
-  // Carica gli inquilini quando cambia la proprietà/unità
   const loadTenants = async (unitId: string) => {
     if (!unitId || unitId === "") {
       console.log("UnitId vuoto o non definito, nessun inquilino da caricare");
       setTenants([]);
       return;
     }
-
-    // Estraiamo l'ID della proprietà dalla stringa unit_id
-    const [propertyId] = unitId.split('-');
+  
+    // Estrai l'ID della proprietà dalla stringa unit_id
+    // Formato atteso: "property_id-unit_number" (es: "b51a8696-1234-5678-9abc-123456789abc-1")
+    // Dobbiamo estrarre l'UUID completo della proprietà
+    
+    // Versione corretta: estrai l'UUID completo
+    const propertyId = unitId.includes('-') 
+      ? unitId.substring(0, unitId.lastIndexOf('-'))  // Prende tutto fino all'ultimo trattino
+      : unitId;  // Se non c'è un trattino, usa l'intero valore
+    
     console.log("Tentativo di caricamento inquilini per proprietà ID:", propertyId);
-
+  
     try {
       console.log("Invio richiesta getTenantsByProperty con ID:", propertyId);
       const data = await getTenantsByProperty(propertyId);
@@ -210,76 +216,82 @@ export function AddTransactionForm({
     }
   };
 
-  const onSubmit = async (data: TransactionFormValues) => {
-    try {
-      setIsSubmitting(true);
+  const onSubmit = async (data: z.infer<typeof transactionFormSchema>) => {
+    // Estrai l'ID della proprietà e l'indice dell'unità dalla stringa unit_id
+    const unitIdParts = data.unit_id.split('-');
+    let propertyId: string | null = null;
+    let unitIndex: string | null = null;
+    
+    // Verifica se unit_id è nel formato corretto
+    if (unitIdParts.length >= 2) {
+      // Formato: property_id-unit_index
+      // Per gli UUID, dobbiamo prendere tutto fino all'ultimo trattino
+      const lastDashIndex = data.unit_id.lastIndexOf('-');
+      propertyId = data.unit_id.substring(0, lastDashIndex);
+      unitIndex = data.unit_id.substring(lastDashIndex + 1) || "0";
       
-      // Log dei dati del form per debug
-      console.log("Form data da inviare:", data);
-      
-      // Verifica se l'utente è autenticato
-      const authToken = localStorage.getItem('authToken');
-      if (!authToken) {
-        toast.error("Utente non autenticato", {
-          description: "Effettua il login per aggiungere una transazione"
-        });
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Verifica che unit_id sia un valore valido
-      if (!data.unit_id || data.unit_id.trim() === "") {
-        toast.error("Unità immobiliare non selezionata", {
-          description: "Seleziona un'unità immobiliare valida prima di procedere"
-        });
-        setIsSubmitting(false);
-        return;
-      }
-      
-      // Estraiamo l'ID della proprietà e il numero dell'unità dalla stringa unit_id
-      const [propertyId, unitIndex] = data.unit_id.split('-');
-      console.log("Proprietà ID selezionata:", propertyId, "Unità:", unitIndex);
-      
-      // Crea un oggetto che corrisponde all'interfaccia Omit<Transaction, 'id'>
-      const transactionData: TransactionWithUnit = {
-        property_id: Number(propertyId),
-        unit_index: unitIndex || "0",
-        tenant_id: data.tenant_id && data.tenant_id !== "none" ? Number(data.tenant_id) : null,
-        date: new Date(data.date),
-        amount: data.amount,
-        type: data.type,
-        category: data.category,
-        description: data.description || "",
-      };
-      
-      console.log("Invio transazione:", transactionData, "Token presente:", !!authToken);
-      
-      try {
-        await createTransaction(transactionData);
-        
-        toast.success("Transazione aggiunta con successo", {
-          description: `${data.type === 'income' ? 'Entrata' : 'Uscita'} di €${data.amount} registrata.`,
-        });
-        
-        form.reset();
-        onOpenChange(false);
-        navigate("/transactions");
-      } catch (apiError: any) {
-        console.error("Errore API:", apiError);
-        const errorMessage = apiError.message || "Errore sconosciuto";
-        toast.error("Errore durante l'aggiunta della transazione", {
-          description: errorMessage
-        });
-      }
-    } catch (error) {
-      console.error("Errore durante l'aggiunta della transazione:", error);
-      toast.error("Errore durante l'aggiunta della transazione", {
-        description: "Si è verificato un errore. Riprova più tardi.",
+      console.log("Formato con trattini multipli:", {
+        unitId: data.unit_id,
+        propertyId,
+        unitIndex
       });
-    } finally {
-      setIsSubmitting(false);
+    } else {
+      // Potrebbe essere solo l'ID della proprietà
+      propertyId = data.unit_id;
+      unitIndex = "0";
+      
+      console.log("Formato senza trattini:", {
+        unitId: data.unit_id,
+        propertyId,
+        unitIndex
+      });
     }
-  };
+    
+    // Validazione: property_id non può essere null o vuoto
+    if (!propertyId) {
+      toast.error("Errore nella creazione della transazione", {
+        description: "È necessario selezionare una proprietà valida"
+      });
+      return;
+    }
+    
+    // Trova l'opzione di unità corrispondente per ottenere il propertyId corretto
+    const selectedUnit = unitOptions.find(unit => unit.id === data.unit_id);
+    console.log("Unità selezionata:", selectedUnit);
+    
+    // Crea l'oggetto transazione
+    const transactionData: TransactionWithUnit = {
+      property_id: selectedUnit?.propertyId || propertyId,
+      unit_index: unitIndex || "0",
+      tenant_id: data.tenant_id && data.tenant_id !== "none" ? Number(data.tenant_id) : null,
+      date: new Date(data.date),
+      amount: data.amount,
+      type: data.type,
+      category: data.category,
+      description: data.description || "",
+    };
+    
+    // Log dei dati della transazione per debug
+    console.log("Invio transazione:", transactionData);
+    
+    try {
+      await createTransaction(transactionData);
+      
+      toast.success("Transazione aggiunta con successo", {
+        description: `${data.type === 'income' ? 'Entrata' : 'Uscita'} di €${data.amount} registrata.`,
+      });
+      
+      form.reset();
+      onOpenChange(false);
+      navigate("/transactions");
+    } catch (apiError: any) {
+      console.error("Errore API:", apiError);
+      const errorMessage = apiError.message || "Errore sconosciuto";
+      toast.error("Errore durante l'aggiunta della transazione", {
+        description: errorMessage
+      });
+    }
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

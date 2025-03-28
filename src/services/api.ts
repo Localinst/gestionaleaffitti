@@ -1,3 +1,4 @@
+
 // Tipi di base
 export interface Property {
   id: number;
@@ -31,7 +32,7 @@ export interface Tenant {
 
 export interface Transaction {
   id: number;
-  property_id: number;
+  property_id: number | string;
   tenant_id?: number | null;
   unit_index?: string;
   date: Date;
@@ -154,6 +155,37 @@ const getRequestOptions = (method: string = 'GET', body?: any): RequestInit => {
 const handleApiError = (endpoint: string, status: number, error: any) => {
   // Per qualsiasi errore, logga solo in console
   console.error(`Errore nell'endpoint ${endpoint}:`, status, error);
+};
+
+/**
+ * Assicura che tutti i valori numerici nelle transazioni siano effettivamente numeri
+ * e non stringhe che potrebbero causare concatenazione.
+ */
+const ensureNumericValues = (transactions: Transaction[]): Transaction[] => {
+  return transactions.map(transaction => {
+    // Crea una copia della transazione per non modificare l'originale
+    const cleanedTransaction = { ...transaction };
+    
+    // Converti il campo amount in un numero se è una stringa
+    if (transaction.amount !== undefined && transaction.amount !== null) {
+      if (typeof transaction.amount === 'string') {
+        // Rimuovi caratteri non numerici tranne il punto decimale
+        const cleanedAmount = String(transaction.amount).replace(/[^\d.-]/g, '');
+        cleanedTransaction.amount = parseFloat(cleanedAmount);
+        
+        // Se la conversione fallisce, imposta a 0
+        if (isNaN(cleanedTransaction.amount)) {
+          console.warn(`Valore non valido nella transazione: ${transaction.amount}`);
+          cleanedTransaction.amount = 0;
+        }
+      } else if (typeof transaction.amount !== 'number') {
+        // Assicura che sia un numero anche se non è una stringa
+        cleanedTransaction.amount = Number(transaction.amount) || 0;
+      }
+    }
+    
+    return cleanedTransaction;
+  });
 };
 
 // API Auth
@@ -375,7 +407,8 @@ export async function getTransactions(): Promise<Transaction[]> {
       return [];
     }
     
-    return data;
+    // Applica la funzione per garantire valori numerici
+    return ensureNumericValues(data);
   } catch (error) {
     console.error('Exception in getTransactions:', error);
     return [];
@@ -395,7 +428,10 @@ export async function getTransactionsByProperty(propertyId: number): Promise<Tra
       throw new Error(error.error || `Errore durante il recupero delle transazioni per la proprietà ${propertyId}`);
     }
     
-    return response.json();
+    const data = await response.json();
+    
+    // Applica la funzione per garantire valori numerici
+    return ensureNumericValues(data);
   } catch (error) {
     console.error(`Errore durante il recupero delle transazioni per la proprietà:`, error);
     throw error;
@@ -539,6 +575,24 @@ export async function createTenant(tenant: Omit<Tenant, 'id'>): Promise<Tenant> 
 
 export async function createTransaction(transaction: Omit<Transaction, 'id'>): Promise<Transaction> {
   try {
+    // Validazione dei dati prima dell'invio
+    if (!transaction.property_id) {
+      throw new Error('ID proprietà mancante o non valido');
+    }
+    
+    // Non convertiamo più property_id in numero, poiché potrebbe essere un UUID
+    // Lasciamo che il backend gestisca il tipo corretto
+    
+    // Assicurati che amount sia un numero positivo
+    if (typeof transaction.amount !== 'number' || transaction.amount <= 0) {
+      throw new Error('L\'importo deve essere un numero positivo');
+    }
+    
+    // Assicurati che date sia un oggetto Date valido
+    if (!(transaction.date instanceof Date) && typeof transaction.date !== 'string') {
+      throw new Error('La data non è valida');
+    }
+    
     console.log('Transaction data being sent:', transaction);
     
     const response = await fetch(`${API_URL}/transactions`, {
@@ -566,7 +620,6 @@ export async function createTransaction(transaction: Omit<Transaction, 'id'>): P
     throw error;
   }
 }
-
 // API Contracts
 export async function getContracts(): Promise<Contract[]> {
   try {

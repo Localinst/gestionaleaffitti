@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
+
 import { 
   AreaChart, 
   Area, 
@@ -120,19 +121,129 @@ function StatCard({
 }
 
 // Chart components
+// Chart components
+
+
 function IncomeChart() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showNet, setShowNet] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Funzione per processare le transazioni in dati mensili
+  const processTransactionsIntoMonthlyData = (transactions: Transaction[]) => {
+    if (!transactions || transactions.length === 0) {
+      console.warn("Nessuna transazione da processare");
+      return [];
+    }
+    
+    console.log("Inizio processamento transazioni:", transactions.length, "transazioni");
+    
+    // Oggetto per memorizzare i totali mensili
+    const monthlyTotals: { [key: string]: { month: string, income: number, expenses: number, net: number } } = {};
+    
+    // Data corrente per i calcoli
+    const today = new Date();
+    
+    // Creiamo un array di date per gli ultimi 12 mesi più il mese futuro (13 mesi totali)
+    const monthsToDisplay = 13;
+    const monthDates = [];
+    
+    // Aggiungiamo prima il mese futuro
+    const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+    monthDates.push(nextMonth);
+    
+    // Poi aggiungiamo il mese corrente e i precedenti 11 mesi (totale 12 + 1 futuro)
+    for (let i = 0; i < monthsToDisplay - 1; i++) {
+      const monthDate = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      monthDates.push(monthDate);
+    }
+    
+    // Ordiniamo le date cronologicamente
+    monthDates.sort((a, b) => a.getTime() - b.getTime());
+    
+    // Inizializziamo i totali mensili per tutti i mesi che vogliamo visualizzare
+    monthDates.forEach(date => {
+      const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
+      const monthName = date.toLocaleDateString('it-IT', { month: 'short' });
+      
+      // Inizializza con valori zero
+      monthlyTotals[monthYear] = { 
+        month: monthName, 
+        income: 0, 
+        expenses: 0, 
+        net: 0 
+      };
+    });
+    
+    // Ora elaboriamo le transazioni e aggiorniamo i valori per ogni mese
+    transactions.forEach(transaction => {
+      try {
+        // Assicurati che la data sia un oggetto Date
+        const transactionDate = transaction.date instanceof Date 
+          ? transaction.date 
+          : new Date(transaction.date);
+        
+        if (isNaN(transactionDate.getTime())) {
+          console.error("Data non valida per la transazione:", transaction);
+          return; // Salta questa transazione
+        }
+        
+        const monthYear = `${transactionDate.getMonth() + 1}/${transactionDate.getFullYear()}`;
+        
+        // Verifica se abbiamo inizializzato questo mese nei nostri dati
+        if (monthlyTotals[monthYear]) {
+          if (transaction.type === 'income') {
+            monthlyTotals[monthYear].income += transaction.amount;
+          } else if (transaction.type === 'expense') {
+            monthlyTotals[monthYear].expenses += transaction.amount;
+          }
+          
+          // Aggiorna il valore netto
+          monthlyTotals[monthYear].net = monthlyTotals[monthYear].income - monthlyTotals[monthYear].expenses;
+        }
+      } catch (error) {
+        console.error("Errore nell'elaborazione della transazione:", transaction, error);
+      }
+    });
+    
+    // Converti l'oggetto in un array ordinato per data
+    const result = Object.entries(monthlyTotals)
+      .map(([key, value]) => {
+        const [month, year] = key.split('/');
+        return { 
+          key, 
+          sortDate: new Date(parseInt(year), parseInt(month) - 1, 1),
+          ...value 
+        };
+      })
+      .sort((a, b) => a.sortDate.getTime() - b.sortDate.getTime())
+      .map(({ key, sortDate, ...rest }) => rest);
+    
+    // Debug per verificare i dati generati
+    console.log("Dati mensili elaborati:", result);
+    console.log("Numero di mesi:", result.length);
+    console.log("Dettaglio mesi:", result.map(m => m.month));
+    
+    return result;
+  };
   
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
         const response = await api.transactions.getAll();
+        console.log("Transazioni caricate:", response);
+        
+        if (!response || response.length === 0) {
+          console.warn("Nessuna transazione trovata");
+          setError("Nessuna transazione disponibile");
+        }
+        
         setTransactions(response);
       } catch (error) {
         console.error('Errore nel caricamento delle transazioni:', error);
+        setError("Errore nel caricamento delle transazioni");
       } finally {
         setIsLoading(false);
       }
@@ -141,44 +252,66 @@ function IncomeChart() {
     fetchData();
   }, []);
   
-  // Processa le transazioni in dati mensili per il grafico
-  const processTransactionsIntoMonthlyData = (transactions: Transaction[]) => {
-    const monthlyTotals: { [key: string]: { month: string, income: number, expenses: number, net: number } } = {};
-    
-    // Inizializza i totali mensili per gli ultimi 12 mesi
-    const today = new Date();
-    for (let i = 11; i >= 0; i--) {
-      const date = new Date(today);
-      date.setMonth(today.getMonth() - i);
-      const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
-      const monthName = date.toLocaleDateString('it-IT', { month: 'short' });
-      monthlyTotals[monthYear] = { month: monthName, income: 0, expenses: 0, net: 0 };
-    }
-    
-    // Aggrega le transazioni per mese
-    transactions.forEach(transaction => {
-      const date = new Date(transaction.date);
-      const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
-      
-      if (monthlyTotals[monthYear]) {
-        if (transaction.type === 'income') {
-          monthlyTotals[monthYear].income += transaction.amount;
-        } else if (transaction.type === 'expense') {
-          monthlyTotals[monthYear].expenses += transaction.amount;
-        }
-        
-        // Calcola il valore netto (entrate - uscite)
-        monthlyTotals[monthYear].net = monthlyTotals[monthYear].income - monthlyTotals[monthYear].expenses;
-      }
-    });
-    
-    return Object.values(monthlyTotals);
-  };
-  
   const data = processTransactionsIntoMonthlyData(transactions);
+  
+  // Aggiunto log per verificare effettivamente i valori dei mesi
+  console.log("Valori per mese:", data.map(item => `${item.month}: ${item.income}`));
   
   if (isLoading) {
     return <Skeleton className="h-[350px] w-full" />;
+  }
+  
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base font-normal">Reddito Mensile</CardTitle>
+          <CardDescription>Dati non disponibili</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px] flex items-center justify-center">
+            <div className="text-center text-muted-foreground">
+              <p>{error}</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-4"
+                onClick={() => window.location.reload()}
+              >
+                Riprova
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  // Se non ci sono dati, mostra un messaggio
+  if (!data || data.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base font-normal">Reddito Mensile</CardTitle>
+          <CardDescription>Nessun dato disponibile</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px] flex items-center justify-center">
+            <div className="text-center text-muted-foreground">
+              <p>Non ci sono transazioni da visualizzare</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-4"
+                onClick={() => window.location.reload()}
+              >
+                Riprova
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
   
   return (
@@ -231,9 +364,30 @@ function IncomeChart() {
                   <stop offset="95%" stopColor="#10b981" stopOpacity={0.2} />
                 </linearGradient>
               </defs>
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip />
+              <XAxis 
+                dataKey="month" 
+                tickLine={false}
+                axisLine={{ stroke: '#e5e7eb' }}
+                // Assicura che tutti i mesi vengano visualizzati
+                interval={0}
+              />
+              <YAxis 
+                tickFormatter={(value) => `€${value}`}
+                tickLine={false}
+                axisLine={{ stroke: '#e5e7eb' }}
+              />
+              <Tooltip 
+                formatter={(value) => {
+                  // Assicurati che value sia un numero
+                  const numValue = typeof value === 'string' ? parseFloat(value) : value;
+                  // Formatta il valore come valuta
+                  return [`€${numValue.toLocaleString('it-IT')}`, undefined];
+                }}
+                separator=": "
+                cursor={{ stroke: '#f0f0f0', strokeWidth: 1, fill: 'rgba(0, 0, 0, 0.05)' }}
+                // Migliora la visibilità del tooltip
+                contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '4px' }}
+              />
               <CartesianGrid stroke="#eee" strokeDasharray="5 5" />
               <Legend />
               
@@ -242,9 +396,15 @@ function IncomeChart() {
                   type="monotone" 
                   dataKey="net" 
                   stroke="#10b981" 
+                  strokeWidth={2}
                   fillOpacity={1} 
                   fill="url(#colorNet)" 
-                  name="Netto" 
+                  name="Netto"
+                  // Forza la connessione di tutti i punti
+                  connectNulls={true}
+                  // Assicura che i punti estremi siano inclusi
+                  activeDot={{ r: 6, strokeWidth: 1, stroke: '#fff' }}
+                  dot={{ r: 4, strokeWidth: 1, stroke: '#fff' }}
                 />
               ) : (
                 <>
@@ -252,17 +412,29 @@ function IncomeChart() {
                     type="monotone" 
                     dataKey="income" 
                     stroke="#3b82f6" 
+                    strokeWidth={2}
                     fillOpacity={1} 
                     fill="url(#colorIncome)" 
-                    name="Entrate" 
+                    name="Entrate"
+                    // Forza la connessione di tutti i punti
+                    connectNulls={true}
+                    // Assicura che i punti estremi siano inclusi
+                    activeDot={{ r: 6, strokeWidth: 1, stroke: '#fff' }}
+                    dot={{ r: 4, strokeWidth: 1, stroke: '#fff' }}
                   />
                   <Area 
                     type="monotone" 
                     dataKey="expenses" 
                     stroke="#ef4444" 
+                    strokeWidth={2}
                     fillOpacity={1} 
                     fill="url(#colorExpenses)" 
-                    name="Uscite" 
+                    name="Uscite"
+                    // Forza la connessione di tutti i punti
+                    connectNulls={true}
+                    // Assicura che i punti estremi siano inclusi 
+                    activeDot={{ r: 6, strokeWidth: 1, stroke: '#fff' }}
+                    dot={{ r: 4, strokeWidth: 1, stroke: '#fff' }}
                   />
                 </>
               )}
@@ -275,8 +447,46 @@ function IncomeChart() {
 }
 
 function OccupancyChart() {
-  const data = getOccupancyRate();
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [occupancyData, setOccupancyData] = useState<{ name: string, value: number }[]>([]);
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        // Prova a ottenere dati reali dall'API
+        const response = await getDashboardSummary();
+        
+        if (response && response.occupancyRate) {
+          const occupancyRate = parseFloat(response.occupancyRate);
+          setOccupancyData([
+            { name: "Occupato", value: occupancyRate },
+            { name: "Libero", value: 100 - occupancyRate }
+          ]);
+        } else {
+          // Fallback ai dati di esempio se necessario
+          console.warn("Utilizzando dati di esempio per il grafico di occupazione");
+          setOccupancyData(getOccupancyRate());
+        }
+      } catch (error) {
+        console.error('Errore nel caricamento dei dati di occupazione:', error);
+        setError("Errore nel caricamento dei dati");
+        // Fallback ai dati di esempio
+        setOccupancyData(getOccupancyRate());
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, []);
+  
   const COLORS = ["#3b82f6", "#94a3b8"];
+  
+  if (isLoading) {
+    return <Skeleton className="h-[250px] md:h-[280px]" />;
+  }
   
   return (
     <CardContainer className="h-[250px] md:h-[280px]">
@@ -284,7 +494,7 @@ function OccupancyChart() {
       <ResponsiveContainer width="100%" height="90%">
         <PieChart>
           <Pie
-            data={data}
+            data={occupancyData}
             cx="50%"
             cy="50%"
             innerRadius={60}
@@ -293,7 +503,7 @@ function OccupancyChart() {
             dataKey="value"
             label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
           >
-            {data.map((entry, index) => (
+            {occupancyData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
@@ -412,53 +622,59 @@ export default function DashboardPage() {
     try {
       setLoading(true);
       console.log("Iniziando caricamento dati dashboard...");
-      // Cast esplicito a DashboardSummaryResponse
+      
+      // Ottieni i dati della dashboard e fai il cast
       const data = await getDashboardSummary() as unknown as DashboardSummaryResponse;
       console.log("Dati dashboard ricevuti:", data);
       setSummary(data);
-      
-      // Calcola i trend in base ai dati storici
+  
+      // Verifica che i dati storici siano presenti
       if (data.historicalData) {
-        const propertyTrend = calculateTrend(data.totalProperties, data.historicalData.previousMonthProperties);
-        const tenantsTrend = calculateTrend(data.totalTenants, data.historicalData.previousMonthTenants);
-        const incomeTrend = calculateTrend(data.rentIncome, data.historicalData.previousMonthIncome);
-        const occupancyTrend = calculateTrend(parseFloat(data.occupancyRate), data.historicalData.previousMonthOccupancy);
-        
+        // Funzione di sicurezza per convertire i dati in numeri
+        const safeParse = (value: any) => isNaN(parseFloat(value)) ? 0 : parseFloat(value);
+  
+        const propertyTrend = calculateTrend(safeParse(data.totalProperties), safeParse(data.historicalData.previousMonthProperties));
+        const tenantsTrend = calculateTrend(safeParse(data.totalTenants), safeParse(data.historicalData.previousMonthTenants));
+        const incomeTrend = calculateTrend(safeParse(data.rentIncome), safeParse(data.historicalData.previousMonthIncome));
+        const occupancyTrend = calculateTrend(safeParse(parseFloat(data.occupancyRate)), safeParse(data.historicalData.previousMonthOccupancy));
+  
+        const formatTrend = (trend: any, singular: string, plural: string) => {
+          if (trend.value === 0) return "nessuna variazione";
+          return trend.isPercentage 
+            ? `${Math.abs(trend.value).toFixed(1)}%` 
+            : `${Math.abs(trend.value)} ${trend.value === 1 ? singular : plural} questo mese`;
+        };
+  
         setTrends({
           properties: {
             trend: propertyTrend.direction,
-            value: propertyTrend.isPercentage 
-              ? `${Math.abs(propertyTrend.value).toFixed(1)}%` 
-              : `${Math.abs(propertyTrend.value)} ${propertyTrend.value === 1 ? 'nuova' : 'nuove'} questo mese`
+            value: formatTrend(propertyTrend, 'nuova', 'nuove'),
           },
           tenants: {
             trend: tenantsTrend.direction,
-            value: tenantsTrend.isPercentage 
-              ? `${Math.abs(tenantsTrend.value).toFixed(1)}%` 
-              : `${Math.abs(tenantsTrend.value)} ${tenantsTrend.value === 1 ? 'nuovo' : 'nuovi'} questo mese`
+            value: formatTrend(tenantsTrend, 'nuovo', 'nuovi'),
           },
           income: {
             trend: incomeTrend.direction,
-            value: `${Math.abs(incomeTrend.value).toFixed(1)}% di ${incomeTrend.direction === 'up' ? 'aumento' : 'diminuzione'}`
+            value: `${Math.abs(incomeTrend.value).toFixed(1)}% di ${incomeTrend.direction === 'up' ? 'aumento' : 'diminuzione'}`,
           },
           occupancy: {
             trend: occupancyTrend.direction,
-            value: `${Math.abs(occupancyTrend.value).toFixed(1)}% di ${occupancyTrend.direction === 'up' ? 'aumento' : 'diminuzione'}`
+            value: `${Math.abs(occupancyTrend.value).toFixed(1)}% di ${occupancyTrend.direction === 'up' ? 'aumento' : 'diminuzione'}`,
           }
         });
       }
     } catch (err) {
       console.error("Errore durante il caricamento dei dati della dashboard:", err);
-      // Log più dettagliato dell'errore
       if (err instanceof Error) {
         console.error("Dettaglio errore:", err.message, err.stack);
       }
-      setError("Si è verificato un errore durante il caricamento dei dati.");
+      setError("Si è verificato un errore durante il caricamento dei dati. Controlla la connessione o riprova più tardi.");
     } finally {
       setLoading(false);
     }
   }
-
+  
   // Funzione per calcolare trend
   function calculateTrend(currentValue, previousValue) {
     if (!previousValue || previousValue === 0) {
