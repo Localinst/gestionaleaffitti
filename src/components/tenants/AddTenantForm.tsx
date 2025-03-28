@@ -95,7 +95,9 @@ export function AddTenantForm({
         lease_start: data.lease_start,
         lease_end: data.lease_end,
         rent: data.rent,
-        rent_amount: data.rent
+        rent_amount: data.rent,
+        unit: "1",
+        status: "active"
       };
 
       // Salviamo l'inquilino normalmente

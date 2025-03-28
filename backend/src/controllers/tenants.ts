@@ -133,8 +133,8 @@ export const createTenant = async (req: Request, res: Response) => {
       lease_end, 
       rent, 
       property_id, 
-      unit, 
-      status 
+      unit = "EMPTY",  // Valore di default aggiornato a "EMPTY"
+      status = "active"  // Valore di default se non specificato
     } = req.body;
     
     // Ottengo l'user_id dall'utente autenticato

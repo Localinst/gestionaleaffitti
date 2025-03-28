@@ -21,6 +21,8 @@ export interface Tenant {
   lease_end: Date | string;
   rent_amount: number;
   rent: number;
+  unit?: string;
+  status?: 'active' | 'late' | 'pending';
 }
 
 export interface Transaction {
