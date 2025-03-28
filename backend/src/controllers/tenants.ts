@@ -74,7 +74,7 @@ export const getTenantsByProperty = async (req: Request, res: Response) => {
     console.log("Inquilini trovati:", result.rows.length);
     
     // Verifica e formatta ogni inquilino
-    const formattedTenants = result.rows.map(tenant => {
+    const formattedTenants = result.rows.map((tenant: any) => {
       return {
         ...tenant,
         id: tenant.id || 0, // Assicura che l'ID sia sempre presente

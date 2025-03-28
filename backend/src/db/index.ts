@@ -254,7 +254,7 @@ async function getDbPool() {
   }
   
   // Gestione degli errori di connessione
-  pool.on('error', (err) => {
+  pool.on('error', (err: Error) => {
     console.error('Errore imprevisto nel pool di connessione:', err);
   });
   
