@@ -4,7 +4,7 @@
 # Configurazione proxy per reindirizzare le chiamate API
 [[redirects]]
   from = "/api/*"
-  to = "https://gestionale-affitti-api.onrender.com/api/:splat"
+  to = "https://gestionaleaffitti.onrender.com/api/:splat"
   status = 200
   force = true
 
