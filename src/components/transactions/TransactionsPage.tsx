@@ -75,16 +75,20 @@ export default function TransactionsPage() {
   }, [loading, error, transactions, properties, tenants]);
 
   async function loadData() {
+    console.log("Inizio loadData");
     try {
       setLoading(true);
       setError(null);
+      console.log("Loading impostato a true");
       
       // Carica tutti i dati in parallelo
+      console.log("Inizio Promise.all");
       const [transactionsData, propertiesData, tenantsData] = await Promise.all([
         getTransactionsData(),
         getProperties(),
         getTenants()
       ]);
+      console.log("Promise.all completato");
       
       console.log("Dati ricevuti:", { 
         transazioni: transactionsData?.length || 0,
@@ -120,6 +124,7 @@ export default function TransactionsPage() {
       setProperties([]);
       setTenants([]);
     } finally {
+      console.log("Imposto loading a false");
       setLoading(false);
     }
   }

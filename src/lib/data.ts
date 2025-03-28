@@ -221,8 +221,21 @@ export const getTransactionsData = async (): Promise<Transaction[]> => {
     const hostname = window.location.hostname;
     const API_BASE_URL = `${window.location.protocol}//${hostname}:3000/api`;
     
+    // Ottieni il token di autenticazione
+    const token = localStorage.getItem('authToken');
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json'
+    };
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     console.log('Richiesta transactions a:', `${API_BASE_URL}/transactions`);
-    const response = await fetch(`${API_BASE_URL}/transactions`);
+    const response = await fetch(`${API_BASE_URL}/transactions`, {
+      headers,
+      credentials: 'include'
+    });
     
     if (!response.ok) {
       console.error('Risposta API transactions non ok:', response.status, response.statusText);
