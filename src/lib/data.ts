@@ -160,6 +160,20 @@ export const getRecentActivities = () => {
   ];
 };
 
+// Funzione per ottenere gli headers con autenticazione
+const getAuthHeaders = (): HeadersInit => {
+  const token = localStorage.getItem('authToken');
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json'
+  };
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  return headers;
+};
+
 // Funzioni per recuperare dati dal database
 export const getProperties = async (): Promise<Property[]> => {
   try {
@@ -170,7 +184,9 @@ export const getProperties = async (): Promise<Property[]> => {
       : `${window.location.protocol}//${hostname}:3000/api`;
     
     console.log('Richiesta properties a:', `${API_BASE_URL}/properties`);
-    const response = await fetch(`${API_BASE_URL}/properties`);
+    const response = await fetch(`${API_BASE_URL}/properties`, {
+      headers: getAuthHeaders()
+    });
     
     if (!response.ok) {
       console.error('Risposta API properties non ok:', response.status, response.statusText);
@@ -199,7 +215,9 @@ export const getTenants = async (): Promise<Tenant[]> => {
       : `${window.location.protocol}//${hostname}:3000/api`;
     
     console.log('Richiesta tenants a:', `${API_BASE_URL}/tenants`);
-    const response = await fetch(`${API_BASE_URL}/tenants`);
+    const response = await fetch(`${API_BASE_URL}/tenants`, {
+      headers: getAuthHeaders()
+    });
     
     if (!response.ok) {
       console.error('Risposta API tenants non ok:', response.status, response.statusText);
@@ -228,7 +246,9 @@ export const getTransactionsData = async (): Promise<Transaction[]> => {
       : `${window.location.protocol}//${hostname}:3000/api`;
     
     console.log('Richiesta transactions a:', `${API_BASE_URL}/transactions`);
-    const response = await fetch(`${API_BASE_URL}/transactions`);
+    const response = await fetch(`${API_BASE_URL}/transactions`, {
+      headers: getAuthHeaders()
+    });
     
     if (!response.ok) {
       console.error('Risposta API transactions non ok:', response.status, response.statusText);

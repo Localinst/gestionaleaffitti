@@ -3,11 +3,13 @@ import { supabase } from '../lib/supabase';
 import jwt from 'jsonwebtoken';
 import { generateToken } from '../middleware/auth';
 
-// JWT Secret 
-const JWT_SECRET = process.env.JWT_SECRET || 'default_jwt_secret';
+// JWT Secret - con verifica
+const JWT_SECRET = process.env.JWT_SECRET;
 
-// Durata del cookie in millisecondi (1 giorno)
-const COOKIE_MAX_AGE = 24 * 60 * 60 * 1000;
+// Verifichiamo la presenza del JWT_SECRET
+if (!JWT_SECRET) {
+  console.error('ERRORE CRITICO: JWT_SECRET non è definito nelle variabili d\'ambiente.');
+}
 
 /**
  * Controller per la registrazione
@@ -48,25 +50,13 @@ export const register = async (req: Request, res: Response) => {
     }
 
     // Genera il token JWT
-    const token = jwt.sign(
-      { 
-        id: data.user.id,
-        email: data.user.email,
-        name: data.user.user_metadata.full_name
-      }, 
-      JWT_SECRET, 
-      { expiresIn: '1d' }
+    const token = generateToken(
+      data.user.id,
+      data.user.email || '',
+      data.user.user_metadata.full_name || ''
     );
 
-    // Imposta il cookie
-    res.cookie('authToken', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: COOKIE_MAX_AGE,
-      sameSite: 'lax'
-    });
-
-    // Invia la risposta
+    // Invia la risposta con il token
     res.status(201).json({
       message: 'Registrazione completata con successo',
       user: {
@@ -119,24 +109,16 @@ export const login = async (req: Request, res: Response) => {
         });
       }
 
-      // Genera il token JWT con la funzione di utilità
+      // Genera il token JWT
       const token = generateToken(
         data.user.id,
         data.user.email || '',
         data.user.user_metadata?.full_name || ''
       );
 
-      // Imposta il cookie
-      res.cookie('authToken', token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: COOKIE_MAX_AGE,
-        sameSite: 'lax'
-      });
-
       console.log('Login backend completato con successo per:', data.user.email);
 
-      // Invia la risposta
+      // Invia la risposta con il token
       res.status(200).json({
         message: 'Login effettuato con successo',
         user: {
@@ -164,9 +146,7 @@ export const login = async (req: Request, res: Response) => {
  */
 export const logout = async (req: Request, res: Response) => {
   try {
-    // Cancella il cookie
-    res.clearCookie('authToken');
-    
+    // Il logout avviene solo lato client rimuovendo il token
     // Logout da Supabase
     const { error } = await supabase.auth.signOut();
     

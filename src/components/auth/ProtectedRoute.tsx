@@ -12,26 +12,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { isAuthenticated, isLoading, user } = useAuth();
   const location = useLocation();
 
-  // Pulisci i flag di errore 401 nel localStorage quando cambia il percorso
-  useEffect(() => {
-    const clearError401Flags = () => {
-      const flagsToRemove: string[] = [];
-      
-      // Cerca tutti i flag di errore 401 nel localStorage
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('error401_logged_')) {
-          flagsToRemove.push(key);
-        }
-      }
-      
-      // Rimuovi tutti i flag trovati
-      flagsToRemove.forEach(key => localStorage.removeItem(key));
-    };
-    
-    clearError401Flags();
-  }, [location.pathname]);
-
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">

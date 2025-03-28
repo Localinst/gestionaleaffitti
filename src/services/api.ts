@@ -124,8 +124,7 @@ const getAuthHeaders = (): HeadersInit => {
 const getRequestOptions = (method: string = 'GET', body?: any): RequestInit => {
   const options: RequestInit = {
     method,
-    headers: getAuthHeaders(),
-    credentials: 'include', // Necessario per inviare/ricevere cookie
+    headers: getAuthHeaders()
   };
   
   if (body) {
@@ -148,7 +147,6 @@ export async function login(credentials: LoginRequest): Promise<AuthResponse> {
     headers: {
       'Content-Type': 'application/json',
     },
-    credentials: 'include',
     body: JSON.stringify(credentials),
   });
 
@@ -166,7 +164,6 @@ export async function register(userData: RegisterRequest): Promise<AuthResponse>
     headers: {
       'Content-Type': 'application/json',
     },
-    credentials: 'include',
     body: JSON.stringify(userData),
   });
 
@@ -182,7 +179,6 @@ export async function logout(): Promise<{ message: string }> {
   const response = await fetch(`${API_URL}/auth/logout`, {
     method: 'POST',
     headers: getAuthHeaders(),
-    credentials: 'include',
   });
 
   if (!response.ok) {
@@ -197,7 +193,6 @@ export async function getCurrentUser(): Promise<{ user: AuthUser }> {
   const response = await fetch(`${API_URL}/auth/me`, {
     method: 'GET',
     headers: getAuthHeaders(),
-    credentials: 'include',
   });
 
   if (!response.ok) {
@@ -217,7 +212,6 @@ export async function changePassword(currentPassword: string, newPassword: strin
     headers: {
       'Content-Type': 'application/json',
     },
-    credentials: 'include', // Necessario per i cookie
     body: JSON.stringify({ currentPassword, newPassword }),
   });
 
@@ -419,7 +413,6 @@ export async function createProperty(property: any): Promise<Property> {
     const response = await fetch(`${API_URL}/properties`, {
       method: 'POST',
       headers: getAuthHeaders(),
-      credentials: 'include',
       body: JSON.stringify(property),
     });
     
@@ -446,7 +439,6 @@ export async function updateProperty(id: number, property: Partial<Property>): P
     const response = await fetch(`${API_URL}/properties/${id}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
-      credentials: 'include',
       body: JSON.stringify(property),
     });
     
@@ -467,7 +459,6 @@ export async function deleteProperty(id: number): Promise<boolean> {
     const response = await fetch(`${API_URL}/properties/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
-      credentials: 'include',
     });
     
     if (!response.ok) {
@@ -500,7 +491,6 @@ export async function createTenant(tenant: Omit<Tenant, 'id'>): Promise<Tenant> 
     const response = await fetch(`${API_URL}/tenants`, {
       method: 'POST',
       headers: getAuthHeaders(),
-      credentials: 'include',
       body: JSON.stringify(backendData),
     });
     
@@ -521,7 +511,6 @@ export async function createTransaction(transaction: Omit<Transaction, 'id'>): P
     const response = await fetch(`${API_URL}/transactions`, {
       method: 'POST',
       headers: getAuthHeaders(),
-      credentials: 'include',
       body: JSON.stringify(transaction),
     });
     

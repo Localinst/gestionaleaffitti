@@ -24,24 +24,28 @@ const allowedOrigins = [
   'https://gestionaleaffitti.netlify.app'
 ];
 
-// Configurazione CORS che supporta credentials
+// Configurazione CORS più sicura
 app.use(cors({
   origin: function(origin: string | undefined, callback: (err: Error | null, origin?: string | boolean) => void) {
-    // Consenti richieste senza origin (come app mobile o curl)
-    if (!origin) return callback(null, true);
+    // Per richieste senza origin (come quelle da Postman o cURL)
+    if (!origin) {
+      if (process.env.NODE_ENV === 'production') {
+        return callback(new Error('Non sono consentite richieste senza origine in produzione'), false);
+      } else {
+        return callback(null, true);
+      }
+    }
     
     // Controlla se l'origin è nella lista dei permessi
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, origin);
     } else {
-      // Per sviluppo, accetta anche altre origini sconosciute
-      console.log('Richiesta da origine non nella whitelist:', origin);
-      callback(null, origin);
+      // In produzione, rifiuta origini non autorizzate
+      callback(new Error('Origine non autorizzata dal CORS'), false);
     }
   },
-  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Middleware di debug per logging delle richieste
@@ -50,36 +54,17 @@ app.use((req, res, next) => {
   next();
 });
 
-// Middleware aggiuntivo per assicurarsi che gli header CORS siano corretti per le credenziali
-app.use((req, res, next) => {
-  // Imposta l'origin specifico invece del wildcard '*'
-  const origin = req.headers.origin;
-  if (origin) {
-    res.header('Access-Control-Allow-Origin', origin);
-  }
-  
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  
-  // Gestione delle richieste preflight OPTIONS
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-  
-  next();
-});
+// Non è necessario il middleware dei cookie poiché ora usiamo solo token JWT in header
+// app.use(cookieParser());
 
 app.use(express.json());
-app.use(cookieParser());
 
 // Route di test per verificare che il server funzioni
 app.get('/api/ping', (req, res) => {
   return res.json({
     message: 'Server API disponibile',
     timestamp: new Date().toISOString(),
-    origin: req.headers.origin,
-    cors: 'enabled with credentials'
+    origin: req.headers.origin
   });
 });
 
@@ -94,6 +79,6 @@ app.use('/api/dashboard', authenticate, dashboardRouter);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log(`Server configurato per accettare richieste con credentials dai seguenti domini:`);
+  console.log(`Server configurato per accettare richieste dai seguenti domini:`);
   console.log(allowedOrigins);
 }); 
