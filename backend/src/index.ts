@@ -24,14 +24,26 @@ const allowedOrigins = [
   'https://gestionaleaffitti.netlify.app'
 ];
 
-// Configurazione CORS corretta
-app.use(cors({
-  origin: allowedOrigins,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  credentials: true,
-  maxAge: 86400 // 24 ore di cache per le richieste preflight
-}));
+// Configurazione CORS con gestione esplicita delle richieste preflight
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  
+  // Controlla se l'origine è nella lista consentita
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Max-Age', '86400'); // 24 ore
+  }
+  
+  // Gestione richieste preflight OPTIONS
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end();
+  }
+  
+  next();
+});
 
 // Middleware di debug per logging delle richieste
 app.use((req, res, next) => {
