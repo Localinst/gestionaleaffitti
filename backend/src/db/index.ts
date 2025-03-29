@@ -352,7 +352,7 @@ export const executeQuery = async <T>(
   } finally {
     if (client) {
       try {
-        client.release(true); // Forza il rilascio anche in caso di errori
+        client.release();
         console.log('Client rilasciato al pool');
       } catch (releaseError) {
         console.error('Errore nel rilasciare il client:', releaseError);
