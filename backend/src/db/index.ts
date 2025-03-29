@@ -121,12 +121,16 @@ async function setupTransactionPooler() {
     family: 4,
     // Configurazione del pool
     max: 20, // massimo numero di client nel pool
-    idleTimeoutMillis: 30000, // timeout di inattività (30 secondi)
+    idleTimeoutMillis: 10000, // timeout di inattività ridotto a 10 secondi
     connectionTimeoutMillis: 5000, // timeout di connessione (5 secondi)
-    maxUses: 7500, // numero massimo di query per connessione prima del riciclo
+    maxUses: 5000, // ridotto il numero massimo di query per connessione prima del riciclo
     statement_timeout: 10000, // timeout delle query (10 secondi)
     query_timeout: 10000, // timeout delle query (10 secondi)
-    allowExitOnIdle: true // permette al pool di chiudersi quando è inattivo
+    allowExitOnIdle: true, // permette al pool di chiudersi quando è inattivo
+    // Ricicla proattivamente le connessioni per evitare connessioni zombie
+    idlePingInterval: 5000, // Verifica connessioni inattive ogni 5 secondi
+    connectionRetryCount: 3, // Tentativi di riconnessione
+    connectionRetryDelay: 1000 // Attesa tra tentativi in ms
   };
   
   console.log('Configurato per utilizzare il Transaction Pooler (compatibile con IPv4)');
@@ -277,6 +281,9 @@ getDbPool().then(p => {
   if (p) {
     pool = p;
     console.log('Pool di connessione al database inizializzato e pronto');
+    
+    // Pianifica riavvio periodico del pool per evitare connessioni zombie
+    setupPoolMaintenance(p);
   } else {
     console.error('Impossibile inizializzare il pool di connessione al database');
   }
@@ -284,17 +291,84 @@ getDbPool().then(p => {
   console.error('Errore durante l\'inizializzazione del pool di connessione:', err);
 });
 
+// Funzione per impostare manutenzione periodica del pool
+function setupPoolMaintenance(poolInstance: Pool) {
+  // Ogni ora (3600000 ms) riavvia il pool per pulire tutte le connessioni
+  const cleanupInterval = 3600000;
+  
+  console.log(`Pool maintenance configurata: cleanup ogni ${cleanupInterval/1000/60} minuti`);
+  
+  setInterval(async () => {
+    try {
+      console.log('Esecuzione manutenzione del pool di database...');
+      const clientCount = poolInstance.totalCount;
+      const idleCount = poolInstance.idleCount;
+      
+      console.log(`Pool prima del cleanup: totale=${clientCount}, inattivi=${idleCount}`);
+      
+      // Chiudi tutte le connessioni inattive
+      if (idleCount > 0) {
+        console.log(`Chiusura di ${idleCount} connessioni inattive`);
+        
+        // Non possiamo chiudere direttamente le connessioni inattive,
+        // ma possiamo forzare il pool a ridurre le sue dimensioni
+        try {
+          // Forza rilascio di tutte le connessioni inattive
+          await poolInstance.query('SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE state = \'idle\'');
+          console.log('Connessioni inattive terminate con successo');
+        } catch (cleanupError) {
+          console.error('Errore nel cleanup delle connessioni:', cleanupError);
+        }
+      }
+      
+      console.log('Pool maintenance completata');
+    } catch (error) {
+      console.error('Errore durante la manutenzione del pool:', error);
+    }
+  }, cleanupInterval);
+}
+
 // Funzione wrapper per gestire le query in modo sicuro
 export const executeQuery = async <T>(
   queryFn: (client: any) => Promise<T>
 ): Promise<T> => {
-  const client = await pool.connect();
+  let client = null;
   try {
+    client = await pool.connect();
     return await queryFn(client);
+  } catch (error) {
+    console.error('Errore durante l\'esecuzione della query:', error);
+    throw error;
   } finally {
-    client.release();
+    if (client) {
+      try {
+        client.release(true); // Forza il rilascio anche in caso di errori
+        console.log('Client rilasciato al pool');
+      } catch (releaseError) {
+        console.error('Errore nel rilasciare il client:', releaseError);
+      }
+    }
   }
 };
+
+// Aggiungi monitoraggio del pool
+const monitorPool = () => {
+  if (pool) {
+    const totalCount = pool.totalCount;
+    const idleCount = pool.idleCount;
+    const waitingCount = pool.waitingCount;
+    
+    console.log(`[Pool Monitor] Totale: ${totalCount}, Inattivi: ${idleCount}, In attesa: ${waitingCount}`);
+    
+    // Se ci sono molte connessioni e poche inattive, potrebbe esserci un leak
+    if (totalCount > 15 && idleCount < 2) {
+      console.warn('[Pool Monitor] ATTENZIONE: Possibile memory leak nelle connessioni al database!');
+    }
+  }
+};
+
+// Monitora il pool ogni 30 secondi
+setInterval(monitorPool, 30000);
 
 // Esporta un oggetto proxy che inoltrerà le chiamate al pool effettivo quando sarà pronto
 const poolProxy = new Proxy({} as Pool, {

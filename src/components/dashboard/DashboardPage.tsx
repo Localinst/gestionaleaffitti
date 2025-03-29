@@ -532,8 +532,70 @@ function OccupancyChart() {
 }
 
 function PropertyTypeChart() {
-  const data = getPropertyTypeDistribution();
-  const COLORS = ["#3b82f6", "#10b981", "#f97316"];
+  const [data, setData] = useState<{ name: string, value: number }[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const COLORS = ["#3b82f6", "#10b981", "#f97316", "#8b5cf6", "#ec4899"];
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const propertyTypeData = await getPropertyTypeDistribution();
+        setData(propertyTypeData);
+      } catch (error) {
+        console.error('Errore nel caricamento delle tipologie di proprietà:', error);
+        setError("Errore nel caricamento dei dati");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, []);
+  
+  if (isLoading) {
+    return (
+      <CardContainer className="h-[250px] md:h-[280px]">
+        <SectionHeader title="Tipologie di proprietà" />
+        <div className="h-full flex items-center justify-center">
+          <Skeleton className="h-[200px] w-[200px] rounded-full" />
+        </div>
+      </CardContainer>
+    );
+  }
+  
+  if (error) {
+    return (
+      <CardContainer className="h-[250px] md:h-[280px]">
+        <SectionHeader title="Tipologie di proprietà" />
+        <div className="h-full flex items-center justify-center">
+          <div className="text-center text-muted-foreground">
+            <p>{error}</p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="mt-4"
+              onClick={() => window.location.reload()}
+            >
+              Riprova
+            </Button>
+          </div>
+        </div>
+      </CardContainer>
+    );
+  }
+  
+  if (!data || data.length === 0) {
+    return (
+      <CardContainer className="h-[250px] md:h-[280px]">
+        <SectionHeader title="Tipologie di proprietà" />
+        <div className="h-full flex items-center justify-center">
+          <p className="text-muted-foreground">Nessuna proprietà disponibile</p>
+        </div>
+      </CardContainer>
+    );
+  }
   
   return (
     <CardContainer className="h-[250px] md:h-[280px]">
@@ -554,7 +616,10 @@ function PropertyTypeChart() {
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
-          <Tooltip formatter={(value) => `${value}%`} />
+          <Tooltip 
+            formatter={(value) => [`${value} proprietà`, undefined]}
+            contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '4px' }}
+          />
         </PieChart>
       </ResponsiveContainer>
     </CardContainer>

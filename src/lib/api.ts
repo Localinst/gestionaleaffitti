@@ -10,6 +10,51 @@ const getApiUrl = () => {
 
 const API_URL = getApiUrl();
 
+// Configurazione globale per timeout e retry
+const API_TIMEOUT = 15000; // 15 secondi di timeout
+const MAX_RETRIES = 1; // Numero massimo di tentativi in caso di timeout
+
+// Funzione avanzata per fetch con timeout e retry
+async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout = API_TIMEOUT, retries = MAX_RETRIES): Promise<Response> {
+  return new Promise(async (resolve, reject) => {
+    // Controller per abortire la richiesta in caso di timeout
+    const controller = new AbortController();
+    const { signal } = controller;
+    
+    // Timer per il timeout
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+      console.warn(`Timeout nella richiesta a ${url} dopo ${timeout}ms`);
+    }, timeout);
+    
+    // Funzione per eseguire la richiesta con possibilità di retry
+    const executeRequest = async (attemptNumber = 0) => {
+      try {
+        console.log(`Esecuzione richiesta a ${url} - tentativo ${attemptNumber + 1}`);
+        const response = await fetch(url, { ...options, signal });
+        clearTimeout(timeoutId);
+        resolve(response);
+      } catch (error) {
+        clearTimeout(timeoutId);
+        
+        // Se l'errore è dovuto al timeout (abort) e abbiamo ancora tentativi disponibili
+        if (error.name === 'AbortError' && attemptNumber < retries) {
+          console.warn(`Richiesta abortita, ritentativo ${attemptNumber + 1}/${retries + 1}`);
+          // Riprova dopo un breve delay
+          setTimeout(() => executeRequest(attemptNumber + 1), 1000);
+        } else {
+          // Se abbiamo esaurito i tentativi o si tratta di un altro errore
+          console.error(`Errore definitivo nella richiesta dopo ${attemptNumber + 1} tentativi:`, error);
+          reject(error);
+        }
+      }
+    };
+    
+    // Avvia la richiesta
+    executeRequest();
+  });
+}
+
 // Funzione per ottenere gli headers con autenticazione
 const getAuthHeaders = () => {
   const token = localStorage.getItem('authToken');
@@ -24,97 +69,265 @@ const getAuthHeaders = () => {
   return headers;
 };
 
+// Handler generico per gli errori delle richieste
+const handleRequestError = (endpoint: string, error: any) => {
+  console.error(`Errore nella richiesta a ${endpoint}:`, error);
+  
+  // Se è un errore di timeout, possiamo mostrare un messaggio specifico
+  if (error.name === 'AbortError') {
+    return { error: 'La richiesta ha impiegato troppo tempo. Il server potrebbe essere sovraccarico o non raggiungibile.' };
+  }
+  
+  // Altri tipi di errori
+  return { error: "Si è verificato un errore di connessione. Prova ad aggiornare la pagina o a riavviare l'applicazione." };
+};
+
 export const api = {
   properties: {
-    getAll: () => fetch(`${API_URL}/properties`, {
-      headers: getAuthHeaders()
-    }).then(res => res.json()),
-    getById: (id: string) => fetch(`${API_URL}/properties/${id}`, {
-      headers: getAuthHeaders()
-    }).then(res => res.json()),
-    create: (data: any) => fetch(`${API_URL}/properties`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data)
-    }).then(res => res.json()),
-    update: (id: string, data: any) => fetch(`${API_URL}/properties/${id}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data)
-    }).then(res => res.json()),
-    delete: (id: string) => fetch(`${API_URL}/properties/${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders()
-    }).then(res => res.json())
+    getAll: async () => {
+      try {
+        const res = await fetchWithTimeout(`${API_URL}/properties`, {
+          headers: getAuthHeaders()
+        });
+        return res.json();
+      } catch (error) {
+        return handleRequestError('properties/getAll', error);
+      }
+    },
+    getById: async (id: string) => {
+      try {
+        const res = await fetchWithTimeout(`${API_URL}/properties/${id}`, {
+          headers: getAuthHeaders()
+        });
+        return res.json();
+      } catch (error) {
+        return handleRequestError(`properties/getById/${id}`, error);
+      }
+    },
+    create: async (data: any) => {
+      try {
+        const res = await fetchWithTimeout(`${API_URL}/properties`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(data)
+        });
+        return res.json();
+      } catch (error) {
+        return handleRequestError('properties/create', error);
+      }
+    },
+    update: async (id: string, data: any) => {
+      try {
+        const res = await fetchWithTimeout(`${API_URL}/properties/${id}`, {
+          method: 'PUT',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(data)
+        });
+        return res.json();
+      } catch (error) {
+        return handleRequestError(`properties/update/${id}`, error);
+      }
+    },
+    delete: async (id: string) => {
+      try {
+        const res = await fetchWithTimeout(`${API_URL}/properties/${id}`, {
+          method: 'DELETE',
+          headers: getAuthHeaders()
+        });
+        return res.json();
+      } catch (error) {
+        return handleRequestError(`properties/delete/${id}`, error);
+      }
+    }
   },
   tenants: {
-    getAll: () => fetch(`${API_URL}/tenants`, {
-      headers: getAuthHeaders()
-    }).then(res => res.json()),
-    getById: (id: string) => fetch(`${API_URL}/tenants/${id}`, {
-      headers: getAuthHeaders()
-    }).then(res => res.json()),
-    create: (data: any) => fetch(`${API_URL}/tenants`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data)
-    }).then(res => res.json()),
-    update: (id: string, data: any) => fetch(`${API_URL}/tenants/${id}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data)
-    }).then(res => res.json()),
-    delete: (id: string) => fetch(`${API_URL}/tenants/${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders()
-    }).then(res => res.json())
+    getAll: async () => {
+      try {
+        const res = await fetchWithTimeout(`${API_URL}/tenants`, {
+          headers: getAuthHeaders()
+        });
+        return res.json();
+      } catch (error) {
+        return handleRequestError('tenants/getAll', error);
+      }
+    },
+    getById: async (id: string) => {
+      try {
+        const res = await fetchWithTimeout(`${API_URL}/tenants/${id}`, {
+          headers: getAuthHeaders()
+        });
+        return res.json();
+      } catch (error) {
+        return handleRequestError(`tenants/getById/${id}`, error);
+      }
+    },
+    create: async (data: any) => {
+      try {
+        const res = await fetchWithTimeout(`${API_URL}/tenants`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(data)
+        });
+        return res.json();
+      } catch (error) {
+        return handleRequestError('tenants/create', error);
+      }
+    },
+    update: async (id: string, data: any) => {
+      try {
+        const res = await fetchWithTimeout(`${API_URL}/tenants/${id}`, {
+          method: 'PUT',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(data)
+        });
+        return res.json();
+      } catch (error) {
+        return handleRequestError(`tenants/update/${id}`, error);
+      }
+    },
+    delete: async (id: string) => {
+      try {
+        const res = await fetchWithTimeout(`${API_URL}/tenants/${id}`, {
+          method: 'DELETE',
+          headers: getAuthHeaders()
+        });
+        return res.json();
+      } catch (error) {
+        return handleRequestError(`tenants/delete/${id}`, error);
+      }
+    }
   },
   transactions: {
-    getAll: () => fetch(`${API_URL}/transactions`, {
-      headers: getAuthHeaders()
-    }).then(res => res.json()),
-    getById: (id: string) => fetch(`${API_URL}/transactions/${id}`, {
-      headers: getAuthHeaders()
-    }).then(res => res.json()),
-    create: (data: any) => fetch(`${API_URL}/transactions`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data)
-    }).then(res => res.json()),
-    update: (id: string, data: any) => fetch(`${API_URL}/transactions/${id}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data)
-    }).then(res => res.json()),
-    delete: (id: string) => fetch(`${API_URL}/transactions/${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders()
-    }).then(res => res.json())
+    getAll: async () => {
+      try {
+        const res = await fetchWithTimeout(`${API_URL}/transactions`, {
+          headers: getAuthHeaders()
+        });
+        return res.json();
+      } catch (error) {
+        return handleRequestError('transactions/getAll', error);
+      }
+    },
+    getById: async (id: string) => {
+      try {
+        const res = await fetchWithTimeout(`${API_URL}/transactions/${id}`, {
+          headers: getAuthHeaders()
+        });
+        return res.json();
+      } catch (error) {
+        return handleRequestError(`transactions/getById/${id}`, error);
+      }
+    },
+    create: async (data: any) => {
+      try {
+        const res = await fetchWithTimeout(`${API_URL}/transactions`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(data)
+        });
+        return res.json();
+      } catch (error) {
+        return handleRequestError('transactions/create', error);
+      }
+    },
+    update: async (id: string, data: any) => {
+      try {
+        const res = await fetchWithTimeout(`${API_URL}/transactions/${id}`, {
+          method: 'PUT',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(data)
+        });
+        return res.json();
+      } catch (error) {
+        return handleRequestError(`transactions/update/${id}`, error);
+      }
+    },
+    delete: async (id: string) => {
+      try {
+        const res = await fetchWithTimeout(`${API_URL}/transactions/${id}`, {
+          method: 'DELETE',
+          headers: getAuthHeaders()
+        });
+        return res.json();
+      } catch (error) {
+        return handleRequestError(`transactions/delete/${id}`, error);
+      }
+    }
   },
   dashboard: {
-    getSummary: () => fetch(`${API_URL}/dashboard/summary`, {
-      headers: getAuthHeaders()
-    }).then(res => res.json()),
-    getChartData: () => fetch(`${API_URL}/dashboard/charts`, {
-      headers: getAuthHeaders()
-    }).then(res => res.json()),
-    debug: () => fetch(`${API_URL}/dashboard/debug`, {
-      headers: getAuthHeaders()
-    }).then(res => res.json())
+    getSummary: async () => {
+      try {
+        const res = await fetchWithTimeout(`${API_URL}/dashboard/summary`, {
+          headers: getAuthHeaders()
+        });
+        return res.json();
+      } catch (error) {
+        return handleRequestError('dashboard/getSummary', error);
+      }
+    },
+    getChartData: async () => {
+      try {
+        const res = await fetchWithTimeout(`${API_URL}/dashboard/charts`, {
+          headers: getAuthHeaders()
+        });
+        return res.json();
+      } catch (error) {
+        return handleRequestError('dashboard/getChartData', error);
+      }
+    },
+    debug: async () => {
+      try {
+        const res = await fetchWithTimeout(`${API_URL}/dashboard/debug`, {
+          headers: getAuthHeaders()
+        });
+        return res.json();
+      } catch (error) {
+        return handleRequestError('dashboard/debug', error);
+      }
+    }
   },
   reports: {
-    getSummary: (params: any) => fetch(`${API_URL}/reports/summary${formatQueryParams(params)}`, {
-      headers: getAuthHeaders()
-    }).then(res => res.json()),
-    getPropertyPerformance: (params: any) => fetch(`${API_URL}/reports/properties${formatQueryParams(params)}`, {
-      headers: getAuthHeaders()
-    }).then(res => res.json()),
-    getFinancialData: (params: any) => fetch(`${API_URL}/reports/financial${formatQueryParams(params)}`, {
-      headers: getAuthHeaders()
-    }).then(res => res.json()),
-    exportReport: (format: string, params: any) => fetch(`${API_URL}/reports/export/${format}${formatQueryParams(params)}`, {
-      headers: getAuthHeaders()
-    }).then(res => res.blob())
+    getSummary: async (params: any) => {
+      try {
+        const res = await fetchWithTimeout(`${API_URL}/reports/summary${formatQueryParams(params)}`, {
+          headers: getAuthHeaders()
+        });
+        return res.json();
+      } catch (error) {
+        return handleRequestError('reports/getSummary', error);
+      }
+    },
+    getPropertyPerformance: async (params: any) => {
+      try {
+        const res = await fetchWithTimeout(`${API_URL}/reports/properties${formatQueryParams(params)}`, {
+          headers: getAuthHeaders()
+        });
+        return res.json();
+      } catch (error) {
+        return handleRequestError('reports/getPropertyPerformance', error);
+      }
+    },
+    getFinancialData: async (params: any) => {
+      try {
+        const res = await fetchWithTimeout(`${API_URL}/reports/financial${formatQueryParams(params)}`, {
+          headers: getAuthHeaders()
+        });
+        return res.json();
+      } catch (error) {
+        return handleRequestError('reports/getFinancialData', error);
+      }
+    },
+    exportReport: async (format: string, params: any) => {
+      try {
+        const res = await fetchWithTimeout(`${API_URL}/reports/export/${format}${formatQueryParams(params)}`, {
+          headers: getAuthHeaders()
+        });
+        return res.blob();
+      } catch (error) {
+        console.error(`Errore nell'esportazione del report:`, error);
+        throw new Error('Non è stato possibile esportare il report. Riprova più tardi.');
+      }
+    }
   }
 };
 

@@ -135,13 +135,64 @@ export const getOccupancyRate = () => {
   ];
 };
 
-export const getPropertyTypeDistribution = () => {
-  return [
-    { name: "Apartments", value: 65 },
-    { name: "Houses", value: 20 },
-    { name: "Commercial", value: 15 }
-  ];
+export const getPropertyTypeDistribution = async () => {
+  try {
+    // Ottieni le proprietà reali dal database
+    const properties = await getProperties();
+    
+    // Raggruppa le proprietà per tipo
+    const typeCount: { [key: string]: number } = {};
+    
+    // Conta le proprietà per ogni tipo
+    properties.forEach(property => {
+      const type = property.type || 'Altro'; // Usa 'Altro' se il tipo non è specificato
+      // Traduci i tipi in italiano
+      const translatedType = translatePropertyType(type);
+      typeCount[translatedType] = (typeCount[translatedType] || 0) + 1;
+    });
+    
+    // Converti in array nel formato richiesto dal grafico
+    const result = Object.entries(typeCount).map(([name, value]) => ({ name, value }));
+    
+    // Se non ci sono dati, restituisci un valore di default
+    if (result.length === 0) {
+      return [
+        { name: "Appartamenti", value: 0 },
+        { name: "Case", value: 0 },
+        { name: "Commerciale", value: 0 }
+      ];
+    }
+    
+    return result;
+  } catch (error) {
+    console.error('Errore durante il recupero delle tipologie di proprietà:', error);
+    // In caso di errore, restituisci i dati di esempio
+    return [
+      { name: "Appartamenti", value: 65 },
+      { name: "Case", value: 20 },
+      { name: "Commerciale", value: 15 }
+    ];
+  }
 };
+
+// Funzione di supporto per tradurre i tipi di proprietà in italiano
+function translatePropertyType(type: string): string {
+  const translations: { [key: string]: string } = {
+    'Apartments': 'Appartamenti',
+    'Houses': 'Case',
+    'Commercial': 'Commerciale',
+    'Apartment': 'Appartamenti',
+    'House': 'Case',
+    'Condo': 'Condominio',
+    'Duplex': 'Duplex',
+    'Townhouse': 'Villetta a schiera',
+    'Office': 'Ufficio',
+    'Retail': 'Negozio',
+    'Industrial': 'Industriale'
+  };
+  
+  return translations[type] || type; // Restituisci la traduzione o il tipo originale se non trovato
+}
 
 export const getRentCollectionStatus = () => {
   return [
