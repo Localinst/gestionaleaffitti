@@ -291,6 +291,13 @@ getDbPool().then(p => {
   console.error('Errore durante l\'inizializzazione del pool di connessione:', err);
 });
 
+// Estensione dell'interfaccia Pool per aggiungere le proprietà necessarie
+interface ExtendedPool extends Pool {
+  totalCount?: number;
+  idleCount?: number;
+  waitingCount?: number;
+}
+
 // Funzione per impostare manutenzione periodica del pool
 function setupPoolMaintenance(poolInstance: Pool) {
   // Ogni ora (3600000 ms) riavvia il pool per pulire tutte le connessioni
@@ -301,8 +308,11 @@ function setupPoolMaintenance(poolInstance: Pool) {
   setInterval(async () => {
     try {
       console.log('Esecuzione manutenzione del pool di database...');
-      const clientCount = poolInstance.totalCount;
-      const idleCount = poolInstance.idleCount;
+      
+      // Accedi alle proprietà del pool in modo sicuro
+      const extendedPool = poolInstance as any;
+      const clientCount = extendedPool.totalCount || 0;
+      const idleCount = extendedPool.idleCount || 0;
       
       console.log(`Pool prima del cleanup: totale=${clientCount}, inattivi=${idleCount}`);
       
@@ -354,9 +364,11 @@ export const executeQuery = async <T>(
 // Aggiungi monitoraggio del pool
 const monitorPool = () => {
   if (pool) {
-    const totalCount = pool.totalCount;
-    const idleCount = pool.idleCount;
-    const waitingCount = pool.waitingCount;
+    // Accedi alle proprietà del pool in modo sicuro
+    const extendedPool = pool as any;
+    const totalCount = extendedPool.totalCount || 0;
+    const idleCount = extendedPool.idleCount || 0;
+    const waitingCount = extendedPool.waitingCount || 0;
     
     console.log(`[Pool Monitor] Totale: ${totalCount}, Inattivi: ${idleCount}, In attesa: ${waitingCount}`);
     
