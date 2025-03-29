@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import pool from '../db';
+import pool, { executeQuery } from '../db';
 
 export const getDashboardSummary = async (req: Request, res: Response) => {
   try {
@@ -25,11 +25,13 @@ export const getDashboardSummary = async (req: Request, res: Response) => {
     };
 
     try {
-      // Get total properties with user filter
-      const propertiesResult = await pool.query(
-        'SELECT COUNT(*) as total FROM properties WHERE user_id = $1',
-        [userId]
-      );
+      // Get total properties with user filter using the wrapper
+      const propertiesResult = await executeQuery(async (client) => {
+        return client.query(
+          'SELECT COUNT(*) as total FROM properties WHERE user_id = $1',
+          [userId]
+        );
+      });
       results.data.totalProperties = parseInt(propertiesResult.rows[0]?.total) || 0;
       console.log("Total properties:", results.data.totalProperties);
     } catch (err: any) {
@@ -38,11 +40,13 @@ export const getDashboardSummary = async (req: Request, res: Response) => {
     }
 
     try {
-      // Get total units with user filter
-      const unitsResult = await pool.query(
-        'SELECT SUM(units) as total FROM properties WHERE user_id = $1',
-        [userId]
-      );
+      // Get total units with user filter using the wrapper
+      const unitsResult = await executeQuery(async (client) => {
+        return client.query(
+          'SELECT SUM(units) as total FROM properties WHERE user_id = $1',
+          [userId]
+        );
+      });
       results.data.totalUnits = parseInt(unitsResult.rows[0]?.total) || 0;
       console.log("Total units:", results.data.totalUnits);
     } catch (err: any) {

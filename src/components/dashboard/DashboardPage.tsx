@@ -71,6 +71,7 @@ function StatCard({
   trend,
   trendValue,
   to,
+  className,
 }: {
   title: string;
   value: string | number;
@@ -79,26 +80,27 @@ function StatCard({
   trend?: "up" | "down" | "neutral";
   trendValue?: string;
   to?: string;
+  className?: string;
 }) {
   return (
-    <Link to={to || '#'} className="block">
+    <Link to={to || '#'} className={`block ${className || ''}`}>
       <CardContainer className="transition-all duration-300 hover:shadow-md cursor-pointer">
-        <div className="flex justify-between">
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <h2 className="text-2xl font-bold mt-1">{value}</h2>
+        <div className="flex justify-between items-start">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs md:text-sm font-medium text-muted-foreground truncate">{title}</p>
+            <h2 className="text-lg md:text-2xl font-bold mt-0.5 md:mt-1 truncate">{value}</h2>
             {description && (
-              <p className="text-xs text-muted-foreground mt-1">{description}</p>
+              <p className="text-xs text-muted-foreground mt-0.5 md:mt-1 truncate">{description}</p>
             )}
             {trend && (
-              <div className="flex items-center mt-2">
+              <div className="flex items-center mt-1 md:mt-2">
                 {trend === "up" ? (
-                  <ArrowUpRight className="h-3 w-3 text-green-500" />
+                  <ArrowUpRight className="h-3 w-3 text-green-500 flex-shrink-0" />
                 ) : trend === "down" ? (
-                  <ArrowDownRight className="h-3 w-3 text-red-500" />
+                  <ArrowDownRight className="h-3 w-3 text-red-500 flex-shrink-0" />
                 ) : null}
                 <span
-                  className={`text-xs font-medium ml-1 ${
+                  className={`text-xs font-medium ml-1 truncate ${
                     trend === "up"
                       ? "text-green-500"
                       : trend === "down"
@@ -111,8 +113,8 @@ function StatCard({
               </div>
             )}
           </div>
-          <div className="h-10 w-10 bg-primary/10 flex items-center justify-center rounded-full">
-            <Icon className="h-5 w-5 text-primary" />
+          <div className="h-8 w-8 md:h-10 md:w-10 bg-primary/10 flex items-center justify-center rounded-full flex-shrink-0 ml-3">
+            <Icon className="h-4 w-4 md:h-5 md:w-5 text-primary" />
           </div>
         </div>
       </CardContainer>
@@ -129,7 +131,18 @@ function IncomeChart() {
   const [isLoading, setIsLoading] = useState(true);
   const [showNet, setShowNet] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   
+  // Aggiungi event listener per il resize
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Funzione per processare le transazioni in dati mensili
   const processTransactionsIntoMonthlyData = (transactions: Transaction[]) => {
     if (!transactions || transactions.length === 0) {
@@ -318,10 +331,10 @@ function IncomeChart() {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <div className="flex flex-col space-y-1">
-          <CardTitle className="text-base font-normal">
+          <CardTitle className="text-sm md:text-base font-normal">
             {showNet ? 'Reddito Netto Mensile' : 'Reddito Lordo Mensile'}
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-xs md:text-sm">
             {showNet 
               ? 'Visualizzazione del reddito netto (entrate - uscite)' 
               : 'Visualizzazione dettagliata di entrate e uscite'}
@@ -330,17 +343,15 @@ function IncomeChart() {
         <div className="flex rounded-md overflow-hidden border">
           <Button 
             variant={showNet ? "outline" : "default"} 
-            className={`rounded-none border-0 ${!showNet ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+            className={`text-xs md:text-sm px-2 md:px-3 h-7 md:h-8 rounded-none border-0 ${!showNet ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
             onClick={() => setShowNet(false)}
-            size="sm"
           >
             Lordo
           </Button>
           <Button 
             variant={showNet ? "default" : "outline"} 
-            className={`rounded-none border-0 ${showNet ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+            className={`text-xs md:text-sm px-2 md:px-3 h-7 md:h-8 rounded-none border-0 ${showNet ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
             onClick={() => setShowNet(true)}
-            size="sm"
           >
             Netto
           </Button>
@@ -368,8 +379,9 @@ function IncomeChart() {
                 dataKey="month" 
                 tickLine={false}
                 axisLine={{ stroke: '#e5e7eb' }}
-                // Assicura che tutti i mesi vengano visualizzati
-                interval={0}
+                tick={{ fontSize: 12 }}
+                height={20}
+                tickFormatter={(value) => isMobile ? '' : value}
               />
               <YAxis 
                 tickFormatter={(value) => `€${value}`}
@@ -748,7 +760,7 @@ export default function DashboardPage() {
         description="Panoramica delle prestazioni dei tuoi immobili in affitto"
       />
       
-      <Grid cols={4}>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard
           title="Proprietà"
           value={summary.totalProperties}
@@ -756,6 +768,7 @@ export default function DashboardPage() {
           trend={trends.properties.trend}
           trendValue={trends.properties.value}
           to="/properties"
+          className="h-[120px] md:h-auto"
         />
         <StatCard
           title="Inquilini"
@@ -764,6 +777,7 @@ export default function DashboardPage() {
           trend={trends.tenants.trend}
           trendValue={trends.tenants.value}
           to="/tenants"
+          className="h-[120px] md:h-auto"
         />
         <StatCard
           title="Ricavo mensile"
@@ -772,6 +786,7 @@ export default function DashboardPage() {
           trend={trends.income.trend}
           trendValue={trends.income.value}
           to="/transactions"
+          className="h-[120px] md:h-auto"
         />
         <StatCard
           title="Tasso occupazione"
@@ -780,10 +795,11 @@ export default function DashboardPage() {
           trend={trends.occupancy.trend}
           trendValue={trends.occupancy.value}
           to="/tenants"
+          className="h-[120px] md:h-auto"
         />
-      </Grid>
+      </div>
       
-      <div className="mt-8">
+      <div className="mt-4 md:mt-8">
         <IncomeChart />
       </div>
       

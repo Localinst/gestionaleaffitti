@@ -118,7 +118,15 @@ async function setupTransactionPooler() {
   const poolerConfig = {
     connectionString: createSafeConnectionString(connectionString),
     // Forza l'uso di IPv4 come ulteriore sicurezza
-    family: 4
+    family: 4,
+    // Configurazione del pool
+    max: 20, // massimo numero di client nel pool
+    idleTimeoutMillis: 30000, // timeout di inattività (30 secondi)
+    connectionTimeoutMillis: 5000, // timeout di connessione (5 secondi)
+    maxUses: 7500, // numero massimo di query per connessione prima del riciclo
+    statement_timeout: 10000, // timeout delle query (10 secondi)
+    query_timeout: 10000, // timeout delle query (10 secondi)
+    allowExitOnIdle: true // permette al pool di chiudersi quando è inattivo
   };
   
   console.log('Configurato per utilizzare il Transaction Pooler (compatibile con IPv4)');
@@ -275,6 +283,18 @@ getDbPool().then(p => {
 }).catch(err => {
   console.error('Errore durante l\'inizializzazione del pool di connessione:', err);
 });
+
+// Funzione wrapper per gestire le query in modo sicuro
+export const executeQuery = async <T>(
+  queryFn: (client: any) => Promise<T>
+): Promise<T> => {
+  const client = await pool.connect();
+  try {
+    return await queryFn(client);
+  } finally {
+    client.release();
+  }
+};
 
 // Esporta un oggetto proxy che inoltrerà le chiamate al pool effettivo quando sarà pronto
 const poolProxy = new Proxy({} as Pool, {
