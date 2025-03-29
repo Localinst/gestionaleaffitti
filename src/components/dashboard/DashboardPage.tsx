@@ -459,7 +459,12 @@ function OccupancyChart() {
         const response = await getDashboardSummary();
         
         if (response && response.occupancyRate) {
-          const occupancyRate = parseFloat(response.occupancyRate);
+          // Ensure occupancyRate is a string before parsing
+          const rateStr = typeof response.occupancyRate === 'string' 
+            ? response.occupancyRate 
+            : String(response.occupancyRate);
+          
+          const occupancyRate = parseFloat(rateStr);
           setOccupancyData([
             { name: "Occupato", value: occupancyRate },
             { name: "Libero", value: 100 - occupancyRate }
@@ -626,6 +631,12 @@ export default function DashboardPage() {
       // Ottieni i dati della dashboard e fai il cast
       const data = await getDashboardSummary() as unknown as DashboardSummaryResponse;
       console.log("Dati dashboard ricevuti:", data);
+      
+      // Ensure occupancyRate is a string before using any string methods
+      if (data.occupancyRate !== undefined && data.occupancyRate !== null) {
+        data.occupancyRate = String(data.occupancyRate);
+      }
+      
       setSummary(data);
   
       // Verifica che i dati storici siano presenti
@@ -636,7 +647,7 @@ export default function DashboardPage() {
         const propertyTrend = calculateTrend(safeParse(data.totalProperties), safeParse(data.historicalData.previousMonthProperties));
         const tenantsTrend = calculateTrend(safeParse(data.totalTenants), safeParse(data.historicalData.previousMonthTenants));
         const incomeTrend = calculateTrend(safeParse(data.rentIncome), safeParse(data.historicalData.previousMonthIncome));
-        const occupancyTrend = calculateTrend(safeParse(parseFloat(data.occupancyRate)), safeParse(data.historicalData.previousMonthOccupancy));
+        const occupancyTrend = calculateTrend(safeParse(parseFloat(String(data.occupancyRate))), safeParse(data.historicalData.previousMonthOccupancy));
   
         const formatTrend = (trend: any, singular: string, plural: string) => {
           if (trend.value === 0) return "nessuna variazione";
@@ -722,6 +733,14 @@ export default function DashboardPage() {
     );
   }
 
+  // Format the occupancy rate for display
+  const formatOccupancyRate = (rate: string | number): string => {
+    // Ensure rate is a string before using replace
+    const rateStr = typeof rate === 'string' ? rate : String(rate);
+    // Return formatted rate
+    return `${rateStr}%`;
+  };
+
   return (
     <AppLayout>
       <PageHeader
@@ -756,7 +775,7 @@ export default function DashboardPage() {
         />
         <StatCard
           title="Tasso occupazione"
-          value={`${summary.occupancyRate}%`}
+          value={formatOccupancyRate(summary.occupancyRate)}
           icon={Users}
           trend={trends.occupancy.trend}
           trendValue={trends.occupancy.value}

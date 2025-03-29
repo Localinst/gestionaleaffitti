@@ -438,10 +438,55 @@ export async function getTransactionsByProperty(propertyId: number): Promise<Tra
   }
 }
 
-// API Dashboard
-export async function getDashboardSummary(): Promise<DashboardSummaryResponse> {
+// Funzione di utilità per fetch con timeout
+async function fetchWithTimeout(url: string, options: RequestInit, timeout = 15000): Promise<Response> {
+  // Crea un controller per poter annullare la richiesta
+  const controller = new AbortController();
+  const { signal } = controller;
+  
+  // Crea un timer che annullerà la richiesta dopo il timeout specificato
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, timeout);
+  
   try {
-    const response = await fetch(`${API_URL}/dashboard/summary`, getRequestOptions());
+    // Aggiungi il signal alle opzioni di fetch
+    const response = await fetch(url, { ...options, signal });
+    
+    // Pulisci il timer se la richiesta ha avuto successo
+    clearTimeout(timeoutId);
+    
+    return response;
+  } catch (error) {
+    // Pulisci il timer in caso di errore
+    clearTimeout(timeoutId);
+    
+    // Se l'errore è dovuto al timeout (aborted), lancia un errore specifico
+    if (error.name === 'AbortError') {
+      throw new Error(`La richiesta a ${url} ha superato il timeout di ${timeout}ms`);
+    }
+    
+    // Altrimenti, rilancia l'errore originale
+    throw error;
+  }
+}
+
+// API Dashboard con timeout
+export async function getDashboardSummary(): Promise<DashboardSummaryResponse> {
+  console.log('Iniziando richiesta dashboard summary...');
+  const startTime = Date.now();
+  
+  try {
+    // Usa fetchWithTimeout invece di fetch normale, con timeout di 15 secondi
+    const response = await fetchWithTimeout(
+      `${API_URL}/dashboard/summary`, 
+      getRequestOptions(),
+      15000 // 15 secondi di timeout
+    );
+    
+    // Log del tempo di risposta
+    const responseTime = Date.now() - startTime;
+    console.log(`Risposta ricevuta in ${responseTime}ms`);
     
     if (!response.ok) {
       handleApiError('dashboard/summary', response.status, null);
@@ -451,7 +496,17 @@ export async function getDashboardSummary(): Promise<DashboardSummaryResponse> {
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('Error fetching dashboard summary:', error);
+    // Calcola quanto tempo è passato prima dell'errore
+    const errorTime = Date.now() - startTime;
+    
+    // Log specifico per errori di timeout
+    if (error.message && error.message.includes('timeout')) {
+      console.error(`Timeout nella richiesta dashboard dopo ${errorTime}ms: ${error.message}`);
+    } else {
+      console.error(`Errore nella richiesta dashboard dopo ${errorTime}ms:`, error);
+    }
+    
+    // Restituisci un oggetto predefinito in caso di errore
     return {
       totalProperties: 0,
       totalUnits: 0,
@@ -727,5 +782,8 @@ export const api = {
   },
   dashboard: {
     getSummary: getDashboardSummary
+  },
+  utils: {
+    fetchWithTimeout
   }
 };
