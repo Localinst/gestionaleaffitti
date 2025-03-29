@@ -13,6 +13,53 @@ const API_URL = getApiUrl();
 // Configurazione globale per timeout e retry
 const API_TIMEOUT = 15000; // 15 secondi di timeout
 const MAX_RETRIES = 1; // Numero massimo di tentativi in caso di timeout
+const PING_INTERVAL = 5 * 60 * 1000; // 5 minuti in millisecondi
+
+// Sistema di ping periodico per mantenere il server sveglio
+const setupServerPing = () => {
+  let pingCounter = 0;
+  
+  // Funzione che esegue il ping
+  const pingServer = async () => {
+    try {
+      pingCounter++;
+      console.log(`[Ping #${pingCounter}] Invio ping al server per mantenerlo attivo...`);
+      
+      const response = await fetchWithTimeout(`${API_URL}/ping`, {
+        method: 'GET',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      }, 5000); // Timeout di 5 secondi per il ping
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`[Ping #${pingCounter}] Server ha risposto: ${data.message || 'OK'}`);
+      } else {
+        console.warn(`[Ping #${pingCounter}] Server ha risposto con status: ${response.status}`);
+      }
+    } catch (error) {
+      console.error(`[Ping #${pingCounter}] Errore durante il ping del server:`, error);
+    }
+  };
+  
+  // Esegui subito un primo ping
+  pingServer();
+  
+  // Imposta il ping periodico
+  const intervalId = setInterval(pingServer, PING_INTERVAL);
+  
+  // Restituisci una funzione per interrompere il ping se necessario
+  return () => {
+    console.log('Disattivazione del sistema di ping al server');
+    clearInterval(intervalId);
+  };
+};
+
+// Avvia il sistema di ping automaticamente
+const stopPing = setupServerPing();
 
 // Funzione avanzata per fetch con timeout e retry
 async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout = API_TIMEOUT, retries = MAX_RETRIES): Promise<Response> {
