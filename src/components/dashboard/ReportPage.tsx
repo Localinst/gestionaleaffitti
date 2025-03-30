@@ -4,7 +4,7 @@ import { AppLayout, PageHeader, Grid } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building2, Users, DollarSign, Download, CalendarDays, PieChart, TrendingUp, LineChart } from "lucide-react";
-import { addMonths, subMonths } from "date-fns";
+import { addMonths, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { 
   AreaChart, 
   Area, 
@@ -35,15 +35,75 @@ interface FinancialData {
   income: number;
   expenses: number;
   net: number;
+  // Aggiunta la chiave di ordinamento per garantire l'ordinamento corretto
+  sortKey?: string;
+}
+
+// Aggiungiamo un helper per convertire nomi di mesi italiani in numeri di mese
+const italianMonthsMap: {[key: string]: number} = {
+  'gen': 0, 'gennaio': 0,
+  'feb': 1, 'febbraio': 1,
+  'mar': 2, 'marzo': 2,
+  'apr': 3, 'aprile': 3,
+  'mag': 4, 'maggio': 4,
+  'giu': 5, 'giugno': 5,
+  'lug': 6, 'luglio': 6,
+  'ago': 7, 'agosto': 7,
+  'set': 8, 'settembre': 8,
+  'ott': 9, 'ottobre': 9,
+  'nov': 10, 'novembre': 10,
+  'dic': 11, 'dicembre': 11
+};
+
+// Helper function per parsare date in vari formati, inclusi quelli con mesi italiani
+function parseDate(dateString: string): Date | null {
+  try {
+    // Se è già in formato ISO o standard, usiamo il costruttore Date direttamente
+    if (dateString.includes('-') || dateString.includes('/')) {
+      const date = new Date(dateString);
+      if (!isNaN(date.getTime())) {
+        return date;
+      }
+    }
+    
+    // Prova a parsare formati come "Gen 2023" o "Gennaio 2023"
+    const parts = dateString.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      const monthStr = parts[0].toLowerCase();
+      const year = parseInt(parts[1]);
+      
+      if (!isNaN(year)) {
+        // Cerca il mese nella mappa italiana
+        const monthIndex = italianMonthsMap[monthStr];
+        
+        if (monthIndex !== undefined) {
+          const date = new Date(year, monthIndex, 1);
+          return date;
+        } else {
+          // Prova come nome di mese in inglese
+          const date = new Date(`${parts[0]} 1, ${year}`);
+          if (!isNaN(date.getTime())) {
+            return date;
+          }
+        }
+      }
+    }
+    
+    // Se tutte le altre opzioni falliscono, prova il costruttore Date standard
+    const date = new Date(dateString);
+    if (!isNaN(date.getTime())) {
+      return date;
+    }
+    
+    return null;
+  } catch (error) {
+    return null;
+  }
 }
 
 // Helper function to ensure we have data for each month in the range
 function ensureMonthlyData(data: any[], startDate: Date, endDate: Date) {
-  console.log("ensureMonthlyData - Dati originali:", data);
-  console.log("ensureMonthlyData - startDate:", format(startDate, "yyyy-MM-dd"), "endDate:", format(endDate, "yyyy-MM-dd"));
-  
   if (!data || !Array.isArray(data)) {
-    console.error("Dati non validi forniti a ensureMonthlyData:", data);
     return [];
   }
   
@@ -55,46 +115,39 @@ function ensureMonthlyData(data: any[], startDate: Date, endDate: Date) {
     try {
       // Tenta di parsare la data nel formato fornito dall'API
       if (typeof item.date === 'string') {
-        // Prova diversi formati di data
-        if (item.date.includes('-')) {
-          // Formato YYYY-MM-DD o YYYY-MM
-          itemDate = new Date(item.date);
-        } else if (item.date.includes('/')) {
-          // Formato MM/DD/YYYY o DD/MM/YYYY
-          const parts = item.date.split('/');
-          if (parts.length === 3) {
-            // Assumiamo MM/DD/YYYY
-            itemDate = new Date(`${parts[2]}-${parts[0]}-${parts[1]}`);
-          }
-        } else {
-          // Tenta di parsare come stringa di data generica
-          itemDate = new Date(item.date);
+        // Usa il nostro helper avanzato per parsare la data
+        itemDate = parseDate(item.date);
+        
+        if (!itemDate) {
+          return; // Salta questo elemento
         }
       } else if (item.date instanceof Date) {
         itemDate = item.date;
-      }
-      
-      if (isNaN(itemDate.getTime())) {
-        console.error("Data non valida trovata:", item.date);
+      } else {
         return; // Salta questo elemento
       }
       
-      // Crea una chiave per il mese (es. "Jan 2023")
-      const monthKey = format(itemDate, 'MMM yyyy');
-      console.log(`Mappatura dati per ${item.date} a chiave ${monthKey}`);
+      // Usa un formato numerico per la chiave del mese (YYYY-MM) per evitare problemi di localizzazione
+      const monthKeyForMapping = format(itemDate, 'yyyy-MM');
+      // Mantieni il formato localizzato per la visualizzazione
+      const displayDate = format(itemDate, 'MMM yyyy');
       
-      existingDataMap.set(monthKey, {
-        date: monthKey,
+      // Assicuriamoci di utilizzare i nomi di proprietà corretti per i dati
+      // e standardizziamo a 'net' per il valore netto
+      const netValue = typeof item.net !== 'undefined' ? item.net :
+                      typeof item.netIncome !== 'undefined' ? item.netIncome : 0;
+      
+      existingDataMap.set(monthKeyForMapping, {
+        sortKey: monthKeyForMapping, // Aggiungiamo una chiave per l'ordinamento
+        date: displayDate, // Manteniamo il formato localizzato per la visualizzazione
         income: Number(item.income) || 0,
         expenses: Number(item.expenses) || 0,
-        netIncome: Number(item.netIncome) || 0
+        net: netValue
       });
     } catch (error) {
-      console.error(`Errore nel processare la data ${item.date}:`, error);
+      // Silently fail
     }
   });
-  
-  console.log("Mappa dei dati esistenti per mese:", Array.from(existingDataMap.entries()));
   
   // Genera un array di date per i mesi tra startDate e endDate
   const result = [];
@@ -108,20 +161,19 @@ function ensureMonthlyData(data: any[], startDate: Date, endDate: Date) {
   endOfPeriod.setMonth(endOfPeriod.getMonth() + 1);
   endOfPeriod.setDate(0);
   
-  console.log("Range date per generazione dati mensili:", 
-             format(currentDate, "yyyy-MM-dd"), 
-             "fino a", 
-             format(endOfPeriod, "yyyy-MM-dd"));
-  
   const monthKeys: string[] = [];
   
   while (currentDate <= endOfPeriod) {
-    const monthKey = format(currentDate, 'MMM yyyy');
-    monthKeys.push(monthKey);
+    // Usa un formato numerico per la chiave (YYYY-MM)
+    const monthKeyForMapping = format(currentDate, 'yyyy-MM');
+    // Formato localizzato per la visualizzazione
+    const displayDate = format(currentDate, 'MMM yyyy');
     
-    if (existingDataMap.has(monthKey)) {
+    monthKeys.push(monthKeyForMapping);
+    
+    if (existingDataMap.has(monthKeyForMapping)) {
       // Usa i dati esistenti per questo mese
-      result.push(existingDataMap.get(monthKey));
+      result.push(existingDataMap.get(monthKeyForMapping));
     } else {
       // Nessun dato esistente per questo mese
       const today = new Date();
@@ -132,20 +184,22 @@ function ensureMonthlyData(data: any[], startDate: Date, endDate: Date) {
       );
       
       if (isFutureMonth) {
-        // Per i mesi futuri, usiamo valori di esempio piccoli o zero
+        // Per i mesi futuri, usiamo valori zero invece di valori casuali
         result.push({
-          date: monthKey,
-          income: Math.random() * 1000, // Valore casuale piccolo per i mesi futuri
-          expenses: Math.random() * 500,
-          netIncome: Math.random() * 500
+          sortKey: monthKeyForMapping, // Chiave per l'ordinamento
+          date: displayDate, // Data formattata per la visualizzazione
+          income: 0,
+          expenses: 0,
+          net: 0
         });
       } else {
         // Per i mesi passati senza dati, usiamo zero
         result.push({
-          date: monthKey,
+          sortKey: monthKeyForMapping, // Chiave per l'ordinamento
+          date: displayDate, // Data formattata per la visualizzazione
           income: 0,
           expenses: 0,
-          netIncome: 0
+          net: 0
         });
       }
     }
@@ -154,8 +208,8 @@ function ensureMonthlyData(data: any[], startDate: Date, endDate: Date) {
     currentDate.setMonth(currentDate.getMonth() + 1);
   }
   
-  console.log("Chiavi dei mesi generate:", monthKeys);
-  console.log("Dati mensili completi generati:", result);
+  // Ordina in base alla chiave di ordinamento numerica
+  result.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
   
   return result;
 }
@@ -180,20 +234,20 @@ interface PropertyPerformanceData {
   occupancyRate: number;
 }
 
-// Generiamo dati di esempio direttamente durante l'inizializzazione
+// Dati finanziari di esempio per la modalità di anteprima
 const SAMPLE_FINANCIAL_DATA: FinancialData[] = [
-  { date: "Gen 2023", income: 8500, expenses: 3200, net: 5300 },
-  { date: "Feb 2023", income: 7800, expenses: 3500, net: 4300 },
-  { date: "Mar 2023", income: 9200, expenses: 4100, net: 5100 },
-  { date: "Apr 2023", income: 8900, expenses: 3800, net: 5100 },
-  { date: "Mag 2023", income: 9500, expenses: 4200, net: 5300 },
-  { date: "Giu 2023", income: 10200, expenses: 4500, net: 5700 },
-  { date: "Lug 2023", income: 11000, expenses: 4800, net: 6200 },
-  { date: "Ago 2023", income: 9800, expenses: 4300, net: 5500 },
-  { date: "Set 2023", income: 9300, expenses: 4100, net: 5200 },
-  { date: "Ott 2023", income: 8800, expenses: 3900, net: 4900 },
-  { date: "Nov 2023", income: 9100, expenses: 4000, net: 5100 },
-  { date: "Dic 2023", income: 10500, expenses: 4600, net: 5900 }
+  { date: 'Jan 2023', income: 24500, expenses: 15000, net: 9500, sortKey: '2023-01' },
+  { date: 'Feb 2023', income: 28400, expenses: 16500, net: 11900, sortKey: '2023-02' },
+  { date: 'Mar 2023', income: 32000, expenses: 17800, net: 14200, sortKey: '2023-03' },
+  { date: 'Apr 2023', income: 29800, expenses: 16200, net: 13600, sortKey: '2023-04' },
+  { date: 'May 2023', income: 33500, expenses: 18900, net: 14600, sortKey: '2023-05' },
+  { date: 'Jun 2023', income: 31200, expenses: 17500, net: 13700, sortKey: '2023-06' },
+  { date: 'Jul 2023', income: 34600, expenses: 19200, net: 15400, sortKey: '2023-07' },
+  { date: 'Aug 2023', income: 36800, expenses: 20100, net: 16700, sortKey: '2023-08' },
+  { date: 'Sep 2023', income: 32900, expenses: 18600, net: 14300, sortKey: '2023-09' },
+  { date: 'Oct 2023', income: 35700, expenses: 19800, net: 15900, sortKey: '2023-10' },
+  { date: 'Nov 2023', income: 38200, expenses: 21000, net: 17200, sortKey: '2023-11' },
+  { date: 'Dec 2023', income: 42000, expenses: 23500, net: 18500, sortKey: '2023-12' },
 ];
 
 const SAMPLE_PROPERTY_DATA: PropertyPerformanceData[] = [
@@ -215,11 +269,77 @@ const SAMPLE_SUMMARY_DATA: SummaryData = {
   avgRent: 1390
 };
 
+// Funzione per ottenere il nome del mese in italiano
+function getItalianMonthName(monthIndex: number): string {
+  const italianMonths = [
+    'Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 
+    'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'
+  ];
+  
+  return italianMonths[monthIndex] || '';
+}
+
+// Genera dati di esempio basati sul periodo di query
+const generateSampleData = (timeFilter: string, specificYear?: number): FinancialData[] => {
+  const date = new Date();
+  const currentYear = date.getFullYear();
+  const currentMonth = date.getMonth();
+  
+  // Determina il numero di mesi da visualizzare in base al filtro
+  const monthCount = timeFilter === "3months" ? 3 : 
+                     timeFilter === "6months" ? 6 : 
+                     timeFilter === "specific-year" ? 12 : 12;
+  
+  // Crea un array di dati di esempio con le date corrette
+  const sampleData: FinancialData[] = [];
+  
+  for (let i = 0; i < monthCount; i++) {
+    // Calcola la data per questo elemento (tornando indietro nel tempo)
+    let targetMonth: number;
+    let targetYear: number;
+    
+    if (timeFilter === "specific-year") {
+      // Per anno specifico, generiamo tutti i mesi dell'anno selezionato
+      targetYear = specificYear || currentYear;
+      targetMonth = i; // Da gennaio (0) a dicembre (11)
+    } else {
+      // Per altre opzioni, generiamo i mesi più recenti
+      targetMonth = currentMonth - (monthCount - 1 - i);
+      targetYear = currentYear + Math.floor((targetMonth) / 12);
+      // Normalizza il mese per gestire valori negativi
+      targetMonth = ((targetMonth % 12) + 12) % 12;
+    }
+    
+    const targetDate = new Date(targetYear, targetMonth, 1);
+    // Utilizziamo i nomi dei mesi in italiano per essere coerenti con i dati API
+    const displayDate = `${getItalianMonthName(targetMonth)} ${targetYear}`;
+    const sortKey = format(targetDate, 'yyyy-MM');
+    
+    // Genera valori casuali per i dati finanziari
+    const income = Math.floor(25000 + Math.random() * 15000);
+    const expenses = Math.floor(15000 + Math.random() * 8000);
+    const net = income - expenses;
+    
+    sampleData.push({
+      date: displayDate,
+      income,
+      expenses,
+      net,
+      sortKey
+    });
+  }
+  
+  // Ordina i dati per data usando sortKey
+  const sortedData = sampleData.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+  
+  return sortedData;
+};
+
 export default function ReportPage() {
   const [filters, setFilters] = useState<ReportFilters>({
     periodType: "month",
-    startDate: new Date(),
-    endDate: new Date(),
+    startDate: startOfMonth(new Date()),
+    endDate: endOfMonth(new Date()),
     propertyId: "all"
   });
   
@@ -235,58 +355,77 @@ export default function ReportPage() {
   
   const [activeTab, setActiveTab] = useState("summary");
   const [exportLoading, setExportLoading] = useState(false);
+  
+  // Aggiungiamo stati per la gestione dei filtri del grafico
+  const [showNet, setShowNet] = useState(false);
+  const [timeFilter, setTimeFilter] = useState("year"); // "3months", "6months", "year", "specific-year"
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  
+  // Aggiungiamo un meccanismo di cache per evitare richieste ripetute
+  const [dataCache, setDataCache] = useState<{
+    [key: string]: {
+      financialData: FinancialData[];
+      timestamp: number;
+    }
+  }>({});
 
   // Carica i dati finanziari
   useEffect(() => {
     async function loadFinancialData() {
       try {
-        setLoadingFinancial(true);
-        
+        // Determina il range temporale in base ai filtri del grafico
         let queryStartDate: Date;
         let queryEndDate: Date;
         
-        // Determine the date range based on filter type
-        if (filters.periodType === "custom" && filters.startDate && filters.endDate) {
+        // Determina il range temporale in base ai filtri del grafico
+        if (timeFilter === "3months") {
+          // Ultimi 3 mesi
+          queryEndDate = new Date();
+          queryStartDate = new Date();
+          queryStartDate.setMonth(queryStartDate.getMonth() - 2);
+          queryStartDate.setDate(1); // Inizio del mese
+        } else if (timeFilter === "6months") {
+          // Ultimi 6 mesi
+          queryEndDate = new Date();
+          queryStartDate = new Date();
+          queryStartDate.setMonth(queryStartDate.getMonth() - 5);
+          queryStartDate.setDate(1); // Inizio del mese
+        } else if (timeFilter === "year") {
+          // Ultimo anno (12 mesi incluso quello corrente)
+          queryEndDate = new Date();
+          queryStartDate = new Date();
+          queryStartDate.setMonth(queryStartDate.getMonth() - 11);
+          queryStartDate.setDate(1); // Inizio del mese
+        } else if (timeFilter === "specific-year") {
+          // Anno specifico (1 gen - 31 dic)
+          queryStartDate = new Date(selectedYear, 0, 1);
+          queryEndDate = new Date(selectedYear, 11, 31);
+        } else if (filters.periodType === "custom" && filters.startDate && filters.endDate) {
           // Use custom dates if provided
           queryStartDate = filters.startDate;
           queryEndDate = filters.endDate;
         } else {
-          // For non-custom periods, calculate the PAST 12 months
-          queryEndDate = new Date(); // today
+          // Default: ultimo anno (12 mesi)
+          queryEndDate = new Date();
           queryStartDate = new Date();
-          queryStartDate.setMonth(queryStartDate.getMonth() - 11); // Go back 11 months (12 mesi incluso quello corrente)
-          queryStartDate.setDate(1); // Start from the 1st day of the month
-          
-          console.log("Range date calcolato automaticamente:", 
-                     format(queryStartDate, "yyyy-MM-dd"), 
-                     "fino a", 
-                     format(queryEndDate, "yyyy-MM-dd"));
-          
-          // Only update filters if they don't match our calculated dates
-          // This prevents the infinite loop
-          const currentStartMonth = filters.startDate?.getMonth();
-          const currentEndMonth = filters.endDate?.getMonth();
-          const currentStartYear = filters.startDate?.getFullYear();
-          const currentEndYear = filters.endDate?.getFullYear();
-          const targetStartMonth = queryStartDate.getMonth();
-          const targetEndMonth = queryEndDate.getMonth();
-          const targetStartYear = queryStartDate.getFullYear();
-          const targetEndYear = queryEndDate.getFullYear();
-          
-          if (currentStartMonth !== targetStartMonth || 
-              currentEndMonth !== targetEndMonth ||
-              currentStartYear !== targetStartYear ||
-              currentEndYear !== targetEndYear) {
-            // Update filters outside of the render cycle
-            setTimeout(() => {
-              setFilters(prev => ({
-                ...prev,
-                startDate: queryStartDate,
-                endDate: queryEndDate
-              }));
-            }, 0);
-          }
+          queryStartDate.setMonth(queryStartDate.getMonth() - 11);
+          queryStartDate.setDate(1); // Inizio del mese
         }
+        
+        // Crea una chiave di cache basata sui parametri di query
+        const cacheKey = `${format(queryStartDate, "yyyy-MM-dd")}_${format(queryEndDate, "yyyy-MM-dd")}_${filters.propertyId}`;
+        
+        // Verifica se i dati sono già in cache e non sono vecchi (meno di 5 minuti)
+        const currentTime = Date.now();
+        const cachedData = dataCache[cacheKey];
+        
+        if (cachedData && currentTime - cachedData.timestamp < 5 * 60 * 1000) {
+          setFinancialData(cachedData.financialData);
+          return;
+        }
+        
+        // Se i dati non sono in cache o sono vecchi, inizia il caricamento
+        setLoadingFinancial(true);
         
         const queryParams = {
           startDate: format(queryStartDate, "yyyy-MM-dd"),
@@ -295,27 +434,22 @@ export default function ReportPage() {
         };
         
         try {
-          console.log("Tentativo di caricamento dati finanziari reali con parametri:", queryParams);
           // Prima prova a caricare dati reali dall'API
           const data = await api.reports.getFinancialData(queryParams);
-          console.log("Dati finanziari reali ricevuti:", data);
           
           if (!data || !Array.isArray(data) || data.length === 0) {
-            console.log("Dati finanziari reali vuoti o invalidi, utilizzo dati di esempio");
-            
             // Use sample data but adjust dates to match the query period
-            const adjustedSampleData = SAMPLE_FINANCIAL_DATA.map((item, index) => {
-              const monthOffset = index - 11; // 0 is current month, -11 is 11 months ago
-              const date = new Date();
-              date.setMonth(date.getMonth() + monthOffset);
-              
-              return {
-                ...item,
-                date: format(date, 'MMM yyyy')
-              };
-            });
+            const adjustedSampleData = generateSampleData(timeFilter, selectedYear);
             
-            console.log("Dati di esempio adattati:", adjustedSampleData);
+            // Salva i dati nella cache
+            setDataCache(prev => ({
+              ...prev,
+              [cacheKey]: {
+                financialData: adjustedSampleData,
+                timestamp: currentTime
+              }
+            }));
+            
             setFinancialData(adjustedSampleData);
             return;
           }
@@ -328,75 +462,84 @@ export default function ReportPage() {
           );
           
           if (!formattedData || formattedData.length === 0) {
-            console.log("Dati finanziari formattati vuoti, utilizzo dati di esempio");
-            
             // Use sample data but adjust dates to match the query period
-            const adjustedSampleData = SAMPLE_FINANCIAL_DATA.map((item, index) => {
-              const monthOffset = index - 11; // 0 is current month, -11 is 11 months ago
-              const date = new Date();
-              date.setMonth(date.getMonth() + monthOffset);
-              
-              return {
-                ...item,
-                date: format(date, 'MMM yyyy')
-              };
-            });
+            const adjustedSampleData = generateSampleData(timeFilter, selectedYear);
             
-            console.log("Dati di esempio adattati:", adjustedSampleData);
+            // Salva i dati nella cache
+            setDataCache(prev => ({
+              ...prev,
+              [cacheKey]: {
+                financialData: adjustedSampleData,
+                timestamp: currentTime
+              }
+            }));
+            
             setFinancialData(adjustedSampleData);
             return;
           }
           
           // Ordina i dati per data
           formattedData.sort((a, b) => {
+            if (a.sortKey && b.sortKey) {
+              // Se abbiamo le chiavi di ordinamento, usiamo quelle
+              return a.sortKey.localeCompare(b.sortKey);
+            }
+            
+            // Fallback al metodo precedente
             const dateA = new Date(a.date);
             const dateB = new Date(b.date);
             return dateA.getTime() - dateB.getTime();
           });
           
-          console.log("Dati finanziari formattati e ordinati:", formattedData);
-          setFinancialData(formattedData);
+          // Assicuriamoci che ogni elemento abbia la proprietà 'net' calcolata correttamente
+          const dataWithNet = formattedData.map(item => ({
+            ...item,
+            net: typeof item.net !== 'undefined' ? item.net : 
+                (typeof item.income === 'number' && typeof item.expenses === 'number' ? 
+                 item.income - item.expenses : 0)
+          }));
+          
+          // Salva i dati nella cache
+          setDataCache(prev => ({
+            ...prev,
+            [cacheKey]: {
+              financialData: dataWithNet,
+              timestamp: currentTime
+            }
+          }));
+          
+          setFinancialData(dataWithNet);
         } catch (apiError) {
-          console.error("Errore API nel caricamento dei dati finanziari:", apiError);
-          console.log("Utilizzando dati finanziari di esempio preimpostati");
-          
           // Use sample data but adjust dates to match the query period
-          const adjustedSampleData = SAMPLE_FINANCIAL_DATA.map((item, index) => {
-            const monthOffset = index - 11; // 0 is current month, -11 is 11 months ago
-            const date = new Date();
-            date.setMonth(date.getMonth() + monthOffset);
-            
-            return {
-              ...item,
-              date: format(date, 'MMM yyyy')
-            };
-          });
+          const adjustedSampleData = generateSampleData(timeFilter, selectedYear);
           
-          console.log("Dati di esempio adattati:", adjustedSampleData);
+          // Ordina i dati per garantire il corretto ordine cronologico
+          adjustedSampleData.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+          
+          // Salva i dati nella cache
+          setDataCache(prev => ({
+            ...prev,
+            [cacheKey]: {
+              financialData: adjustedSampleData,
+              timestamp: currentTime
+            }
+          }));
+          
           setFinancialData(adjustedSampleData);
         }
       } catch (error) {
-        console.error("Errore nel caricamento dei dati finanziari:", error);
         toast({
           title: "Attenzione",
           description: "Utilizzando dati di esempio a causa di problemi di connessione al database",
           variant: "destructive"
         });
         
-        console.log("Utilizzando dati finanziari di esempio predefiniti dopo errore");
         // Use sample data but adjust dates to match the current period
-        const adjustedSampleData = SAMPLE_FINANCIAL_DATA.map((item, index) => {
-          const monthOffset = index - 11; // 0 is current month, -11 is 11 months ago
-          const date = new Date();
-          date.setMonth(date.getMonth() + monthOffset);
-          
-          return {
-            ...item,
-            date: format(date, 'MMM yyyy')
-          };
-        });
+        const adjustedSampleData = generateSampleData(timeFilter, selectedYear);
         
-        console.log("Dati di esempio adattati:", adjustedSampleData);
+        // Ordina i dati per garantire il corretto ordine cronologico
+        adjustedSampleData.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+        
         setFinancialData(adjustedSampleData);
       } finally {
         setLoadingFinancial(false);
@@ -404,7 +547,7 @@ export default function ReportPage() {
     }
 
     loadFinancialData();
-  }, [filters.periodType, filters.propertyId, filters.startDate?.getTime(), filters.endDate?.getTime()]);
+  }, [filters.propertyId, timeFilter, selectedYear]);
   
   // Carica i dati di riepilogo
   useEffect(() => {
@@ -416,13 +559,12 @@ export default function ReportPage() {
         let queryStartDate = filters.startDate;
         let queryEndDate = filters.endDate;
         
-        if (filters.periodType !== "custom") {
-          // For non-custom periods, use the current dates without updating filters
-          if (!queryStartDate || !queryEndDate) {
-            queryEndDate = new Date();
-            queryStartDate = new Date();
-            queryStartDate.setMonth(queryStartDate.getMonth() - 11);
-          }
+        // Verifica che ci siano date valide all'inizio
+        if (!queryStartDate || !queryEndDate) {
+          // Se non ci sono date valide, imposta un periodo predefinito (ultimo mese)
+          queryEndDate = new Date();
+          queryStartDate = new Date();
+          queryStartDate.setMonth(queryStartDate.getMonth() - 1);
         }
         
         const queryParams = {
@@ -432,32 +574,25 @@ export default function ReportPage() {
         };
         
         try {
-          console.log("Tentativo di caricamento dati di riepilogo reali...");
           // Prima prova a caricare dati reali
           const data = await api.reports.getSummary(queryParams);
-          console.log("Dati di riepilogo reali ricevuti:", data);
           
           if (!data) {
-            console.log("Dati di riepilogo reali vuoti o invalidi, utilizzo dati di esempio");
             setSummaryData(SAMPLE_SUMMARY_DATA);
             return;
           }
           
           setSummaryData(data);
         } catch (apiError) {
-          console.error("Errore API nel caricamento dei dati di riepilogo:", apiError);
-          console.log("Utilizzando dati di riepilogo di esempio preimpostati");
           setSummaryData(SAMPLE_SUMMARY_DATA);
         }
       } catch (error) {
-        console.error("Errore nel caricamento dei dati di riepilogo:", error);
         toast({
           title: "Attenzione",
           description: "Utilizzando dati di esempio a causa di problemi di connessione al database",
           variant: "destructive"
         });
         
-        console.log("Utilizzando dati di riepilogo di esempio predefiniti dopo errore");
         setSummaryData(SAMPLE_SUMMARY_DATA);
       } finally {
         setLoadingSummary(false);
@@ -477,13 +612,12 @@ export default function ReportPage() {
         let queryStartDate = filters.startDate;
         let queryEndDate = filters.endDate;
         
-        if (filters.periodType !== "custom") {
-          // For non-custom periods, use the current dates without updating filters
-          if (!queryStartDate || !queryEndDate) {
-            queryEndDate = new Date();
-            queryStartDate = new Date();
-            queryStartDate.setMonth(queryStartDate.getMonth() - 11);
-          }
+        // Verifica che ci siano date valide all'inizio
+        if (!queryStartDate || !queryEndDate) {
+          // Se non ci sono date valide, imposta un periodo predefinito (ultimo mese)
+          queryEndDate = new Date();
+          queryStartDate = new Date();
+          queryStartDate.setMonth(queryStartDate.getMonth() - 1);
         }
         
         const queryParams = {
@@ -493,32 +627,25 @@ export default function ReportPage() {
         };
         
         try {
-          console.log("Tentativo di caricamento dati proprietà reali...");
           // Prima prova a caricare dati reali dall'API
           const data = await api.reports.getPropertyPerformance(queryParams);
-          console.log("Dati proprietà reali ricevuti:", data);
           
           if (!data || !Array.isArray(data) || data.length === 0) {
-            console.log("Dati proprietà reali vuoti o invalidi, utilizzo dati di esempio");
             setPropertyData(SAMPLE_PROPERTY_DATA);
             return;
           }
           
           setPropertyData(data);
         } catch (apiError) {
-          console.error("Errore API nel caricamento dei dati delle proprietà:", apiError);
-          console.log("Utilizzando dati proprietà di esempio preimpostati");
           setPropertyData(SAMPLE_PROPERTY_DATA);
         }
       } catch (error) {
-        console.error("Errore nel caricamento dei dati delle proprietà:", error);
         toast({
           title: "Attenzione",
           description: "Utilizzando dati di esempio a causa di problemi di connessione al database",
           variant: "destructive"
         });
         
-        console.log("Utilizzando dati proprietà di esempio predefiniti dopo errore");
         setPropertyData(SAMPLE_PROPERTY_DATA);
       } finally {
         setLoadingProperty(false);
@@ -559,7 +686,6 @@ export default function ReportPage() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
-      console.error("Errore nell'esportazione del report:", error);
       toast({
         title: "Errore",
         description: "Impossibile esportare il report. Riprova più tardi.",
@@ -572,69 +698,175 @@ export default function ReportPage() {
 
   // Renderizza il grafico degli incassi/spese
   const renderIncomeChart = () => {
-    console.log("Rendering grafico incassi con dati:", financialData);
-    
     if (loadingFinancial) return (
       <div className="h-[400px] w-full flex items-center justify-center">
         <div className="h-12 w-12 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
       </div>
     );
     
+    // Dichiariamo formattedData prima di usarla
+    let formattedData = financialData;
+    
     if (!financialData || financialData.length === 0) {
-      // Se non ci sono dati, utilizza i dati di esempio
-      console.log("Dati finanziari non disponibili nel rendering, utilizzo dati di esempio");
-      setTimeout(() => {
-        if (!financialData || financialData.length === 0) {
-          setFinancialData(SAMPLE_FINANCIAL_DATA);
-        }
-      }, 100);
-      
-      return (
-        <Card className="col-span-2">
-          <CardHeader>
-            <CardTitle>Andamento Finanziario</CardTitle>
-            <CardDescription>
-              Tentativo di recupero dati in corso...
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="h-[400px] flex items-center justify-center text-muted-foreground">
-            <div className="text-center">
-              <LineChart className="h-16 w-16 mx-auto mb-4 opacity-20" />
-              <p>Caricamento dei dati finanziari in corso...</p>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="mt-4"
-                onClick={() => setFinancialData(SAMPLE_FINANCIAL_DATA)}
-              >
-                Carica dati di esempio
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      );
+      formattedData = generateSampleData(timeFilter, selectedYear);
+      setFinancialData(formattedData);
     }
     
     // Assicuriamoci che i dati abbiano il formato corretto
-    const validData = financialData.map(item => ({
+    // Utilizziamo formattedData invece di financialData
+    const validData = formattedData.map(item => ({
       ...item,
       income: typeof item.income === 'number' ? item.income : 0,
       expenses: typeof item.expenses === 'number' ? item.expenses : 0,
-      net: typeof item.net === 'number' ? item.net : 0
+      // Assicuriamoci che il valore "net" sia calcolato correttamente se non esiste
+      net: typeof item.net === 'number' ? item.net : 
+           (typeof item.income === 'number' && typeof item.expenses === 'number' ? 
+            item.income - item.expenses : 0),
+      // Se la sortKey non esiste, creane una dalla data usando la nostra funzione parseDate
+      sortKey: item.sortKey || (() => {
+        // Usiamo parseDate per gestire correttamente i nomi dei mesi in italiano
+        const parsedDate = typeof item.date === 'string' ? parseDate(item.date) : null;
+        return parsedDate ? format(parsedDate, 'yyyy-MM') : format(new Date(), 'yyyy-MM');
+      })()
     }));
+    
+    // Ordiniamo i dati in base alla chiave di ordinamento
+    const sortedData = [...validData].sort((a, b) => {
+      return a.sortKey.localeCompare(b.sortKey);
+    });
+    
+    // Limita il numero di elementi visualizzati in base al filtro temporale
+    const limitedData = timeFilter === "3months" ? sortedData.slice(-3) :
+                        timeFilter === "6months" ? sortedData.slice(-6) :
+                        timeFilter === "specific-year" ? sortedData :
+                        sortedData.slice(-12);
+    
+    // Ottieni gli anni disponibili per il selettore (se necessario)
+    const availableYears = Array.from(
+      new Set(
+        formattedData  // Utilizziamo formattedData invece di financialData
+          .map(item => {
+            if (typeof item.date === 'string') {
+              // Assumiamo che il formato sia "MMM YYYY"
+              const parts = item.date.split(' ');
+              if (parts.length >= 2) {
+                return parseInt(parts[1]);
+              }
+            }
+            return new Date().getFullYear();
+          })
+          .filter(year => !isNaN(year))
+      )
+    ).sort((a, b) => b - a); // Ordine decrescente
+    
+    if (availableYears.length === 0) {
+      // Se non ci sono anni disponibili, usa l'anno corrente
+      availableYears.push(new Date().getFullYear());
+    }
+    
+    // Otteniamo il titolo in base al filtro temporale selezionato
+    let timeFilterTitle = "";
+    switch(timeFilter) {
+      case "3months":
+        timeFilterTitle = "ultimi 3 mesi";
+        break;
+      case "6months":
+        timeFilterTitle = "ultimi 6 mesi";
+        break;
+      case "year":
+        timeFilterTitle = "ultimo anno";
+        break;
+      case "specific-year":
+        timeFilterTitle = `anno ${selectedYear}`;
+        break;
+    }
     
     return (
       <Card className="col-span-2">
-        <CardHeader>
-          <CardTitle>Andamento Finanziario</CardTitle>
-          <CardDescription>
-            Visualizzazione dettagliata di entrate, uscite e margine netto
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Andamento Finanziario - {timeFilterTitle}</CardTitle>
+            <CardDescription>
+              Visualizzazione dettagliata di entrate, uscite e margine netto
+            </CardDescription>
+          </div>
+          <div className="flex flex-col md:flex-row gap-2">
+            {/* Filtri temporali */}
+            <div className="flex rounded-md overflow-hidden border">
+              <Button 
+                variant={timeFilter === "3months" ? "default" : "outline"} 
+                className={`text-xs px-2 md:px-2 h-7 md:h-8 rounded-none border-0 ${
+                  timeFilter === "3months" ? 'bg-primary' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+                onClick={() => setTimeFilter("3months")}
+              >
+                3 Mesi
+              </Button>
+              <Button 
+                variant={timeFilter === "6months" ? "default" : "outline"} 
+                className={`text-xs px-2 md:px-2 h-7 md:h-8 rounded-none border-0 ${
+                  timeFilter === "6months" ? 'bg-primary' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+                onClick={() => setTimeFilter("6months")}
+              >
+                6 Mesi
+              </Button>
+              <Button 
+                variant={timeFilter === "year" ? "default" : "outline"} 
+                className={`text-xs px-2 md:px-2 h-7 md:h-8 rounded-none border-0 ${
+                  timeFilter === "year" ? 'bg-primary' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+                onClick={() => setTimeFilter("year")}
+              >
+                1 Anno
+              </Button>
+              <div className="relative">
+                <Button 
+                  variant={timeFilter === "specific-year" ? "default" : "outline"} 
+                  className={`text-xs px-2 md:px-2 h-7 md:h-8 rounded-none border-0 ${
+                    timeFilter === "specific-year" ? 'bg-primary' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                  onClick={() => setTimeFilter("specific-year")}
+                >
+                  {selectedYear}
+                </Button>
+                {timeFilter === "specific-year" && availableYears.length > 1 && (
+                  <select 
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(Number(e.target.value))}
+                  >
+                    {availableYears.map(year => (
+                      <option key={year} value={year}>{year}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            </div>
+
+            {/* Toggle lordo/netto */}
+            <div className="flex rounded-md overflow-hidden border">
+              <Button 
+                variant={showNet ? "outline" : "default"} 
+                className={`text-xs md:text-sm px-2 md:px-3 h-7 md:h-8 rounded-none border-0 ${!showNet ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                onClick={() => setShowNet(false)}
+              >
+                Lordo
+              </Button>
+              <Button 
+                variant={showNet ? "default" : "outline"} 
+                className={`text-xs md:text-sm px-2 md:px-3 h-7 md:h-8 rounded-none border-0 ${showNet ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                onClick={() => setShowNet(true)}
+              >
+                Netto
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="h-[400px]">
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={validData}>
+              <ComposedChart data={limitedData}>
                 <defs>
                   <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
@@ -660,16 +892,21 @@ export default function ReportPage() {
                   formatter={(value) => [`€${Number(value).toLocaleString()}`, undefined]}
                   labelFormatter={(label) => `Periodo: ${label}`}
                 />
-                <Bar dataKey="income" fill="url(#colorIncome)" name="Entrate" />
-                <Bar dataKey="expenses" fill="url(#colorExpenses)" name="Uscite" />
-                <Line 
-                  type="monotone"
-                  dataKey="net"
-                  stroke="#10b981"
-                  strokeWidth={2}
-                  name="Netto"
-                  dot={{ r: 4 }}
-                />
+                {!showNet ? (
+                  <>
+                    <Bar dataKey="income" fill="url(#colorIncome)" name="Entrate" />
+                    <Bar dataKey="expenses" fill="url(#colorExpenses)" name="Uscite" />
+                  </>
+                ) : (
+                  <Line 
+                    type="monotone"
+                    dataKey="net"
+                    stroke="#10b981"
+                    strokeWidth={2}
+                    name="Netto"
+                    dot={{ r: 4 }}
+                  />
+                )}
               </ComposedChart>
             </ResponsiveContainer>
           </div>
@@ -680,8 +917,6 @@ export default function ReportPage() {
 
   // Renderizza la card di riepilogo
   const renderSummaryCard = () => {
-    console.log("Rendering card di riepilogo con dati:", summaryData);
-    
     if (loadingSummary) return (
       <div className="h-[200px] w-full flex items-center justify-center">
         <div className="h-10 w-10 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
@@ -689,8 +924,6 @@ export default function ReportPage() {
     );
     
     if (!summaryData) {
-      // Se non ci sono dati, utilizza i dati di esempio
-      console.log("Dati riepilogo non disponibili nel rendering, utilizzo dati di esempio");
       setTimeout(() => {
         if (!summaryData) {
           setSummaryData(SAMPLE_SUMMARY_DATA);
@@ -762,8 +995,6 @@ export default function ReportPage() {
 
   // Renderizza la tabella delle performance per proprietà
   const renderPropertyPerformance = () => {
-    console.log("Rendering performance proprietà con dati:", propertyData);
-    
     if (loadingProperty) return (
       <div className="h-[300px] w-full flex items-center justify-center">
         <div className="h-10 w-10 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
@@ -771,8 +1002,6 @@ export default function ReportPage() {
     );
     
     if (!propertyData || propertyData.length === 0) {
-      // Se non ci sono dati, utilizza i dati di esempio
-      console.log("Dati proprietà non disponibili nel rendering, utilizzo dati di esempio");
       setTimeout(() => {
         if (!propertyData || propertyData.length === 0) {
           setPropertyData(SAMPLE_PROPERTY_DATA);

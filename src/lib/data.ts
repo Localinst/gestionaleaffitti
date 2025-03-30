@@ -35,87 +35,17 @@ export interface Transaction {
 
 // Sample Properties
 export const propertiesData: Property[] = [
-  {
-    id: "b51a8696-7413-48e4-b252-16b0ad37b895",
-    name: "jhbvj",
-    address: "Via Roma 123",
-    city: "Milano",
-    type: "Apartments",
-    units: 5,
-    value: 500000,
-    image: "/img/property1.jpg"
-  },
-  {
-    id: "d83a3970-f0be-4ea5-a53b-0cf3b7298355",
-    name: "srgsd",
-    address: "Via Napoli 45",
-    city: "Roma",
-    type: "Houses",
-    units: 3,
-    value: 350000,
-    image: "/img/property2.jpg"
-  }
+ 
 ];
 
 // Sample Tenants
 export const tenantsData: Tenant[] = [
-  {
-    id: "1",
-    name: "Marco Rossi",
-    email: "marco.rossi@example.com",
-    phone: "345-678-9012",
-    leaseStart: "2023-01-01",
-    leaseEnd: "2023-12-31",
-    rent: 1200,
-    propertyId: "b51a8696-7413-48e4-b252-16b0ad37b895",
-    unit: "3A",
-    status: "active"
-  },
-  {
-    id: "2",
-    name: "Giulia Bianchi",
-    email: "giulia.bianchi@example.com",
-    phone: "345-123-4567",
-    leaseStart: "2023-02-15",
-    leaseEnd: "2024-02-14",
-    rent: 950,
-    propertyId: "d83a3970-f0be-4ea5-a53b-0cf3b7298355",
-    unit: "2B",
-    status: "active"
-  }
+ 
 ];
 
 // Sample Transactions
 export const transactionsData: Transaction[] = [
-  {
-    id: "1",
-    date: "2023-06-01",
-    amount: 1200,
-    type: "income",
-    category: "Rent",
-    description: "Affitto Giugno 2023",
-    propertyId: "b51a8696-7413-48e4-b252-16b0ad37b895",
-    tenantId: "1"
-  },
-  {
-    id: "2",
-    date: "2023-06-05",
-    amount: 950,
-    type: "income",
-    category: "Rent",
-    description: "Affitto Giugno 2023",
-    propertyId: "d83a3970-f0be-4ea5-a53b-0cf3b7298355",
-    tenantId: "2"
-  },
-  {
-    id: "3",
-    date: "2023-06-10",
-    amount: 350,
-    type: "expense",
-    category: "Maintenance",
-    description: "Riparazione impianto idraulico",
-    propertyId: "b51a8696-7413-48e4-b252-16b0ad37b895"
-  }
+  
 ];
 
 // Dashboard Stats

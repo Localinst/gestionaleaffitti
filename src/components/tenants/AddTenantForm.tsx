@@ -37,9 +37,10 @@ import {
 // Interfaccia per le opzioni di unità
 interface UnitOption {
   id: string;
-  propertyId: number; 
+  propertyId: string;
   name: string;
   displayName: string;
+  unitIndex: string;
 }
 
 const tenantFormSchema = z.object({
@@ -87,8 +88,9 @@ export function AddTenantForm({
               // Aggiungiamo un'opzione per ogni unità
               unitNames.forEach((unitName: string, index: number) => {
                 options.push({
-                  id: `${property.id}-${index}`,
+                  id: `${property.id}::${index}`,
                   propertyId: property.id,
+                  unitIndex: index.toString(),
                   name: unitName || `Unità ${index + 1}`,
                   displayName: `${property.name} - ${unitName || `Unità ${index + 1}`}`
                 });
@@ -99,8 +101,9 @@ export function AddTenantForm({
               // Fallback: creiamo unità numerate
               for (let i = 0; i < property.units; i++) {
                 options.push({
-                  id: `${property.id}-${i}`,
+                  id: `${property.id}::${i}`,
                   propertyId: property.id,
+                  unitIndex: i.toString(),
                   name: `Unità ${i + 1}`,
                   displayName: `${property.name} - Unità ${i + 1}`
                 });
@@ -109,8 +112,9 @@ export function AddTenantForm({
           } else {
             // Se la proprietà ha solo 1 unità, aggiungiamo solo la proprietà
             options.push({
-              id: `${property.id}-0`,
+              id: `${property.id}::0`,
               propertyId: property.id,
+              unitIndex: "0",
               name: property.name,
               displayName: property.name
             });
@@ -143,8 +147,10 @@ export function AddTenantForm({
     try {
       setIsSubmitting(true);
       
-      // Estraiamo l'ID della proprietà e il numero dell'unità dalla stringa unit_id
-      const [propertyId, unitIndex] = data.unit_id.split('-');
+      // Estraiamo l'ID della proprietà e il numero dell'unità usando il nuovo separatore ::
+      const [propertyId, unitIndex] = data.unit_id.split('::');
+      
+      console.log("propertyId:", propertyId, "unitIndex:", unitIndex);
       
       const tenantData: Omit<Tenant, 'id'> = {
         property_id: propertyId,
@@ -158,6 +164,8 @@ export function AddTenantForm({
         unit: unitIndex || "0",
         status: "active"
       };
+      
+      console.log("Dati inquilino da salvare:", tenantData);
 
       // Salviamo l'inquilino
       const tenant = await createTenant(tenantData);

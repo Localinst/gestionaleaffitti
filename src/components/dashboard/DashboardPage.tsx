@@ -132,8 +132,11 @@ function IncomeChart() {
   const [showNet, setShowNet] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  // Aggiungiamo il filtro temporale
+  const [timeFilter, setTimeFilter] = useState("year"); // "3months", "6months", "year", "specific-year"
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   
-  // Aggiungi event listener per il resize
+  // Aggiungiamo event listener per il resize
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
@@ -142,6 +145,60 @@ function IncomeChart() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Funzione per filtrare i dati in base al filtro temporale
+  const filterDataByTimeRange = (allTransactions: Transaction[]) => {
+    if (!allTransactions || allTransactions.length === 0) {
+      return [];
+    }
+
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    
+    let startDate: Date;
+    
+    switch(timeFilter) {
+      case "3months":
+        // Ultimi 3 mesi
+        startDate = new Date(currentYear, currentMonth - 2, 1);
+        break;
+      case "6months":
+        // Ultimi 6 mesi
+        startDate = new Date(currentYear, currentMonth - 5, 1);
+        break;
+      case "year":
+        // Ultimo anno (12 mesi incluso corrente)
+        startDate = new Date(currentYear, currentMonth - 11, 1);
+        break;
+      case "specific-year":
+        // Anno specifico (1 gen - 31 dic)
+        startDate = new Date(selectedYear, 0, 1);
+        break;
+      default:
+        // Default: ultimo anno
+        startDate = new Date(currentYear, currentMonth - 11, 1);
+    }
+    
+    // Imposta la data di fine appropriata
+    let endDate: Date;
+    if (timeFilter === "specific-year") {
+      endDate = new Date(selectedYear, 11, 31, 23, 59, 59);
+    } else {
+      endDate = new Date();
+    }
+
+    console.log(`Filtrando transazioni dal ${startDate.toISOString()} al ${endDate.toISOString()}`);
+    
+    // Filtra le transazioni
+    return allTransactions.filter(transaction => {
+      const transactionDate = transaction.date instanceof Date
+        ? transaction.date
+        : new Date(transaction.date);
+      
+      return transactionDate >= startDate && transactionDate <= endDate;
+    });
+  };
 
   // Funzione per processare le transazioni in dati mensili
   const processTransactionsIntoMonthlyData = (transactions: Transaction[]) => {
@@ -152,28 +209,49 @@ function IncomeChart() {
     
     console.log("Inizio processamento transazioni:", transactions.length, "transazioni");
     
+    // Filtra le transazioni in base al periodo selezionato
+    const filteredTransactions = filterDataByTimeRange(transactions);
+    console.log("Transazioni filtrate:", filteredTransactions.length);
+    
     // Oggetto per memorizzare i totali mensili
     const monthlyTotals: { [key: string]: { month: string, income: number, expenses: number, net: number } } = {};
     
-    // Data corrente per i calcoli
+    // Determina il range di date da visualizzare in base al filtro temporale
     const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth();
     
-    // Creiamo un array di date per gli ultimi 12 mesi più il mese futuro (13 mesi totali)
-    const monthsToDisplay = 13;
-    const monthDates = [];
+    let startMonth: Date;
+    let monthsToDisplay: number;
     
-    // Aggiungiamo prima il mese futuro
-    const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-    monthDates.push(nextMonth);
-    
-    // Poi aggiungiamo il mese corrente e i precedenti 11 mesi (totale 12 + 1 futuro)
-    for (let i = 0; i < monthsToDisplay - 1; i++) {
-      const monthDate = new Date(today.getFullYear(), today.getMonth() - i, 1);
-      monthDates.push(monthDate);
+    switch(timeFilter) {
+      case "3months":
+        startMonth = new Date(currentYear, currentMonth - 2, 1);
+        monthsToDisplay = 3;
+        break;
+      case "6months":
+        startMonth = new Date(currentYear, currentMonth - 5, 1);
+        monthsToDisplay = 6;
+        break;
+      case "year":
+        startMonth = new Date(currentYear, currentMonth - 11, 1);
+        monthsToDisplay = 12;
+        break;
+      case "specific-year":
+        startMonth = new Date(selectedYear, 0, 1);
+        monthsToDisplay = 12;
+        break;
+      default:
+        startMonth = new Date(currentYear, currentMonth - 11, 1);
+        monthsToDisplay = 12;
     }
     
-    // Ordiniamo le date cronologicamente
-    monthDates.sort((a, b) => a.getTime() - b.getTime());
+    // Crea array delle date per i mesi che vogliamo visualizzare
+    const monthDates = [];
+    for (let i = 0; i < monthsToDisplay; i++) {
+      const monthDate = new Date(startMonth.getFullYear(), startMonth.getMonth() + i, 1);
+      monthDates.push(monthDate);
+    }
     
     // Inizializziamo i totali mensili per tutti i mesi che vogliamo visualizzare
     monthDates.forEach(date => {
@@ -190,7 +268,7 @@ function IncomeChart() {
     });
     
     // Ora elaboriamo le transazioni e aggiorniamo i valori per ogni mese
-    transactions.forEach(transaction => {
+    filteredTransactions.forEach(transaction => {
       try {
         // Assicurati che la data sia un oggetto Date
         const transactionDate = transaction.date instanceof Date 
@@ -233,11 +311,7 @@ function IncomeChart() {
       .sort((a, b) => a.sortDate.getTime() - b.sortDate.getTime())
       .map(({ key, sortDate, ...rest }) => rest);
     
-    // Debug per verificare i dati generati
     console.log("Dati mensili elaborati:", result);
-    console.log("Numero di mesi:", result.length);
-    console.log("Dettaglio mesi:", result.map(m => m.month));
-    
     return result;
   };
   
@@ -267,8 +341,22 @@ function IncomeChart() {
   
   const data = processTransactionsIntoMonthlyData(transactions);
   
-  // Aggiunto log per verificare effettivamente i valori dei mesi
-  console.log("Valori per mese:", data.map(item => `${item.month}: ${item.income}`));
+  // Otteniamo gli anni disponibili per il selettore
+  const availableYears = Array.from(
+    new Set(
+      transactions
+        .map(t => {
+          const date = t.date instanceof Date ? t.date : new Date(t.date);
+          return date.getFullYear();
+        })
+        .filter(y => !isNaN(y))
+    )
+  ).sort((a, b) => b - a); // Ordine decrescente
+  
+  if (availableYears.length === 0) {
+    // Se non ci sono anni disponibili, usa l'anno corrente
+    availableYears.push(new Date().getFullYear());
+  }
   
   if (isLoading) {
     return <Skeleton className="h-[350px] w-full" />;
@@ -327,12 +415,29 @@ function IncomeChart() {
     );
   }
   
+  // Otteniamo il titolo in base al filtro
+  let timeFilterTitle = "";
+  switch(timeFilter) {
+    case "3months":
+      timeFilterTitle = "ultimi 3 mesi";
+      break;
+    case "6months":
+      timeFilterTitle = "ultimi 6 mesi";
+      break;
+    case "year":
+      timeFilterTitle = "ultimo anno";
+      break;
+    case "specific-year":
+      timeFilterTitle = `anno ${selectedYear}`;
+      break;
+  }
+  
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <div className="flex flex-col space-y-1">
           <CardTitle className="text-sm md:text-base font-normal">
-            {showNet ? 'Reddito Netto Mensile' : 'Reddito Lordo Mensile'}
+            {showNet ? 'Reddito Netto Mensile' : 'Reddito Lordo Mensile'} - {timeFilterTitle}
           </CardTitle>
           <CardDescription className="text-xs md:text-sm">
             {showNet 
@@ -340,21 +445,77 @@ function IncomeChart() {
               : 'Visualizzazione dettagliata di entrate e uscite'}
           </CardDescription>
         </div>
-        <div className="flex rounded-md overflow-hidden border">
-          <Button 
-            variant={showNet ? "outline" : "default"} 
-            className={`text-xs md:text-sm px-2 md:px-3 h-7 md:h-8 rounded-none border-0 ${!showNet ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-            onClick={() => setShowNet(false)}
-          >
-            Lordo
-          </Button>
-          <Button 
-            variant={showNet ? "default" : "outline"} 
-            className={`text-xs md:text-sm px-2 md:px-3 h-7 md:h-8 rounded-none border-0 ${showNet ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-            onClick={() => setShowNet(true)}
-          >
-            Netto
-          </Button>
+        <div className="flex flex-col md:flex-row gap-2">
+          {/* Aggiungiamo i filtri temporali */}
+          <div className="flex rounded-md overflow-hidden border">
+            <Button 
+              variant={timeFilter === "3months" ? "default" : "outline"} 
+              className={`text-xs px-2 md:px-2 h-7 md:h-8 rounded-none border-0 ${
+                timeFilter === "3months" ? 'bg-primary' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+              onClick={() => setTimeFilter("3months")}
+            >
+              3 Mesi
+            </Button>
+            <Button 
+              variant={timeFilter === "6months" ? "default" : "outline"} 
+              className={`text-xs px-2 md:px-2 h-7 md:h-8 rounded-none border-0 ${
+                timeFilter === "6months" ? 'bg-primary' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+              onClick={() => setTimeFilter("6months")}
+            >
+              6 Mesi
+            </Button>
+            <Button 
+              variant={timeFilter === "year" ? "default" : "outline"} 
+              className={`text-xs px-2 md:px-2 h-7 md:h-8 rounded-none border-0 ${
+                timeFilter === "year" ? 'bg-primary' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+              onClick={() => setTimeFilter("year")}
+            >
+              1 Anno
+            </Button>
+            <div className="relative">
+              <Button 
+                variant={timeFilter === "specific-year" ? "default" : "outline"} 
+                className={`text-xs px-2 md:px-2 h-7 md:h-8 rounded-none border-0 ${
+                  timeFilter === "specific-year" ? 'bg-primary' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+                onClick={() => setTimeFilter("specific-year")}
+              >
+                {selectedYear}
+              </Button>
+              {timeFilter === "specific-year" && availableYears.length > 1 && (
+                <select 
+                  className="absolute inset-0 opacity-0 cursor-pointer"
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(Number(e.target.value))}
+                >
+                  {availableYears.map(year => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
+              )}
+            </div>
+          </div>
+
+          {/* Toggle lordo/netto */}
+          <div className="flex rounded-md overflow-hidden border">
+            <Button 
+              variant={showNet ? "outline" : "default"} 
+              className={`text-xs md:text-sm px-2 md:px-3 h-7 md:h-8 rounded-none border-0 ${!showNet ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+              onClick={() => setShowNet(false)}
+            >
+              Lordo
+            </Button>
+            <Button 
+              variant={showNet ? "default" : "outline"} 
+              className={`text-xs md:text-sm px-2 md:px-3 h-7 md:h-8 rounded-none border-0 ${showNet ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+              onClick={() => setShowNet(true)}
+            >
+              Netto
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
