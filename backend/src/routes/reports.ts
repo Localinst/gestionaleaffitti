@@ -111,6 +111,7 @@ router.get('/financial', async (req: Request, res: Response) => {
 
 // Endpoint per ottenere i dati di sommario
 router.get('/summary', async (req: Request, res: Response) => {
+  const client = await pool.connect();
   try {
     // Parametri dalla query
     const { startDate, endDate, propertyId } = req.query;
@@ -135,7 +136,7 @@ router.get('/summary', async (req: Request, res: Response) => {
       paramIndex++;
     }
     
-    const propertyResult = await pool.query(propertyQuery, queryParams);
+    const propertyResult = await client.query(propertyQuery, queryParams);
     
     // Query per contare il numero di inquilini
     let tenantQuery = `
@@ -154,7 +155,7 @@ router.get('/summary', async (req: Request, res: Response) => {
       paramIndex++;
     }
     
-    const tenantResult = await pool.query(tenantQuery, queryParams);
+    const tenantResult = await client.query(tenantQuery, queryParams);
     
     // Query per calcolare entrate, uscite e tasso di occupazione
     let financialQuery = `
@@ -186,7 +187,7 @@ router.get('/summary', async (req: Request, res: Response) => {
       queryParams.push(propertyId);
     }
     
-    const financialResult = await pool.query(financialQuery, queryParams);
+    const financialResult = await client.query(financialQuery, queryParams);
     
     // Query per calcolare il canone medio
     let rentQuery = `
@@ -218,7 +219,7 @@ router.get('/summary', async (req: Request, res: Response) => {
       queryParams.push(propertyId);
     }
     
-    const rentResult = await pool.query(rentQuery, queryParams);
+    const rentResult = await client.query(rentQuery, queryParams);
     
     // Calcola il tasso di occupazione (tenants / total_units)
     const propertyCount = parseInt(propertyResult.rows[0].property_count) || 0;
@@ -239,17 +240,28 @@ router.get('/summary', async (req: Request, res: Response) => {
     
     // Invia i dati
     res.json(summaryData);
-  } catch (error: any) {
+  } catch (error) {
     console.error('Errore durante il recupero dei dati di riepilogo:', error);
     res.status(500).json({ 
       error: 'Errore durante il recupero dei dati di riepilogo',
-      message: error.message 
+      details: process.env.NODE_ENV === 'development' ? (error as any).message : undefined
     });
+  } finally {
+    // Assicuriamoci di rilasciare sempre il client al pool
+    try {
+      if (client) {
+        client.release();
+        console.log('Client rilasciato al pool in /summary');
+      }
+    } catch (releaseError) {
+      console.error('Errore nel rilascio del client:', releaseError);
+    }
   }
 });
 
 // Endpoint per ottenere i dati delle proprietà
 router.get('/properties', async (req: Request, res: Response) => {
+  const client = await pool.connect();
   try {
     // Parametri dalla query
     const { startDate, endDate, propertyId } = req.query;
@@ -274,7 +286,7 @@ router.get('/properties', async (req: Request, res: Response) => {
       queryParams.push(propertyId);
     }
     
-    const propertiesResult = await pool.query(propertiesQuery, queryParams);
+    const propertiesResult = await client.query(propertiesQuery, queryParams);
     
     // Preparazione dell'array dei risultati
     const data = [];
@@ -304,7 +316,7 @@ router.get('/properties', async (req: Request, res: Response) => {
         financialParams.push(endDate);
       }
       
-      const financialResult = await pool.query(financialQuery, financialParams);
+      const financialResult = await client.query(financialQuery, financialParams);
       
       // Query per contare gli inquilini
       const tenantQuery = `
@@ -313,7 +325,7 @@ router.get('/properties', async (req: Request, res: Response) => {
         WHERE property_id = $1
       `;
       
-      const tenantResult = await pool.query(tenantQuery, [property.id]);
+      const tenantResult = await client.query(tenantQuery, [property.id]);
       
       // Calcola il tasso di occupazione
       const tenantCount = parseInt(tenantResult.rows[0].tenant_count) || 0;
@@ -335,17 +347,28 @@ router.get('/properties', async (req: Request, res: Response) => {
     
     // Invia i dati
     res.json(data);
-  } catch (error: any) {
+  } catch (error) {
     console.error('Errore durante il recupero dei dati delle proprietà:', error);
     res.status(500).json({ 
       error: 'Errore durante il recupero dei dati delle proprietà',
-      message: error.message 
+      details: process.env.NODE_ENV === 'development' ? (error as any).message : undefined
     });
+  } finally {
+    // Assicuriamoci di rilasciare sempre il client al pool
+    try {
+      if (client) {
+        client.release();
+        console.log('Client rilasciato al pool in /properties');
+      }
+    } catch (releaseError) {
+      console.error('Errore nel rilascio del client:', releaseError);
+    }
   }
 });
 
 // Endpoint per esportare i report
 router.get('/export/:format', async (req: Request, res: Response) => {
+  const client = await pool.connect();
   try {
     // Parametri dalla query e dal path
     const { format } = req.params;
@@ -382,12 +405,22 @@ router.get('/export/:format', async (req: Request, res: Response) => {
       // Per altri formati, restituisci un errore per ora
       res.status(400).json({ error: `Formato ${format} non supportato attualmente` });
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error(`Errore durante l'esportazione del report:`, error);
     res.status(500).json({ 
       error: 'Errore durante l\'esportazione del report',
-      message: error.message 
+      details: process.env.NODE_ENV === 'development' ? (error as any).message : undefined
     });
+  } finally {
+    // Assicuriamoci di rilasciare sempre il client al pool
+    try {
+      if (client) {
+        client.release();
+        console.log('Client rilasciato al pool in /export/:format');
+      }
+    } catch (releaseError) {
+      console.error('Errore nel rilascio del client:', releaseError);
+    }
   }
 });
 
