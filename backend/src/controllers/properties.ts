@@ -1,16 +1,18 @@
 import { Request, Response } from 'express';
-import pool from '../db';
+import pool, { executeQuery } from '../db';
 
 export const getProperties = async (req: Request, res: Response) => {
   try {
     // Ottengo l'user_id dall'utente autenticato
     const userId = req.user?.id;
     
-    // Query con filtro user_id
-    const result = await pool.query(
-      'SELECT * FROM properties WHERE user_id = $1 ORDER BY created_at DESC',
-      [userId]
-    );
+    // Query con filtro user_id usando il wrapper
+    const result = await executeQuery(async (client) => {
+      return client.query(
+        'SELECT * FROM properties WHERE user_id = $1 ORDER BY created_at DESC',
+        [userId]
+      );
+    });
     
     res.json(result.rows);
   } catch (error) {
@@ -25,11 +27,13 @@ export const getPropertyById = async (req: Request, res: Response) => {
     // Ottengo l'user_id dall'utente autenticato
     const userId = req.user?.id;
     
-    // Query con filtro user_id per garantire che l'utente possa vedere solo le proprie proprietà
-    const result = await pool.query(
-      'SELECT * FROM properties WHERE id = $1 AND user_id = $2', 
-      [id, userId]
-    );
+    // Query con filtro user_id usando il wrapper
+    const result = await executeQuery(async (client) => {
+      return client.query(
+        'SELECT * FROM properties WHERE id = $1 AND user_id = $2', 
+        [id, userId]
+      );
+    });
     
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Property not found' });
@@ -49,15 +53,17 @@ export const createProperty = async (req: Request, res: Response) => {
     const userId = req.user?.id;
     
     // Preparo i nomi delle unità come array JSON
-    let unitNamesJson = null;
+    let unitNamesJson: string | null = null;
     if (unitNames && Array.isArray(unitNames) && unitNames.length > 0) {
       unitNamesJson = JSON.stringify(unitNames);
     }
     
-    const result = await pool.query(
-      'INSERT INTO properties (name, address, city, type, units, value, image_url, unit_names, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
-      [name, address, city, type, units, 0, null, unitNamesJson, userId]
-    );
+    const result = await executeQuery(async (client) => {
+      return client.query(
+        'INSERT INTO properties (name, address, city, type, units, value, image_url, unit_names, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
+        [name, address, city, type, units, 0, null, unitNamesJson, userId]
+      );
+    });
     
     res.status(201).json(result.rows[0]);
   } catch (error) {
@@ -101,10 +107,12 @@ export const deleteProperty = async (req: Request, res: Response) => {
     // Ottengo l'user_id dall'utente autenticato
     const userId = req.user?.id;
     
-    const result = await pool.query(
-      'DELETE FROM properties WHERE id = $1 AND user_id = $2 RETURNING *', 
-      [id, userId]
-    );
+    const result = await executeQuery(async (client) => {
+      return client.query(
+        'DELETE FROM properties WHERE id = $1 AND user_id = $2 RETURNING *', 
+        [id, userId]
+      );
+    });
     
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Property not found or not owned by user' });

@@ -94,8 +94,9 @@ export function ReportFilterComponent({ onFiltersChange }: ReportFilterComponent
         endDate = endOfYear(now);
         break;
       case "all":
-        startDate = null;
-        endDate = null;
+        // Imposta la data di inizio al 1 gennaio 2018 e la data di fine a oggi
+        startDate = new Date(2018, 0, 1); // 1 gennaio 2018
+        endDate = now; // Data corrente
         break;
       case "custom":
         // Mantieni le date correnti o imposta un intervallo predefinito
@@ -126,7 +127,7 @@ export function ReportFilterComponent({ onFiltersChange }: ReportFilterComponent
 
   // Formatta l'etichetta del periodo corrente
   const formatPeriodLabel = () => {
-    if (filters.periodType === "all") return "Tutto il periodo";
+    if (filters.periodType === "all") return "Dal 01/01/2018 ad oggi";
     if (filters.periodType === "custom" && filters.startDate && filters.endDate) {
       return `${format(filters.startDate, "dd/MM/yyyy")} - ${format(filters.endDate, "dd/MM/yyyy")}`;
     }
@@ -233,7 +234,7 @@ export function ReportFilterComponent({ onFiltersChange }: ReportFilterComponent
       <CardFooter className="flex justify-between pt-3">
         <div className="text-sm text-muted-foreground">
           <FilterIcon className="h-4 w-4 inline-block mr-1" />
-          {filters.periodType !== "all" && filters.startDate && filters.endDate
+          {filters.startDate && filters.endDate
             ? `Dati dal ${format(filters.startDate, "dd/MM/yyyy")} al ${format(filters.endDate, "dd/MM/yyyy")}`
             : "Tutti i dati disponibili"}
           {filters.propertyId !== "all" && ` per ${getPropertyName()}`}

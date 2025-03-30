@@ -2,6 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { HashRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -15,7 +16,27 @@ import TransactionsPage from "./components/transactions/TransactionsPage";
 import DashboardPage from '@/components/dashboard/DashboardPage';
 import ReportPage from "./components/dashboard/ReportPage";
 
-const queryClient = new QueryClient();
+// Configurazione avanzata di QueryClient con gestione della cache
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Disabilita il caching
+      staleTime: 0,
+      // Effettua nuove richieste al remount dei componenti
+      refetchOnMount: true,
+      // Effettua nuove richieste al cambio di finestra
+      refetchOnWindowFocus: true,
+      // Effettua nuove richieste alla riconnessione
+      refetchOnReconnect: true,
+      // Ritentare fino a 2 volte in caso di errore
+      retry: 2,
+      // Non mantenere i dati precedenti durante le nuove richieste
+      keepPreviousData: false,
+      // Disabilita la cache
+      cacheTime: 0,
+    },
+  },
+});
 
 const App = () => {
   return (
@@ -63,6 +84,7 @@ const App = () => {
             </Routes>
           </AuthProvider>
         </Router>
+        {process.env.NODE_ENV === 'development' && <ReactQueryDevtools initialIsOpen={false} />}
       </TooltipProvider>
     </QueryClientProvider>
   );

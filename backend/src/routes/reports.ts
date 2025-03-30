@@ -70,7 +70,7 @@ router.get('/financial', async (req: Request, res: Response) => {
     console.log(`Query finanziaria completata con ${result.rows.length} risultati`);
     
     // Formatta i dati per il frontend
-    const formattedData = result.rows.map(row => {
+    const formattedData = result.rows.map((row: any) => {
       const dateObj = new Date(row[0]);
       const monthName = dateObj.toLocaleDateString('it-IT', { month: 'short' });
       const year = dateObj.getFullYear();

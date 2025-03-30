@@ -28,6 +28,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import IncomeChart from "./IncomeChart";
 
 // Interfaccia per i dati finanziari
 interface FinancialData {
@@ -103,7 +104,10 @@ function parseDate(dateString: string): Date | null {
 
 // Helper function to ensure we have data for each month in the range
 function ensureMonthlyData(data: any[], startDate: Date, endDate: Date) {
+  console.log("ensureMonthlyData - input data:", JSON.stringify(data, null, 2));
+  
   if (!data || !Array.isArray(data)) {
+    console.warn("ensureMonthlyData - dati non validi:", data);
     return [];
   }
   
@@ -111,12 +115,19 @@ function ensureMonthlyData(data: any[], startDate: Date, endDate: Date) {
   const existingDataMap = new Map();
   
   data.forEach(item => {
+    console.log("Elaborazione elemento:", item);
     let itemDate;
     try {
+      // Se sono presenti month e year separati, li utilizziamo
+      if (typeof item.month === 'number' && typeof item.year === 'number') {
+        itemDate = new Date(item.year, item.month, 1);
+        console.log("Data creata da month/year:", itemDate);
+      }
       // Tenta di parsare la data nel formato fornito dall'API
-      if (typeof item.date === 'string') {
+      else if (typeof item.date === 'string') {
         // Usa il nostro helper avanzato per parsare la data
         itemDate = parseDate(item.date);
+        console.log("Data parsata da stringa:", itemDate);
         
         if (!itemDate) {
           return; // Salta questo elemento
@@ -124,6 +135,7 @@ function ensureMonthlyData(data: any[], startDate: Date, endDate: Date) {
       } else if (item.date instanceof Date) {
         itemDate = item.date;
       } else {
+        console.warn("Formato data non riconosciuto:", item);
         return; // Salta questo elemento
       }
       
@@ -134,18 +146,29 @@ function ensureMonthlyData(data: any[], startDate: Date, endDate: Date) {
       
       // Assicuriamoci di utilizzare i nomi di proprietà corretti per i dati
       // e standardizziamo a 'net' per il valore netto
-      const netValue = typeof item.net !== 'undefined' ? item.net :
-                      typeof item.netIncome !== 'undefined' ? item.netIncome : 0;
+      const incomeValue = parseFloat(item.income || '0');
+      const expensesValue = parseFloat(item.expenses || '0');
+      const netValue = typeof item.net !== 'undefined' ? parseFloat(item.net) :
+                       typeof item.netIncome !== 'undefined' ? parseFloat(item.netIncome) : 
+                       (incomeValue - expensesValue);
+      
+      console.log("Valori calcolati:", { 
+        monthKey: monthKeyForMapping, 
+        display: displayDate, 
+        income: incomeValue, 
+        expenses: expensesValue, 
+        net: netValue 
+      });
       
       existingDataMap.set(monthKeyForMapping, {
         sortKey: monthKeyForMapping, // Aggiungiamo una chiave per l'ordinamento
         date: displayDate, // Manteniamo il formato localizzato per la visualizzazione
-        income: Number(item.income) || 0,
-        expenses: Number(item.expenses) || 0,
-        net: netValue
+        income: isNaN(incomeValue) ? 0 : incomeValue,
+        expenses: isNaN(expensesValue) ? 0 : expensesValue,
+        net: isNaN(netValue) ? 0 : netValue
       });
     } catch (error) {
-      // Silently fail
+      console.error("Errore nell'elaborazione dell'elemento:", error, item);
     }
   });
   
@@ -361,17 +384,6 @@ export default function ReportPage() {
   const [timeFilter, setTimeFilter] = useState("year"); // "3months", "6months", "year", "specific-year"
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   
-  // Aggiungiamo un meccanismo di cache per evitare richieste ripetute
-  const [dataCache, setDataCache] = useState<{
-    [key: string]: {
-      financialData: FinancialData[];
-      timestamp: number;
-    }
-  }>({});
-
-  // Flag per tenere traccia se una richiesta è già in corso
-  const [pendingRequest, setPendingRequest] = useState<string | null>(null);
-
   // Carica i dati finanziari
   useEffect(() => {
     let isMounted = true; // Flag per gestire l'unmount del componente
@@ -417,30 +429,9 @@ export default function ReportPage() {
           queryStartDate.setDate(1); // Inizio del mese
         }
         
-        // Crea una chiave di cache basata sui parametri di query
-        const cacheKey = `${format(queryStartDate, "yyyy-MM-dd")}_${format(queryEndDate, "yyyy-MM-dd")}_${filters.propertyId}`;
-        
-        // Se c'è già una richiesta pendente per questi stessi dati, non avviare un'altra richiesta
-        if (pendingRequest === cacheKey) {
-          console.log('Richiesta già in corso per questi dati, ignoro la richiesta duplicata');
-          return;
-        }
-        
-        // Verifica se i dati sono già in cache e non sono vecchi (meno di 5 minuti)
-        const currentTime = Date.now();
-        const cachedData = dataCache[cacheKey];
-        
-        if (cachedData && currentTime - cachedData.timestamp < 5 * 60 * 1000) {
-          if (isMounted) {
-            setFinancialData(cachedData.financialData);
-          }
-          return;
-        }
-        
         // Se i dati non sono in cache o sono vecchi, inizia il caricamento
         if (isMounted) {
           setLoadingFinancial(true);
-          setPendingRequest(cacheKey);
         }
         
         const queryParams = {
@@ -452,24 +443,38 @@ export default function ReportPage() {
         try {
           // Prima prova a caricare dati reali dall'API
           const data = await api.reports.getFinancialData(queryParams);
-          
           if (!isMounted) return; // Non aggiornare lo stato se il componente è smontato
           
+          console.log("Dati ricevuti dall'API:", data);
+          
           if (!data || !Array.isArray(data) || data.length === 0) {
+            console.log("Nessun dato ricevuto dall'API, carico dati di esempio");
             // Use sample data but adjust dates to match the query period
             const adjustedSampleData = generateSampleData(timeFilter, selectedYear);
-            
-            // Salva i dati nella cache
-            setDataCache(prev => ({
-              ...prev,
-              [cacheKey]: {
-                financialData: adjustedSampleData,
-                timestamp: currentTime
-              }
+            setFinancialData(adjustedSampleData);
+            return;
+          }
+          
+          // Se i dati hanno già il formato corretto, li usiamo direttamente
+          if (data.every(item => 
+            typeof item.income !== 'undefined' && 
+            typeof item.expenses !== 'undefined' && 
+            typeof item.net !== 'undefined' && 
+            typeof item.date !== 'undefined'
+          )) {
+            console.log("Dati API già nel formato corretto, li uso direttamente");
+            // Assicuriamoci che i numeri siano numeri
+            const cleanData = data.map(item => ({
+              ...item,
+              income: typeof item.income === 'string' ? parseFloat(item.income) : item.income,
+              expenses: typeof item.expenses === 'string' ? parseFloat(item.expenses) : item.expenses,
+              net: typeof item.net === 'string' ? parseFloat(item.net) : item.net,
+              date: typeof item.month === 'number' && typeof item.year === 'number' ? 
+                    `${item.date} ${item.year}` : item.date
             }));
             
-            setFinancialData(adjustedSampleData);
-            setPendingRequest(null);
+            console.log("Dati puliti:", cleanData);
+            setFinancialData(cleanData);
             return;
           }
           
@@ -480,21 +485,13 @@ export default function ReportPage() {
             queryEndDate
           );
           
+          console.log("Dati formattati dopo ensureMonthlyData:", formattedData);
+          
           if (!formattedData || formattedData.length === 0) {
             // Use sample data but adjust dates to match the query period
+            console.log("Dati formattati vuoti, carico dati di esempio");
             const adjustedSampleData = generateSampleData(timeFilter, selectedYear);
-            
-            // Salva i dati nella cache
-            setDataCache(prev => ({
-              ...prev,
-              [cacheKey]: {
-                financialData: adjustedSampleData,
-                timestamp: currentTime
-              }
-            }));
-            
             setFinancialData(adjustedSampleData);
-            setPendingRequest(null);
             return;
           }
           
@@ -512,48 +509,35 @@ export default function ReportPage() {
           });
           
           // Assicuriamoci che ogni elemento abbia la proprietà 'net' calcolata correttamente
-          const dataWithNet = formattedData.map(item => ({
-            ...item,
-            net: typeof item.net !== 'undefined' ? item.net : 
-                (typeof item.income === 'number' && typeof item.expenses === 'number' ? 
-                 item.income - item.expenses : 0)
-          }));
+          const dataWithNet = formattedData.map(item => {
+            // Convertiamo i valori in numeri
+            const income = typeof item.income === 'string' ? parseFloat(item.income) : (item.income || 0);
+            const expenses = typeof item.expenses === 'string' ? parseFloat(item.expenses) : (item.expenses || 0); 
+            const netValue = typeof item.net !== 'undefined' ? 
+              (typeof item.net === 'string' ? parseFloat(item.net) : item.net) : 
+              (income - expenses);
+            
+            return {
+              ...item,
+              income: isNaN(income) ? 0 : income,
+              expenses: isNaN(expenses) ? 0 : expenses,
+              net: isNaN(netValue) ? 0 : netValue
+            };
+          });
           
-          // Salva i dati nella cache
-          setDataCache(prev => ({
-            ...prev,
-            [cacheKey]: {
-              financialData: dataWithNet,
-              timestamp: currentTime
-            }
-          }));
-          
+          console.log("Dati finali con net calcolato:", dataWithNet);
           setFinancialData(dataWithNet);
-          setPendingRequest(null);
         } catch (apiError) {
-          console.error('Errore nel caricamento dei dati finanziari:', apiError);
-          
           // Use sample data but adjust dates to match the query period
           const adjustedSampleData = generateSampleData(timeFilter, selectedYear);
           
           // Ordina i dati per garantire il corretto ordine cronologico
           adjustedSampleData.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
           
-          // Salva i dati nella cache
-          setDataCache(prev => ({
-            ...prev,
-            [cacheKey]: {
-              financialData: adjustedSampleData,
-              timestamp: currentTime
-            }
-          }));
-          
           setFinancialData(adjustedSampleData);
-          setPendingRequest(null);
         }
       } catch (error) {
         console.error('Errore generale durante il caricamento dei dati:', error);
-        setPendingRequest(null);
       } finally {
         if (isMounted) {
           setLoadingFinancial(false);
@@ -718,48 +702,78 @@ export default function ReportPage() {
 
   // Renderizza il grafico degli incassi/spese
   const renderIncomeChart = () => {
-    if (loadingFinancial) return (
-      <div className="h-[400px] w-full flex items-center justify-center">
-        <div className="h-12 w-12 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
-      </div>
-    );
+    if (loadingFinancial) {
+      return <IncomeChart isLoading={true} />;
+    }
     
     // Dichiariamo formattedData prima di usarla
     let formattedData = financialData;
+    console.log("ReportPage - finanial data originale:", financialData);
     
-    if (!financialData || financialData.length === 0) {
+    if (!financialData || !Array.isArray(financialData) || financialData.length === 0) {
+      console.log("ReportPage - generando dati di esempio");
       formattedData = generateSampleData(timeFilter, selectedYear);
-      setFinancialData(formattedData);
+      console.log("ReportPage - dati di esempio generati:", formattedData);
+      
+      // Imposta i dati di esempio nello stato
+      if (formattedData && formattedData.length > 0) {
+        setFinancialData(formattedData);
+      }
     }
     
     // Assicuriamoci che i dati abbiano il formato corretto
+    console.log("ReportPage - formattedData prima della validazione:", formattedData);
+    
     // Utilizziamo formattedData invece di financialData
-    const validData = formattedData.map(item => ({
-      ...item,
-      income: typeof item.income === 'number' ? item.income : 0,
-      expenses: typeof item.expenses === 'number' ? item.expenses : 0,
-      // Assicuriamoci che il valore "net" sia calcolato correttamente se non esiste
-      net: typeof item.net === 'number' ? item.net : 
-           (typeof item.income === 'number' && typeof item.expenses === 'number' ? 
-            item.income - item.expenses : 0),
-      // Se la sortKey non esiste, creane una dalla data usando la nostra funzione parseDate
-      sortKey: item.sortKey || (() => {
-        // Usiamo parseDate per gestire correttamente i nomi dei mesi in italiano
-        const parsedDate = typeof item.date === 'string' ? parseDate(item.date) : null;
-        return parsedDate ? format(parsedDate, 'yyyy-MM') : format(new Date(), 'yyyy-MM');
-      })()
-    }));
+    const validData = Array.isArray(formattedData) ? formattedData.map(item => {
+      if (!item) return null;
+      
+      const validItem = {
+        ...item,
+        income: typeof item.income === 'number' ? item.income : 
+                typeof item.income === 'string' ? parseFloat(item.income) : 0,
+        expenses: typeof item.expenses === 'number' ? item.expenses : 
+                  typeof item.expenses === 'string' ? parseFloat(item.expenses) : 0,
+        // Assicuriamoci che il valore "net" sia calcolato correttamente se non esiste
+        net: typeof item.net === 'number' ? item.net : 
+             typeof item.net === 'string' ? parseFloat(item.net) :
+             typeof item.income === 'number' && typeof item.expenses === 'number' ? 
+              item.income - item.expenses : 0,
+        // Se la sortKey non esiste, creane una dalla data usando la nostra funzione parseDate
+        sortKey: item.sortKey || (() => {
+          // Usiamo parseDate per gestire correttamente i nomi dei mesi in italiano
+          const parsedDate = typeof item.date === 'string' ? parseDate(item.date) : null;
+          return parsedDate ? format(parsedDate, 'yyyy-MM') : format(new Date(), 'yyyy-MM');
+        })()
+      };
+      
+      // Previeni valori NaN
+      if (isNaN(validItem.income)) validItem.income = 0;
+      if (isNaN(validItem.expenses)) validItem.expenses = 0;
+      if (isNaN(validItem.net)) validItem.net = 0;
+      
+      return validItem;
+    }).filter(Boolean) : [];
+    
+    console.log("ReportPage - validData dopo la validazione:", validData);
     
     // Ordiniamo i dati in base alla chiave di ordinamento
     const sortedData = [...validData].sort((a, b) => {
-      return a.sortKey.localeCompare(b.sortKey);
+      if (a.sortKey && b.sortKey) {
+        return a.sortKey.localeCompare(b.sortKey);
+      }
+      return 0;
     });
+    
+    console.log("ReportPage - sortedData dopo l'ordinamento:", sortedData);
     
     // Limita il numero di elementi visualizzati in base al filtro temporale
     const limitedData = timeFilter === "3months" ? sortedData.slice(-3) :
                         timeFilter === "6months" ? sortedData.slice(-6) :
                         timeFilter === "specific-year" ? sortedData :
                         sortedData.slice(-12);
+    
+    console.log("ReportPage - limitedData da passare al grafico:", limitedData);
     
     // Ottieni gli anni disponibili per il selettore (se necessario)
     const availableYears = Array.from(
@@ -884,52 +898,16 @@ export default function ReportPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="h-[400px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={limitedData}>
-                <defs>
-                  <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.2} />
-                  </linearGradient>
-                  <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0.2} />
-                  </linearGradient>
-                  <linearGradient id="colorNet" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.6} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.1} />
-                  </linearGradient>
-                </defs>
-                <XAxis 
-                  dataKey="date" 
-                  tick={{ fontSize: 12 }}
-                  interval="preserveStartEnd"
-                />
-                <YAxis />
-                <CartesianGrid stroke="#eee" strokeDasharray="5 5" />
-                <Tooltip 
-                  formatter={(value) => [`€${Number(value).toLocaleString()}`, undefined]}
-                  labelFormatter={(label) => `Periodo: ${label}`}
-                />
-                {!showNet ? (
-                  <>
-                    <Bar dataKey="income" fill="url(#colorIncome)" name="Entrate" />
-                    <Bar dataKey="expenses" fill="url(#colorExpenses)" name="Uscite" />
-                  </>
-                ) : (
-                  <Line 
-                    type="monotone"
-                    dataKey="net"
-                    stroke="#10b981"
-                    strokeWidth={2}
-                    name="Netto"
-                    dot={{ r: 4 }}
-                  />
-                )}
-              </ComposedChart>
-            </ResponsiveContainer>
-          </div>
+          <IncomeChart
+            data={limitedData}
+            isLoading={loadingFinancial}
+            showNetByDefault={showNet}
+            onRefresh={() => {
+              setFinancialData([]);
+              setLoadingFinancial(true);
+              setTimeout(() => setLoadingFinancial(false), 500);
+            }}
+          />
         </CardContent>
       </Card>
     );

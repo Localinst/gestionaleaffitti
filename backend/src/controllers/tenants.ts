@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import pool from '../db';
+import pool, { executeQuery } from '../db';
 
 export const getTenants = async (req: Request, res: Response) => {
   try {
@@ -15,13 +15,15 @@ export const getTenants = async (req: Request, res: Response) => {
     }
     
     // Query con join a properties e filtro user_id in properties
-    const result = await pool.query(`
-      SELECT t.*, p.name as property_name 
-      FROM tenants t 
-      JOIN properties p ON t.property_id = p.id 
-      WHERE p.user_id = $1
-      ORDER BY t.created_at DESC
-    `, [userId]);
+    const result = await executeQuery(async (client) => {
+      return client.query(`
+        SELECT t.*, p.name as property_name 
+        FROM tenants t 
+        JOIN properties p ON t.property_id = p.id 
+        WHERE p.user_id = $1
+        ORDER BY t.created_at DESC
+      `, [userId]);
+    });
     
     res.json(result.rows);
   } catch (error) {
@@ -49,10 +51,12 @@ export const getTenantsByProperty = async (req: Request, res: Response) => {
     
     // Verifica che la proprietà appartenga all'utente
     console.log("Cerco proprietà con ID:", propertyId, "di tipo:", typeof propertyId);
-    const propertyCheck = await pool.query(
-      'SELECT id FROM properties WHERE id = $1 AND user_id = $2',
-      [propertyId, userId]
-    );
+    const propertyCheck = await executeQuery(async (client) => {
+      return client.query(
+        'SELECT id FROM properties WHERE id = $1 AND user_id = $2',
+        [propertyId, userId]
+      );
+    });
     
     if (propertyCheck.rows.length === 0) {
       return res.status(403).json({ error: 'Property not found or not owned by user' });
@@ -60,22 +64,24 @@ export const getTenantsByProperty = async (req: Request, res: Response) => {
     
     // Query per ottenere gli inquilini della proprietà specificata
     console.log("Cerco inquilini per proprietà ID:", propertyId);
-    const result = await pool.query(`
-      SELECT 
-        t.id, 
-        t.name, 
-        t.email, 
-        t.phone, 
-        t.lease_start, 
-        t.lease_end, 
-        t.rent, 
-        t.property_id,
-        p.name as property_name 
-      FROM tenants t 
-      JOIN properties p ON t.property_id = p.id 
-      WHERE p.id = $1 AND p.user_id = $2
-      ORDER BY t.name ASC
-    `, [propertyId, userId]);
+    const result = await executeQuery(async (client) => {
+      return client.query(`
+        SELECT 
+          t.id, 
+          t.name, 
+          t.email, 
+          t.phone, 
+          t.lease_start, 
+          t.lease_end, 
+          t.rent, 
+          t.property_id,
+          p.name as property_name 
+        FROM tenants t 
+        JOIN properties p ON t.property_id = p.id 
+        WHERE p.id = $1 AND p.user_id = $2
+        ORDER BY t.name ASC
+      `, [propertyId, userId]);
+    });
     
     console.log("Inquilini trovati:", result.rows.length);
     
@@ -111,12 +117,14 @@ export const getTenantById = async (req: Request, res: Response) => {
     const userId = req.user?.id;
     
     // Query con join a properties e filtro user_id in properties
-    const result = await pool.query(`
-      SELECT t.*
-      FROM tenants t
-      JOIN properties p ON t.property_id = p.id
-      WHERE t.id = $1 AND p.user_id = $2
-    `, [id, userId]);
+    const result = await executeQuery(async (client) => {
+      return client.query(`
+        SELECT t.*
+        FROM tenants t
+        JOIN properties p ON t.property_id = p.id
+        WHERE t.id = $1 AND p.user_id = $2
+      `, [id, userId]);
+    });
     
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Tenant not found' });
@@ -147,22 +155,26 @@ export const createTenant = async (req: Request, res: Response) => {
     const userId = req.user?.id;
     
     // Verifica che la proprietà appartenga all'utente
-    const propertyCheck = await pool.query(
-      'SELECT id FROM properties WHERE id = $1 AND user_id = $2',
-      [property_id, userId]
-    );
+    const propertyCheck = await executeQuery(async (client) => {
+      return client.query(
+        'SELECT id FROM properties WHERE id = $1 AND user_id = $2',
+        [property_id, userId]
+      );
+    });
     
     if (propertyCheck.rows.length === 0) {
       return res.status(403).json({ error: 'Property not found or not owned by user' });
     }
     
-    const result = await pool.query(
-      `INSERT INTO tenants (
-        name, email, phone, lease_start, lease_end, 
-        rent, property_id, unit, status, user_id
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
-      [name, email, phone, lease_start, lease_end, rent, property_id, unit, status, userId]
-    );
+    const result = await executeQuery(async (client) => {
+      return client.query(
+        `INSERT INTO tenants (
+          name, email, phone, lease_start, lease_end, 
+          rent, property_id, unit, status, user_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+        [name, email, phone, lease_start, lease_end, rent, property_id, unit, status, userId]
+      );
+    });
     
     res.status(201).json(result.rows[0]);
   } catch (error) {
@@ -190,35 +202,41 @@ export const updateTenant = async (req: Request, res: Response) => {
     const userId = req.user?.id;
     
     // Verifica che l'inquilino appartenga all'utente
-    const tenantCheck = await pool.query(`
-      SELECT t.id
-      FROM tenants t
-      JOIN properties p ON t.property_id = p.id
-      WHERE t.id = $1 AND p.user_id = $2
-    `, [id, userId]);
+    const tenantCheck = await executeQuery(async (client) => {
+      return client.query(`
+        SELECT t.id
+        FROM tenants t
+        JOIN properties p ON t.property_id = p.id
+        WHERE t.id = $1 AND p.user_id = $2
+      `, [id, userId]);
+    });
     
     if (tenantCheck.rows.length === 0) {
       return res.status(404).json({ error: 'Tenant not found or not accessible' });
     }
     
     // Verifica che la nuova proprietà appartenga all'utente
-    const propertyCheck = await pool.query(
-      'SELECT id FROM properties WHERE id = $1 AND user_id = $2',
-      [property_id, userId]
-    );
+    const propertyCheck = await executeQuery(async (client) => {
+      return client.query(
+        'SELECT id FROM properties WHERE id = $1 AND user_id = $2',
+        [property_id, userId]
+      );
+    });
     
     if (propertyCheck.rows.length === 0) {
       return res.status(403).json({ error: 'Property not found or not owned by user' });
     }
     
-    const result = await pool.query(
-      `UPDATE tenants SET 
-        name = $1, email = $2, phone = $3, lease_start = $4, 
-        lease_end = $5, rent = $6, property_id = $7, unit = $8, 
-        status = $9, updated_at = CURRENT_TIMESTAMP 
-      WHERE id = $10 RETURNING *`,
-      [name, email, phone, lease_start, lease_end, rent, property_id, unit, status, id]
-    );
+    const result = await executeQuery(async (client) => {
+      return client.query(
+        `UPDATE tenants SET 
+          name = $1, email = $2, phone = $3, lease_start = $4, 
+          lease_end = $5, rent = $6, property_id = $7, unit = $8, 
+          status = $9, updated_at = CURRENT_TIMESTAMP 
+        WHERE id = $10 RETURNING *`,
+        [name, email, phone, lease_start, lease_end, rent, property_id, unit, status, id]
+      );
+    });
     
     res.json(result.rows[0]);
   } catch (error) {
@@ -234,18 +252,22 @@ export const deleteTenant = async (req: Request, res: Response) => {
     const userId = req.user?.id;
     
     // Verifica che l'inquilino appartenga all'utente
-    const tenantCheck = await pool.query(`
-      SELECT t.id
-      FROM tenants t
-      JOIN properties p ON t.property_id = p.id
-      WHERE t.id = $1 AND p.user_id = $2
-    `, [id, userId]);
+    const tenantCheck = await executeQuery(async (client) => {
+      return client.query(`
+        SELECT t.id
+        FROM tenants t
+        JOIN properties p ON t.property_id = p.id
+        WHERE t.id = $1 AND p.user_id = $2
+      `, [id, userId]);
+    });
     
     if (tenantCheck.rows.length === 0) {
       return res.status(404).json({ error: 'Tenant not found or not accessible' });
     }
     
-    const result = await pool.query('DELETE FROM tenants WHERE id = $1 RETURNING *', [id]);
+    const result = await executeQuery(async (client) => {
+      return client.query('DELETE FROM tenants WHERE id = $1 RETURNING *', [id]);
+    });
     
     res.json({ message: 'Tenant deleted successfully' });
   } catch (error) {

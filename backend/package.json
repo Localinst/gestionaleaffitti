@@ -5,18 +5,20 @@
   "main": "dist/index.js",
   "scripts": {
     "start": "node dist/index.js",
-    "dev": "nodemon src/index.ts",
+    "dev": "nodemon -e ts --exec \"ts-node --transpileOnly src/index.ts\"",
     "build": "tsc",
     "migrate": "node dist/db/migrations/run.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.3",
     "@types/bcrypt": "^5.0.2",
+    "@types/connect-timeout": "^0.0.39",
     "@types/cookie-parser": "^1.4.8",
     "@types/cors": "^2.8.17",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/pg": "^8.11.11",
     "bcrypt": "^5.1.1",
+    "connect-timeout": "^1.9.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",

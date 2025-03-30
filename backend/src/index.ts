@@ -1,7 +1,8 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
+import timeout from 'connect-timeout';
 import { propertiesRouter } from './routes/properties';
 import { tenantsRouter } from './routes/tenants';
 import { transactionsRouter } from './routes/transactions';
@@ -10,11 +11,32 @@ import { authRouter } from './routes/auth';
 import { reportsRouter } from './routes/reports';
 import { authenticate } from './middleware/auth';
 
+// Definisci solo requestId, timedout è già definito da connect-timeout
+declare global {
+  namespace Express {
+    interface Request {
+      requestId?: string;
+    }
+  }
+}
+
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:8080';
+
+// Timeout globale per le richieste (12 secondi)
+app.use(timeout('12s'));
+app.use(haltOnTimedout);
+
+// Tracciamento delle richieste attive per identificare richieste zombie
+const activeRequests = new Map<string, { 
+  startTime: number, 
+  url: string, 
+  method: string,
+  timeout: NodeJS.Timeout 
+}>();
 
 // Domini consentiti
 const allowedOrigins = [
@@ -117,15 +139,6 @@ app.get('/api/cors-test', (req, res) => {
   });
 });
 
-// Route di test per verificare che il server funzioni
-app.get('/api/ping', (req, res) => {
-  return res.json({
-    message: 'Server API disponibile',
-    timestamp: new Date().toISOString(),
-    origin: req.headers.origin || 'nessuna origine'
-  });
-});
-
 // Rotte pubbliche
 app.use('/api/auth', authRouter);
 
@@ -139,4 +152,72 @@ app.use('/api/reports', authenticate, reportsRouter);
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Server configurato per accettare richieste da origini definite nella lista allowedOrigins`);
+});
+
+function haltOnTimedout(req: any, res: any, next: any) {
+  if (!req.timedout) next();
+  else {
+    console.error(`[TIMEOUT] ${req.method} ${req.originalUrl}`);
+    
+    // Chiudi esplicitamente la richiesta
+    if (!res.headersSent) {
+      res.status(408).json({ error: 'Request timeout' });
+    }
+    
+    // Pulisci dalle richieste attive
+    if (req.requestId && activeRequests.has(req.requestId)) {
+      const request = activeRequests.get(req.requestId);
+      if (request) {
+        clearTimeout(request.timeout);
+      }
+      activeRequests.delete(req.requestId);
+    }
+  }
+}
+
+// Middleware per monitorare le richieste attive
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const requestId = Date.now() + Math.random().toString(36).substring(2, 15);
+  const startTime = Date.now();
+  
+  // Mantieni traccia della richiesta
+  req.requestId = requestId;
+  activeRequests.set(requestId, {
+    startTime,
+    url: req.originalUrl,
+    method: req.method,
+    // Imposta un timeout per forzare la terminazione delle richieste zombie
+    timeout: setTimeout(() => {
+      console.error(`[ZOMBIE REQUEST] Richiesta ${requestId} in corso da ${Date.now() - startTime}ms: ${req.method} ${req.originalUrl}`);
+      
+      // Registra tutte le richieste attive per il debug
+      console.log(`Richieste attive (${activeRequests.size}):`, 
+        Array.from(activeRequests.entries())
+          .map(([id, r]) => `${id}: ${r.method} ${r.url} (${Date.now() - r.startTime}ms)`)
+      );
+      
+      // Se la richiesta è ancora attiva, forza la terminazione
+      if (activeRequests.has(requestId)) {
+        console.error(`Terminazione forzata della richiesta zombie: ${requestId}`);
+        res.status(408).json({ error: 'Request timeout' });
+      }
+    }, 10000) // 10 secondi
+  });
+  
+  // Registra il completamento della richiesta
+  res.on('finish', () => {
+    const request = activeRequests.get(requestId);
+    if (request) {
+      clearTimeout(request.timeout);
+      activeRequests.delete(requestId);
+      const duration = Date.now() - request.startTime;
+      
+      // Log solo per richieste lente (> 1000ms)
+      if (duration > 1000) {
+        console.log(`[SLOW] ${req.method} ${req.originalUrl} completata in ${duration}ms`);
+      }
+    }
+  });
+  
+  next();
 }); 

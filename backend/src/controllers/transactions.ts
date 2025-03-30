@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import pool from '../db';
+import pool, { executeQuery } from '../db';
 
 export const getTransactions = async (req: Request, res: Response) => {
   try {
@@ -18,7 +18,10 @@ export const getTransactions = async (req: Request, res: Response) => {
     `;
     console.log('Query eseguita:', query);
     
-    const result = await pool.query(query, [userId]);
+    const result = await executeQuery(async (client) => {
+      return client.query(query, [userId]);
+    });
+    
     console.log('Numero di transazioni trovate:', result.rows.length);
     
     res.json(result.rows);

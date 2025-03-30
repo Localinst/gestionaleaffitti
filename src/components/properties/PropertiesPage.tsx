@@ -1,17 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
-import { Home, Plus, Loader2, Eye, Edit, Trash2, MoreHorizontal } from "lucide-react";
+import { Home, Plus, Loader2, Eye, Edit, Trash2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
-import { getProperties, deleteProperty } from "@/services/api";
-import { Property } from "@/services/api";
+import { Property, api } from "@/services/api";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { AddPropertyForm } from "./AddPropertyForm";
 import { PropertyDetailDialog } from "./PropertyDetailDialog";
 import { Badge } from "@/components/ui/badge";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { useNavigate } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useProperties } from "@/hooks/use-query-hooks";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -57,8 +58,6 @@ function ActionButton({
 }
 
 export default function PropertiesPage() {
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [loading, setLoading] = useState(true);
   const [openAddForm, setOpenAddForm] = useState(false);
   const [openEditForm, setOpenEditForm] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
@@ -66,25 +65,26 @@ export default function PropertiesPage() {
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const fetchProperties = async () => {
-      try {
-        setLoading(true);
-        const data = await getProperties();
-        setProperties(data);
-      } catch (error) {
-        console.error("Error fetching properties:", error);
-        toast.error("Errore nel caricamento delle proprietà", {
-          description: "Non è stato possibile recuperare le proprietà. Riprova più tardi."
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProperties();
-  }, [openAddForm, openEditForm]);
+  const queryClient = useQueryClient();
+  
+  // Utilizzo del hook personalizzato per caricare le proprietà
+  const { data: properties = [], isLoading: loading, error } = useProperties();
+  
+  // Utilizzo di useMutation per l'eliminazione delle proprietà
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => api.properties.delete(id),
+    onSuccess: () => {
+      // Invalida la query delle proprietà per forzare un aggiornamento dei dati
+      queryClient.invalidateQueries({ queryKey: ['properties'] });
+      toast.success("Proprietà eliminata con successo");
+      setDeleteDialogOpen(false);
+      setSelectedProperty(null);
+    },
+    onError: (error) => {
+      console.error("Error deleting property:", error);
+      toast.error("Errore durante l'eliminazione della proprietà");
+    }
+  });
 
   const handleView = (property: Property) => {
     setSelectedProperty(property);
@@ -103,20 +103,15 @@ export default function PropertiesPage() {
 
   const confirmDelete = async () => {
     if (!selectedProperty) return;
-    
-    try {
-      await deleteProperty(selectedProperty.id);
-      toast.success("Proprietà eliminata con successo");
-      // Aggiorna la lista di proprietà rimuovendo quella eliminata
-      setProperties(properties.filter(p => p.id !== selectedProperty.id));
-    } catch (error) {
-      console.error("Error deleting property:", error);
-      toast.error("Errore durante l'eliminazione della proprietà");
-    } finally {
-      setDeleteDialogOpen(false);
-      setSelectedProperty(null);
-    }
+    deleteMutation.mutate(selectedProperty.id);
   };
+
+  // Mostra un messaggio di errore se c'è stato un problema nel caricamento
+  if (error) {
+    toast.error("Errore nel caricamento delle proprietà", {
+      description: "Non è stato possibile recuperare le proprietà. Riprova più tardi."
+    });
+  }
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
@@ -240,8 +235,12 @@ export default function PropertiesPage() {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Annulla</AlertDialogCancel>
-                <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                  Elimina
+                <AlertDialogAction 
+                  onClick={confirmDelete} 
+                  disabled={deleteMutation.isPending}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  {deleteMutation.isPending ? "Eliminazione..." : "Elimina"}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -249,9 +248,9 @@ export default function PropertiesPage() {
 
           {/* Dialog di dettaglio della proprietà */}
           {selectedProperty && (
-            <PropertyDetailDialog 
-              property={selectedProperty} 
-              open={detailDialogOpen} 
+            <PropertyDetailDialog
+              property={selectedProperty}
+              open={detailDialogOpen}
               onOpenChange={setDetailDialogOpen}
             />
           )}

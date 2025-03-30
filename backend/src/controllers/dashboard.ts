@@ -56,13 +56,15 @@ export const getDashboardSummary = async (req: Request, res: Response) => {
 
     try {
       // Get total tenants with user filter (via properties)
-      const tenantsResult = await pool.query(
-        `SELECT COUNT(*) as total 
-         FROM tenants t
-         JOIN properties p ON t.property_id = p.id
-         WHERE p.user_id = $1`,
-        [userId]
-      );
+      const tenantsResult = await executeQuery(async (client) => {
+        return client.query(
+          `SELECT COUNT(*) as total 
+           FROM tenants t
+           JOIN properties p ON t.property_id = p.id
+           WHERE p.user_id = $1`,
+          [userId]
+        );
+      });
       results.data.totalTenants = parseInt(tenantsResult.rows[0]?.total) || 0;
       console.log("Total tenants:", results.data.totalTenants);
     } catch (err: any) {
@@ -82,15 +84,17 @@ export const getDashboardSummary = async (req: Request, res: Response) => {
     try {
       // Ottieni il mese corrente in modo che PostgreSQL lo interpreti correttamente
       const currentMonth = new Date();
-      const incomeResult = await pool.query(
-        `SELECT COALESCE(SUM(amount), 0) as total 
-         FROM transactions t
-         JOIN properties p ON t.property_id = p.id
-         WHERE t.type = 'income' AND t.category = 'Rent' 
-         AND date_trunc('month', t.date) = date_trunc('month', $1::timestamp)
-         AND p.user_id = $2`,
-        [currentMonth, userId]
-      );
+      const incomeResult = await executeQuery(async (client) => {
+        return client.query(
+          `SELECT COALESCE(SUM(amount), 0) as total 
+           FROM transactions t
+           JOIN properties p ON t.property_id = p.id
+           WHERE t.type = 'income' AND t.category = 'Rent' 
+           AND date_trunc('month', t.date) = date_trunc('month', $1::timestamp)
+           AND p.user_id = $2`,
+          [currentMonth, userId]
+        );
+      });
       results.data.rentIncome = parseFloat(incomeResult.rows[0]?.total || '0');
       console.log("Rent income:", results.data.rentIncome);
     } catch (err: any) {

@@ -13,53 +13,6 @@ const API_URL = getApiUrl();
 // Configurazione globale per timeout e retry
 const API_TIMEOUT = 15000; // 15 secondi di timeout
 const MAX_RETRIES = 1; // Numero massimo di tentativi in caso di timeout
-const PING_INTERVAL = 5 * 60 * 1000; // 5 minuti in millisecondi
-
-// Sistema di ping periodico per mantenere il server sveglio
-const setupServerPing = () => {
-  let pingCounter = 0;
-  
-  // Funzione che esegue il ping
-  const pingServer = async () => {
-    try {
-      pingCounter++;
-      console.log(`[Ping #${pingCounter}] Invio ping al server per mantenerlo attivo...`);
-      
-      const response = await fetchWithTimeout(`${API_URL}/ping`, {
-        method: 'GET',
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
-      }, 5000); // Timeout di 5 secondi per il ping
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log(`[Ping #${pingCounter}] Server ha risposto: ${data.message || 'OK'}`);
-      } else {
-        console.warn(`[Ping #${pingCounter}] Server ha risposto con status: ${response.status}`);
-      }
-    } catch (error) {
-      console.error(`[Ping #${pingCounter}] Errore durante il ping del server:`, error);
-    }
-  };
-  
-  // Esegui subito un primo ping
-  pingServer();
-  
-  // Imposta il ping periodico
-  const intervalId = setInterval(pingServer, PING_INTERVAL);
-  
-  // Restituisci una funzione per interrompere il ping se necessario
-  return () => {
-    console.log('Disattivazione del sistema di ping al server');
-    clearInterval(intervalId);
-  };
-};
-
-// Avvia il sistema di ping automaticamente
-const stopPing = setupServerPing();
 
 // Funzione avanzata per fetch con timeout e retry
 async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout = API_TIMEOUT, retries = MAX_RETRIES): Promise<Response> {
@@ -73,21 +26,6 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout 
       controller.abort();
       console.warn(`Timeout nella richiesta a ${url} dopo ${timeout}ms`);
     }, timeout);
-    
-    // Limita il numero massimo di richieste concorrenti
-    let waitTime = 0;
-    while (activeRequests >= MAX_CONCURRENT_REQUESTS) {
-      // Attendi un po' se ci sono già troppe richieste attive
-      console.log(`Troppe richieste attive (${activeRequests}/${MAX_CONCURRENT_REQUESTS}), attendendo...`);
-      await new Promise(r => setTimeout(r, 100));
-      waitTime += 100;
-      
-      // Se abbiamo aspettato troppo, fallisci la richiesta
-      if (waitTime > timeout / 2) {
-        clearTimeout(timeoutId);
-        return reject(new Error('Troppo tempo in attesa di uno slot per la richiesta'));
-      }
-    }
     
     // Incrementa il contatore di richieste attive
     activeRequests++;
@@ -132,7 +70,7 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout 
 }
 
 // Limita il numero di richieste parallele
-const MAX_CONCURRENT_REQUESTS = 10;
+const MAX_CONCURRENT_REQUESTS = 9999; // Valore molto alto che in pratica elimina la limitazione
 let activeRequests = 0;
 
 // Funzione per ottenere gli headers con autenticazione
