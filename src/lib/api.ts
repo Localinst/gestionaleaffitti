@@ -132,7 +132,7 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout 
 }
 
 // Limita il numero di richieste parallele
-const MAX_CONCURRENT_REQUESTS = 5;
+const MAX_CONCURRENT_REQUESTS = 10;
 let activeRequests = 0;
 
 // Funzione per ottenere gli headers con autenticazione
