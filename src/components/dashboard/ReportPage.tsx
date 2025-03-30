@@ -369,8 +369,13 @@ export default function ReportPage() {
     }
   }>({});
 
+  // Flag per tenere traccia se una richiesta è già in corso
+  const [pendingRequest, setPendingRequest] = useState<string | null>(null);
+
   // Carica i dati finanziari
   useEffect(() => {
+    let isMounted = true; // Flag per gestire l'unmount del componente
+    
     async function loadFinancialData() {
       try {
         // Determina il range temporale in base ai filtri del grafico
@@ -415,17 +420,28 @@ export default function ReportPage() {
         // Crea una chiave di cache basata sui parametri di query
         const cacheKey = `${format(queryStartDate, "yyyy-MM-dd")}_${format(queryEndDate, "yyyy-MM-dd")}_${filters.propertyId}`;
         
+        // Se c'è già una richiesta pendente per questi stessi dati, non avviare un'altra richiesta
+        if (pendingRequest === cacheKey) {
+          console.log('Richiesta già in corso per questi dati, ignoro la richiesta duplicata');
+          return;
+        }
+        
         // Verifica se i dati sono già in cache e non sono vecchi (meno di 5 minuti)
         const currentTime = Date.now();
         const cachedData = dataCache[cacheKey];
         
         if (cachedData && currentTime - cachedData.timestamp < 5 * 60 * 1000) {
-          setFinancialData(cachedData.financialData);
+          if (isMounted) {
+            setFinancialData(cachedData.financialData);
+          }
           return;
         }
         
         // Se i dati non sono in cache o sono vecchi, inizia il caricamento
-        setLoadingFinancial(true);
+        if (isMounted) {
+          setLoadingFinancial(true);
+          setPendingRequest(cacheKey);
+        }
         
         const queryParams = {
           startDate: format(queryStartDate, "yyyy-MM-dd"),
@@ -436,6 +452,8 @@ export default function ReportPage() {
         try {
           // Prima prova a caricare dati reali dall'API
           const data = await api.reports.getFinancialData(queryParams);
+          
+          if (!isMounted) return; // Non aggiornare lo stato se il componente è smontato
           
           if (!data || !Array.isArray(data) || data.length === 0) {
             // Use sample data but adjust dates to match the query period
@@ -451,6 +469,7 @@ export default function ReportPage() {
             }));
             
             setFinancialData(adjustedSampleData);
+            setPendingRequest(null);
             return;
           }
           
@@ -475,6 +494,7 @@ export default function ReportPage() {
             }));
             
             setFinancialData(adjustedSampleData);
+            setPendingRequest(null);
             return;
           }
           
@@ -509,7 +529,10 @@ export default function ReportPage() {
           }));
           
           setFinancialData(dataWithNet);
+          setPendingRequest(null);
         } catch (apiError) {
+          console.error('Errore nel caricamento dei dati finanziari:', apiError);
+          
           // Use sample data but adjust dates to match the query period
           const adjustedSampleData = generateSampleData(timeFilter, selectedYear);
           
@@ -526,28 +549,25 @@ export default function ReportPage() {
           }));
           
           setFinancialData(adjustedSampleData);
+          setPendingRequest(null);
         }
       } catch (error) {
-        toast({
-          title: "Attenzione",
-          description: "Utilizzando dati di esempio a causa di problemi di connessione al database",
-          variant: "destructive"
-        });
-        
-        // Use sample data but adjust dates to match the current period
-        const adjustedSampleData = generateSampleData(timeFilter, selectedYear);
-        
-        // Ordina i dati per garantire il corretto ordine cronologico
-        adjustedSampleData.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
-        
-        setFinancialData(adjustedSampleData);
+        console.error('Errore generale durante il caricamento dei dati:', error);
+        setPendingRequest(null);
       } finally {
-        setLoadingFinancial(false);
+        if (isMounted) {
+          setLoadingFinancial(false);
+        }
       }
     }
-
+    
     loadFinancialData();
-  }, [filters.propertyId, timeFilter, selectedYear]);
+    
+    // Cleanup function per gestire l'unmount
+    return () => {
+      isMounted = false;
+    };
+  }, [timeFilter, selectedYear, filters.periodType, filters.startDate, filters.endDate, filters.propertyId]);
   
   // Carica i dati di riepilogo
   useEffect(() => {

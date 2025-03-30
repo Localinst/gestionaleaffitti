@@ -74,21 +74,50 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout 
       console.warn(`Timeout nella richiesta a ${url} dopo ${timeout}ms`);
     }, timeout);
     
+    // Limita il numero massimo di richieste concorrenti
+    let waitTime = 0;
+    while (activeRequests >= MAX_CONCURRENT_REQUESTS) {
+      // Attendi un po' se ci sono già troppe richieste attive
+      console.log(`Troppe richieste attive (${activeRequests}/${MAX_CONCURRENT_REQUESTS}), attendendo...`);
+      await new Promise(r => setTimeout(r, 100));
+      waitTime += 100;
+      
+      // Se abbiamo aspettato troppo, fallisci la richiesta
+      if (waitTime > timeout / 2) {
+        clearTimeout(timeoutId);
+        return reject(new Error('Troppo tempo in attesa di uno slot per la richiesta'));
+      }
+    }
+    
+    // Incrementa il contatore di richieste attive
+    activeRequests++;
+    console.log(`Iniziata richiesta a ${url} - Richieste attive: ${activeRequests}`);
+    
     // Funzione per eseguire la richiesta con possibilità di retry
     const executeRequest = async (attemptNumber = 0) => {
       try {
         console.log(`Esecuzione richiesta a ${url} - tentativo ${attemptNumber + 1}`);
         const response = await fetch(url, { ...options, signal });
         clearTimeout(timeoutId);
+        
+        // Rilascia lo slot di richiesta
+        activeRequests--;
+        console.log(`Completata richiesta a ${url} - Richieste attive: ${activeRequests}`);
+        
         resolve(response);
       } catch (error) {
         clearTimeout(timeoutId);
         
+        // Rilascia lo slot di richiesta in caso di errore
+        activeRequests--;
+        console.log(`Errore nella richiesta a ${url} - Richieste attive: ${activeRequests}`);
+        
         // Se l'errore è dovuto al timeout (abort) e abbiamo ancora tentativi disponibili
         if (error.name === 'AbortError' && attemptNumber < retries) {
           console.warn(`Richiesta abortita, ritentativo ${attemptNumber + 1}/${retries + 1}`);
-          // Riprova dopo un breve delay
-          setTimeout(() => executeRequest(attemptNumber + 1), 1000);
+          // Riprova dopo un breve delay (backoff esponenziale)
+          const delay = Math.min(1000 * Math.pow(2, attemptNumber), 5000);
+          setTimeout(() => executeRequest(attemptNumber + 1), delay);
         } else {
           // Se abbiamo esaurito i tentativi o si tratta di un altro errore
           console.error(`Errore definitivo nella richiesta dopo ${attemptNumber + 1} tentativi:`, error);
@@ -101,6 +130,10 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout 
     executeRequest();
   });
 }
+
+// Limita il numero di richieste parallele
+const MAX_CONCURRENT_REQUESTS = 5;
+let activeRequests = 0;
 
 // Funzione per ottenere gli headers con autenticazione
 const getAuthHeaders = () => {

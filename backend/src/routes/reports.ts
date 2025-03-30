@@ -10,6 +10,7 @@ router.use(authenticate);
 
 // Endpoint per ottenere i dati finanziari
 router.get('/financial', async (req: Request, res: Response) => {
+  const client = await pool.connect();
   try {
     // Parametri dalla query
     const { startDate, endDate, propertyId } = req.query;
@@ -58,29 +59,53 @@ router.get('/financial', async (req: Request, res: Response) => {
     console.log('Esecuzione query finanziaria:', query);
     console.log('Parametri query:', queryParams);
     
-    const result = await pool.query(query, queryParams);
+    // Aggiungiamo un timeout alla query (30 secondi)
+    const result = await client.query({
+      text: query,
+      values: queryParams,
+      rowMode: 'array', // Ottimizza per minore utilizzo di memoria
+      timeout: 30000 // 30 secondi timeout
+    } as any);
     
-    // Formatta i risultati
-    const data = result.rows.map(row => {
-      const date = new Date(row.date_month);
-      const months = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
+    console.log(`Query finanziaria completata con ${result.rows.length} risultati`);
+    
+    // Formatta i dati per il frontend
+    const formattedData = result.rows.map(row => {
+      const dateObj = new Date(row[0]);
+      const monthName = dateObj.toLocaleDateString('it-IT', { month: 'short' });
+      const year = dateObj.getFullYear();
+      
+      // Crea una chiave di ordinamento nel formato YYYY-MM
+      const sortKey = `${year}-${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
       
       return {
-        date: `${months[date.getMonth()]} ${date.getFullYear()}`,
-        income: parseFloat(row.income) || 0,
-        expenses: parseFloat(row.expenses) || 0,
-        net: parseFloat(row.income) - parseFloat(row.expenses)
+        date: monthName,
+        month: dateObj.getMonth(),
+        year: year,
+        income: parseFloat(row[1]) || 0,
+        expenses: parseFloat(row[2]) || 0,
+        net: parseFloat(row[1] || 0) - parseFloat(row[2] || 0),
+        sortKey
       };
     });
     
-    // Invia i dati
-    res.json(data);
-  } catch (error: any) {
-    console.error('Errore durante il recupero dei dati finanziari:', error);
+    res.json(formattedData);
+  } catch (error) {
+    console.error('Errore nel recupero dei dati finanziari:', error);
     res.status(500).json({ 
       error: 'Errore durante il recupero dei dati finanziari',
-      message: error.message 
+      details: process.env.NODE_ENV === 'development' ? (error as any).message : undefined
     });
+  } finally {
+    // Assicuriamoci di rilasciare sempre il client al pool
+    try {
+      if (client) {
+        client.release();
+        console.log('Client rilasciato al pool in /financial');
+      }
+    } catch (releaseError) {
+      console.error('Errore nel rilascio del client:', releaseError);
+    }
   }
 });
 
