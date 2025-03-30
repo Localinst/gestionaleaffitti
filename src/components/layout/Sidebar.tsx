@@ -9,7 +9,8 @@ import {
   X, 
   Home, 
   LogOut,
-  LineChart
+  LineChart,
+  FileText
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -63,6 +64,7 @@ export function Sidebar() {
     { path: "/properties", label: "Proprietà", icon: Building2 },
     { path: "/tenants", label: "Inquilini", icon: Users },
     { path: "/transactions", label: "Transazioni", icon: Receipt },
+    { path: "/contracts", label: "Contratti", icon: FileText },
     { path: "/reports", label: "Report & Analytics", icon: LineChart },
   ];
   

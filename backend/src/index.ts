@@ -9,6 +9,8 @@ import { transactionsRouter } from './routes/transactions';
 import { dashboardRouter } from './routes/dashboard';
 import { authRouter } from './routes/auth';
 import { reportsRouter } from './routes/reports';
+import contractsRouter from './routes/contracts';
+import activitiesRouter from './routes/activities';
 import { authenticate } from './middleware/auth';
 
 // Definisci solo requestId, timedout è già definito da connect-timeout
@@ -148,6 +150,8 @@ app.use('/api/tenants', authenticate, tenantsRouter);
 app.use('/api/transactions', authenticate, transactionsRouter);
 app.use('/api/dashboard', authenticate, dashboardRouter);
 app.use('/api/reports', authenticate, reportsRouter);
+app.use('/api/contracts', authenticate, contractsRouter);
+app.use('/api/activities', authenticate, activitiesRouter);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

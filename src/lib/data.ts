@@ -1,3 +1,5 @@
+import { Activity } from "@/services/api";
+
 export interface Property {
   id: string;
   name: string;
@@ -132,13 +134,55 @@ export const getRentCollectionStatus = () => {
   ];
 };
 
-export const getRecentActivities = () => {
-  return [
-    { id: 1, description: "New lease signed", property: "Marina Towers", date: "2023-06-28" },
-    { id: 2, description: "Maintenance request", property: "Highland Residences", date: "2023-06-27" },
-    { id: 3, description: "Rent payment received", property: "Lakeside Villa", date: "2023-06-25" },
-    { id: 4, description: "Lease renewal notice", property: "Downtown Lofts", date: "2023-06-23" }
-  ];
+export const getRecentActivities = async (): Promise<any[]> => {
+  try {
+    // Usa lo stesso URL base usato in api.ts
+    const hostname = window.location.hostname;
+    const API_BASE_URL = hostname !== 'localhost' 
+      ? '/api'  // In produzione usa URL relativo
+      : `${window.location.protocol}//${hostname}:3000/api`;
+    
+    console.log('Richiesta activities a:', `${API_BASE_URL}/activities`);
+    const response = await fetch(`${API_BASE_URL}/activities`, {
+      headers: getAuthHeaders()
+    });
+    
+    if (!response.ok) {
+      console.error('Risposta API activities non ok:', response.status, response.statusText);
+      throw new Error(`Errore nel recupero delle attività: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (!data || !Array.isArray(data)) {
+      console.log('Nessuna attività trovata o formato non valido, uso dati statici');
+      // Restituisci dati statici come fallback
+      return [
+        { id: 1, description: "Contratto in scadenza", property: "Marina Towers", date: new Date() },
+        { id: 2, description: "Richiesta manutenzione", property: "Highland Residences", date: new Date() },
+        { id: 3, description: "Pagamento affitto ricevuto", property: "Lakeside Villa", date: new Date() },
+        { id: 4, description: "Avviso rinnovo contratto", property: "Downtown Lofts", date: new Date() }
+      ];
+    }
+    
+    // Formatta i dati per la visualizzazione
+    return data.map((activity: Activity) => ({
+      id: activity.id,
+      description: activity.description,
+      property: activity.property_name || "Proprietà sconosciuta",
+      date: activity.date
+    })).slice(0, 5); // Mostra solo le prime 5 attività
+    
+  } catch (error) {
+    console.error('Errore durante il recupero delle attività:', error);
+    // Restituisci dati statici come fallback in caso di errore
+    return [
+      { id: 1, description: "Contratto in scadenza", property: "Marina Towers", date: new Date() },
+      { id: 2, description: "Richiesta manutenzione", property: "Highland Residences", date: new Date() },
+      { id: 3, description: "Pagamento affitto ricevuto", property: "Lakeside Villa", date: new Date() },
+      { id: 4, description: "Avviso rinnovo contratto", property: "Downtown Lofts", date: new Date() }
+    ];
+  }
 };
 
 // Funzione per ottenere gli headers con autenticazione
@@ -295,4 +339,10 @@ export const getDashboardSummary = async () => {
       occupancyRate: '0.0'
     };
   }
+};
+
+// L'interfaccia Headers è definita globalmente in TypeScript, quindi
+// definiamo un tipo per i nostri headers
+type HeadersInit = {
+  [key: string]: string;
 };

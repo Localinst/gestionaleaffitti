@@ -48,9 +48,6 @@ const tenantFormSchema = z.object({
   name: z.string().min(1, "Il nome è obbligatorio"),
   email: z.string().email("Inserisci un'email valida"),
   phone: z.string().min(1, "Il numero di telefono è obbligatorio"),
-  lease_start: z.string().min(1, "La data di inizio è obbligatoria"),
-  lease_end: z.string().min(1, "La data di fine è obbligatoria"),
-  rent: z.coerce.number().positive("L'importo dell'affitto deve essere positivo"),
 });
 
 type TenantFormValues = z.infer<typeof tenantFormSchema>;
@@ -137,9 +134,6 @@ export function AddTenantForm({
       name: "",
       email: "",
       phone: "",
-      lease_start: "",
-      lease_end: "",
-      rent: 0
     },
   });
 
@@ -157,10 +151,6 @@ export function AddTenantForm({
         name: data.name,
         email: data.email,
         phone: data.phone,
-        lease_start: data.lease_start,
-        lease_end: data.lease_end,
-        rent: data.rent,
-        rent_amount: data.rent,
         unit: unitIndex || "0",
         status: "active"
       };
@@ -271,56 +261,6 @@ export function AddTenantForm({
                   <FormLabel>Telefono</FormLabel>
                   <FormControl>
                     <Input placeholder="es. +39 123 456 7890" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="lease_start"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Data Inizio Contratto</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="lease_end"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Data Fine Contratto</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="rent"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Importo Affitto Mensile (€)</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="es. 850"
-                      {...field}
-                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

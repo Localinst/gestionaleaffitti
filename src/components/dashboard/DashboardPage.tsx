@@ -17,7 +17,7 @@ import {
   Legend,
   ComposedChart
 } from "recharts";
-import { ArrowUpRight, ArrowDownRight, Building2, Users, DollarSign, ChevronRight, Receipt } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Building2, Users, DollarSign, ChevronRight, Receipt, Calendar, RefreshCcw } from "lucide-react";
 import { 
   AppLayout, 
   PageHeader, 
@@ -40,6 +40,8 @@ import { api, Transaction } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableBody, TableCell, TableHead, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { generateActivitiesFromContracts } from "@/lib/activities";
+import { toast } from "@/components/ui/use-toast";
 
 // Definisci un tipo per il riepilogo della dashboard
 interface DashboardSummaryData {
@@ -816,29 +818,99 @@ function RentCollectionChart() {
 }
 
 function RecentActivities() {
-  const activities = getRecentActivities();
+  const [activities, setActivities] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  
+  useEffect(() => {
+    loadActivities();
+  }, []);
+  
+  async function loadActivities() {
+    try {
+      setLoading(true);
+      const data = await getRecentActivities();
+      setActivities(data);
+    } catch (error) {
+      console.error("Errore nel caricamento delle attività:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+  
+  async function handleGenerateActivities() {
+    try {
+      setGenerating(true);
+      await generateActivitiesFromContracts();
+      toast({
+        title: "Attività generate",
+        description: "Le attività sono state generate con successo",
+      });
+      // Ricarica le attività
+      await loadActivities();
+    } catch (error) {
+      console.error("Errore nella generazione delle attività:", error);
+      toast({
+        title: "Errore",
+        description: "Impossibile generare le attività",
+        variant: "destructive",
+      });
+    } finally {
+      setGenerating(false);
+    }
+  }
   
   return (
     <CardContainer>
-      <SectionHeader title="Attività recenti" />
-      <div className="space-y-4">
-        {activities.map((activity) => (
-          <div
-            key={activity.id}
-            className="flex items-start gap-4 border-b border-border pb-4 last:border-b-0 last:pb-0"
-          >
-            <div className="h-2 w-2 mt-2 rounded-full bg-primary" />
-            <div>
-              <p className="font-medium">{activity.description}</p>
-              <div className="flex text-sm text-muted-foreground gap-2 mt-1">
-                <span>{activity.property}</span>
-                <span>•</span>
-                <span>{new Date(activity.date).toLocaleDateString()}</span>
+      <div className="flex justify-between items-center">
+        <SectionHeader title="Attività recenti" />
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleGenerateActivities}
+          disabled={generating}
+          className="flex items-center gap-1 text-xs"
+        >
+          <RefreshCcw className="h-3 w-3" />
+          {generating ? "Generazione..." : "Genera attività"}
+        </Button>
+      </div>
+      {loading ? (
+        <div className="space-y-4">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="flex items-start gap-4 border-b border-border pb-4 last:border-b-0 last:pb-0">
+              <div className="h-2 w-2 mt-2 rounded-full bg-gray-200" />
+              <div className="w-full">
+                <Skeleton className="h-4 w-3/4 mb-2" />
+                <Skeleton className="h-3 w-1/2" />
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : activities.length === 0 ? (
+        <div className="py-4 text-center text-muted-foreground">
+          Nessuna attività recente da mostrare.
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {activities.map((activity) => (
+            <div
+              key={activity.id}
+              className="flex items-start gap-4 border-b border-border pb-4 last:border-b-0 last:pb-0"
+            >
+              <div className="h-2 w-2 mt-2 rounded-full bg-primary" />
+              <div>
+                <p className="font-medium">{activity.description}</p>
+                <div className="flex text-sm text-muted-foreground gap-2 mt-1">
+                  <span>{activity.property}</span>
+                  <span>•</span>
+                  <span>{new Date(activity.date).toLocaleDateString()}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </CardContainer>
   );
 }

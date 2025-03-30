@@ -13,6 +13,7 @@ import NotFound from "./pages/NotFound";
 import PropertiesPage from "./components/properties/PropertiesPage";
 import TenantsPage from "./components/tenants/TenantsPage";
 import TransactionsPage from "./components/transactions/TransactionsPage";
+import ContractsPage from "./components/contracts/ContractsPage";
 import DashboardPage from '@/components/dashboard/DashboardPage';
 import ReportPage from "./components/dashboard/ReportPage";
 
@@ -73,6 +74,11 @@ const App = () => {
                   <TransactionsPage />
                 </ProtectedRoute>
               } />
+              <Route path="/contracts" element={
+                <ProtectedRoute>
+                  <ContractsPage />
+                </ProtectedRoute>
+              } />
               <Route path="/reports" element={
                 <ProtectedRoute>
                   <ReportPage />
@@ -84,7 +90,6 @@ const App = () => {
             </Routes>
           </AuthProvider>
         </Router>
-        {process.env.NODE_ENV === 'development' && <ReactQueryDevtools initialIsOpen={false} />}
       </TooltipProvider>
     </QueryClientProvider>
   );

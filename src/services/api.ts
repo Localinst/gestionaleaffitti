@@ -1,4 +1,3 @@
-
 // Tipi di base
 export interface Property {
   id: number;
@@ -53,6 +52,21 @@ export interface Contract {
   rent_amount: number;
   deposit_amount: number;
   status: 'active' | 'expired' | 'terminated';
+}
+
+export interface Activity {
+  id: number;
+  description: string;
+  property_id: string | number;
+  property_name?: string;
+  tenant_id?: string | number;
+  tenant_name?: string;
+  date: Date | string;
+  type: 'contract_expiration' | 'rent_payment' | 'maintenance' | 'other';
+  priority: 'high' | 'medium' | 'low';
+  status: 'pending' | 'completed' | 'dismissed';
+  related_id?: string | number; // ID del contratto o transazione correlata
+  created_at?: Date | string;
 }
 
 export interface Owner {
@@ -675,6 +689,7 @@ export async function createTransaction(transaction: Omit<Transaction, 'id'>): P
     throw error;
   }
 }
+
 // API Contracts
 export async function getContracts(): Promise<Contract[]> {
   try {
@@ -699,8 +714,9 @@ export async function getContracts(): Promise<Contract[]> {
   }
 }
 
-export async function getContractsByProperty(propertyId: number): Promise<Contract[]> {
+export async function getContractsByProperty(propertyId: number | string): Promise<Contract[]> {
   try {
+    console.log('Richiesta getContractsByProperty con ID:', propertyId, 'di tipo:', typeof propertyId);
     const response = await fetch(`${API_URL}/contracts?propertyId=${propertyId}`, getRequestOptions());
     
     if (!response.ok) {
@@ -709,6 +725,7 @@ export async function getContractsByProperty(propertyId: number): Promise<Contra
     }
     
     const data = await response.json();
+    console.log('Risposta API getContractsByProperty:', data);
     
     if (!Array.isArray(data)) {
       console.error('La risposta non è un array:', data);
@@ -719,6 +736,26 @@ export async function getContractsByProperty(propertyId: number): Promise<Contra
   } catch (error) {
     console.error('Exception in getContractsByProperty:', error);
     return [];
+  }
+}
+
+export async function createContract(contract: Omit<Contract, 'id'>): Promise<Contract> {
+  try {
+    const response = await fetch(`${API_URL}/contracts`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(contract),
+    });
+    
+    if (!response.ok) {
+      console.error('Errore nella creazione del contratto:', response.status);
+      throw new Error(`Errore nella creazione del contratto: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Exception in createContract:', error);
+    throw error;
   }
 }
 
@@ -743,6 +780,70 @@ export async function getOwners(): Promise<Owner[]> {
   } catch (error) {
     console.error('Exception in getOwners:', error);
     return [];
+  }
+}
+
+// API Activities
+export async function getActivities(): Promise<Activity[]> {
+  try {
+    const response = await fetch(`${API_URL}/activities`, getRequestOptions());
+    
+    if (!response.ok) {
+      console.error('Errore nella richiesta activities:', response.status);
+      throw new Error(`Errore nel caricamento delle attività: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (!Array.isArray(data)) {
+      console.error('La risposta non è un array:', data);
+      return [];
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Exception in getActivities:', error);
+    return [];
+  }
+}
+
+export async function createActivity(activity: Omit<Activity, 'id'>): Promise<Activity> {
+  try {
+    const response = await fetch(`${API_URL}/activities`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(activity),
+    });
+    
+    if (!response.ok) {
+      console.error('Errore nella creazione dell\'attività:', response.status);
+      throw new Error(`Errore nella creazione dell'attività: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Exception in createActivity:', error);
+    throw error;
+  }
+}
+
+export async function updateActivityStatus(id: number, status: Activity['status']): Promise<Activity> {
+  try {
+    const response = await fetch(`${API_URL}/activities/${id}/status`, {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ status }),
+    });
+    
+    if (!response.ok) {
+      console.error('Errore nell\'aggiornamento dello stato dell\'attività:', response.status);
+      throw new Error(`Errore nell'aggiornamento dello stato dell'attività: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Exception in updateActivityStatus:', error);
+    throw error;
   }
 }
 
@@ -775,10 +876,16 @@ export const api = {
   },
   contracts: {
     getAll: getContracts,
-    getByProperty: getContractsByProperty
+    getByProperty: getContractsByProperty,
+    create: createContract
   },
   owners: {
     getAll: getOwners
+  },
+  activities: {
+    getAll: getActivities,
+    create: createActivity,
+    updateStatus: updateActivityStatus
   },
   dashboard: {
     getSummary: getDashboardSummary
