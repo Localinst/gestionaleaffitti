@@ -380,7 +380,7 @@ export default function ReportPage() {
         toast({
           title: "Attenzione",
           description: "Utilizzando dati di esempio a causa di problemi di connessione al database",
-          variant: "warning"
+          variant: "destructive"
         });
         
         console.log("Utilizzando dati finanziari di esempio predefiniti dopo errore");
@@ -454,7 +454,7 @@ export default function ReportPage() {
         toast({
           title: "Attenzione",
           description: "Utilizzando dati di esempio a causa di problemi di connessione al database",
-          variant: "warning"
+          variant: "destructive"
         });
         
         console.log("Utilizzando dati di riepilogo di esempio predefiniti dopo errore");
@@ -515,7 +515,7 @@ export default function ReportPage() {
         toast({
           title: "Attenzione",
           description: "Utilizzando dati di esempio a causa di problemi di connessione al database",
-          variant: "warning"
+          variant: "destructive"
         });
         
         console.log("Utilizzando dati proprietà di esempio predefiniti dopo errore");
