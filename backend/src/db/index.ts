@@ -420,7 +420,7 @@ export const executeQuery = async <T>(
   } finally {
     if (client) {
       try {
-        client.release(true); // true = termina la connessione invece di riciclarla
+        client.release();
       } catch (releaseError) {
         console.error('Errore nel rilasciare il client:', releaseError);
       }
