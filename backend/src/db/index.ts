@@ -120,7 +120,6 @@ async function setupTransactionPooler() {
     // Forza l'uso di IPv4 come ulteriore sicurezza
     family: 4,
     // Configurazione del pool
-    max: 20, // massimo numero di client nel pool
     idleTimeoutMillis: 10000, // timeout di inattività ridotto a 10 secondi
     connectionTimeoutMillis: 5000, // timeout di connessione (5 secondi)
     maxUses: 5000, // ridotto il numero massimo di query per connessione prima del riciclo
