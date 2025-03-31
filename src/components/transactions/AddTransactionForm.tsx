@@ -5,7 +5,7 @@ import { z } from "zod";
 import { useNavigate } from "react-router-dom";
 import { Receipt } from "lucide-react";
 import { toast } from "sonner";
-import { createTransaction, getProperties, getTenantsByProperty, Transaction } from "@/services/api";
+import { createTransaction, getProperties, getTenantsByProperty, Transaction, updateTransaction } from "@/services/api";
 
 import {
   Form,
@@ -69,20 +69,28 @@ const transactionCategories = {
   ],
   expense: [
     "Manutenzione",
-    "Utenze",
+    "Luce",
+    "Gas",
+    "Acqua",
     "Assicurazione",
     "Tasse",
     "Mutuo",
+    "Pulizie",
+    "Lavanderia",
+    "Noleggio",
+    "Prodotti",
     "Altro"
   ]
 };
 
 export function AddTransactionForm({ 
   open, 
-  onOpenChange 
+  onOpenChange,
+  transaction
 }: { 
   open: boolean; 
   onOpenChange: (open: boolean) => void;
+  transaction?: any;
 }) {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -90,6 +98,18 @@ export function AddTransactionForm({
   const [unitOptions, setUnitOptions] = useState<UnitOption[]>([]);
   const [tenants, setTenants] = useState([]);
   const [selectedType, setSelectedType] = useState<"income" | "expense">("income");
+  const [isEditMode, setIsEditMode] = useState(false);
+  
+  // Determina se siamo in modalità modifica
+  useEffect(() => {
+    if (transaction) {
+      setIsEditMode(true);
+      setSelectedType(transaction.type || "income");
+    } else {
+      setIsEditMode(false);
+      setSelectedType("income");
+    }
+  }, [transaction]);
   
   useEffect(() => {
     async function loadProperties() {
@@ -176,6 +196,30 @@ export function AddTransactionForm({
       description: "",
     },
   });
+  
+  // Aggiorna valori del form in modalità modifica
+  useEffect(() => {
+    if (transaction && open) {
+      const unitId = `${transaction.propertyId || transaction.property_id}-${transaction.unit_index || '0'}`;
+      
+      form.reset({
+        unit_id: unitId,
+        tenant_id: transaction.tenantId || transaction.tenant_id || "none",
+        date: new Date(transaction.date).toISOString().split('T')[0],
+        amount: transaction.amount || 0,
+        type: transaction.type || "income",
+        category: transaction.category || "",
+        description: transaction.description || "",
+      });
+      
+      setSelectedType(transaction.type || "income");
+      
+      // Carica gli inquilini per la proprietà
+      if (transaction.propertyId || transaction.property_id) {
+        loadTenants(unitId);
+      }
+    }
+  }, [transaction, open, form]);
 
   const loadTenants = async (unitId: string) => {
     if (!unitId || unitId === "") {
@@ -275,11 +319,21 @@ export function AddTransactionForm({
     console.log("Invio transazione:", transactionData);
     
     try {
-      await createTransaction(transactionData);
+      setIsSubmitting(true);
       
-      toast.success("Transazione aggiunta con successo", {
-        description: `${data.type === 'income' ? 'Entrata' : 'Uscita'} di €${data.amount} registrata.`,
-      });
+      if (isEditMode && transaction) {
+        // Aggiorna una transazione esistente
+        const updatedTransaction = await updateTransaction(transaction.id, transactionData);
+        toast.success("Transazione aggiornata con successo", {
+          description: `${data.type === 'income' ? 'Entrata' : 'Uscita'} di €${data.amount} aggiornata.`,
+        });
+      } else {
+        // Crea una nuova transazione
+        await createTransaction(transactionData);
+        toast.success("Transazione aggiunta con successo", {
+          description: `${data.type === 'income' ? 'Entrata' : 'Uscita'} di €${data.amount} registrata.`,
+        });
+      }
       
       form.reset();
       onOpenChange(false);
@@ -287,9 +341,11 @@ export function AddTransactionForm({
     } catch (apiError: any) {
       console.error("Errore API:", apiError);
       const errorMessage = apiError.message || "Errore sconosciuto";
-      toast.error("Errore durante l'aggiunta della transazione", {
+      toast.error(isEditMode ? "Errore durante l'aggiornamento della transazione" : "Errore durante l'aggiunta della transazione", {
         description: errorMessage
       });
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -299,10 +355,10 @@ export function AddTransactionForm({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Receipt className="h-5 w-5" />
-            Aggiungi Nuova Transazione
+            {isEditMode ? "Modifica Transazione" : "Aggiungi Nuova Transazione"}
           </DialogTitle>
           <DialogDescription>
-            Inserisci i dettagli per registrare una nuova transazione.
+            {isEditMode ? "Modifica i dettagli della transazione." : "Inserisci i dettagli per registrare una nuova transazione."}
           </DialogDescription>
         </DialogHeader>
 
@@ -479,7 +535,7 @@ export function AddTransactionForm({
                 type="submit" 
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Aggiunta in corso..." : "Aggiungi Transazione"}
+                {isSubmitting ? (isEditMode ? "Salvataggio in corso..." : "Aggiunta in corso...") : (isEditMode ? "Salva Modifiche" : "Aggiungi Transazione")}
               </Button>
             </DialogFooter>
           </form>

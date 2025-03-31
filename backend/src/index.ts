@@ -11,6 +11,7 @@ import { authRouter } from './routes/auth';
 import { reportsRouter } from './routes/reports';
 import contractsRouter from './routes/contracts';
 import activitiesRouter from './routes/activities';
+import { tourismRouter } from './routes/tourism';
 import { authenticate } from './middleware/auth';
 
 // Definisci solo requestId, timedout è già definito da connect-timeout
@@ -152,6 +153,7 @@ app.use('/api/dashboard', authenticate, dashboardRouter);
 app.use('/api/reports', authenticate, reportsRouter);
 app.use('/api/contracts', authenticate, contractsRouter);
 app.use('/api/activities', authenticate, activitiesRouter);
+app.use('/api/tourism', authenticate, tourismRouter);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

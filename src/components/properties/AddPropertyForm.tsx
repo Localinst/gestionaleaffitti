@@ -6,10 +6,11 @@ import * as z from "zod";
 import { toast } from "sonner";
 import { Building2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { createProperty, updateProperty } from "@/services/api";
 import { Property } from "@/services/api";
 
@@ -23,6 +24,8 @@ const formSchema = z.object({
   }),
   units: z.coerce.number().min(1, { message: "Inserisci almeno 1 unità" }),
   unitNames: z.array(z.string()).optional(),
+  is_tourism: z.boolean().default(false),
+  max_guests: z.coerce.number().min(0).optional(),
 });
 
 // Tipo per i valori del form
@@ -39,6 +42,7 @@ interface PropertyFormProps {
 export function AddPropertyForm({ open, onOpenChange, property }: PropertyFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [unitCount, setUnitCount] = useState(property?.units || 1);
+  const [isTourism, setIsTourism] = useState(property?.is_tourism || false);
   const navigate = useNavigate();
   const isEditing = !!property;
 
@@ -52,6 +56,8 @@ export function AddPropertyForm({ open, onOpenChange, property }: PropertyFormPr
       type: property?.type || "",
       units: property?.units || 1,
       unitNames: getInitialUnitNames(property),
+      is_tourism: property?.is_tourism || false,
+      max_guests: property?.max_guests || 0,
     },
   });
 
@@ -101,6 +107,8 @@ export function AddPropertyForm({ open, onOpenChange, property }: PropertyFormPr
           const newNames = currentNames.slice(0, units);
           form.setValue("unitNames", newNames);
         }
+      } else if (name === "is_tourism") {
+        setIsTourism(!!value.is_tourism);
       }
     });
     return () => subscription.unsubscribe();
@@ -129,7 +137,9 @@ export function AddPropertyForm({ open, onOpenChange, property }: PropertyFormPr
         type: data.type,
         units: data.units,
         unitNames: data.unitNames || [],
-        image_url: property?.image_url || ""
+        image_url: property?.image_url || "",
+        is_tourism: data.is_tourism,
+        max_guests: data.is_tourism ? data.max_guests : 0
       };
       
       if (isEditing && property) {
@@ -292,6 +302,55 @@ export function AddPropertyForm({ open, onOpenChange, property }: PropertyFormPr
               />
               
               {renderUnitNameFields()}
+            </div>
+
+            <div className="space-y-4 border p-4 rounded-md">
+              <h3 className="text-sm font-medium">Impostazioni locazione turistica</h3>
+              
+              <FormField
+                control={form.control}
+                name="is_tourism"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>Proprietà per locazione turistica</FormLabel>
+                      <FormDescription>
+                        Seleziona questa opzione se la proprietà verrà utilizzata per affitti turistici
+                      </FormDescription>
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              {isTourism && (
+                <FormField
+                  control={form.control}
+                  name="max_guests"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Numero massimo di ospiti</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          min="0" 
+                          placeholder="es. 4" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Inserisci il numero massimo di ospiti che possono essere alloggiati
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
             </div>
 
             <div className="flex justify-end space-x-2 pt-4">

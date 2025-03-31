@@ -45,9 +45,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getTransactions } from "@/services/api";
+import { getTransactions, deleteTransaction } from "@/services/api";
 import { AddTransactionForm } from "./AddTransactionForm";
 import { Property, Tenant } from "@/lib/data";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { api } from "@/services/api";
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState([]);
@@ -57,7 +69,12 @@ export default function TransactionsPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [propertyFilter, setPropertyFilter] = useState<string>("all");
   const [isAddTransactionOpen, setIsAddTransactionOpen] = useState(false);
+  const [isEditTransactionOpen, setIsEditTransactionOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<any | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   
   useEffect(() => {
     loadData();
@@ -166,8 +183,43 @@ export default function TransactionsPage() {
     
     const matchesType = typeFilter === "all" || transaction.type === typeFilter;
     
-    return matchesSearch && matchesType;
+    const matchesProperty = propertyFilter === "all" || 
+      transaction.propertyId?.toString() === propertyFilter ||
+      transaction.property_id?.toString() === propertyFilter;
+    
+    return matchesSearch && matchesType && matchesProperty;
   });
+  
+  const handleEdit = (transaction: any) => {
+    setSelectedTransaction(transaction);
+    setIsEditTransactionOpen(true);
+  };
+
+  const handleDelete = (transaction: any) => {
+    setSelectedTransaction(transaction);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedTransaction) return;
+    
+    try {
+      setDeleteLoading(true);
+      await deleteTransaction(selectedTransaction.id);
+      
+      // Aggiorna la lista delle transazioni
+      loadData();
+      
+      toast.success("Transazione eliminata con successo");
+      setDeleteDialogOpen(false);
+      setSelectedTransaction(null);
+    } catch (err: any) {
+      console.error("Errore durante l'eliminazione della transazione:", err);
+      toast.error("Errore durante l'eliminazione della transazione");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
   
   return (
     <AppLayout>
@@ -204,6 +256,21 @@ export default function TransactionsPage() {
               <SelectItem value="all">Tutti i tipi</SelectItem>
               <SelectItem value="income">Entrate</SelectItem>
               <SelectItem value="expense">Uscite</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="w-full md:w-[220px]">
+          <Select value={propertyFilter} onValueChange={setPropertyFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="Filtra per proprietà" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tutte le proprietà</SelectItem>
+              {properties.map((property) => (
+                <SelectItem key={property.id} value={property.id?.toString()}>
+                  {property.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -292,11 +359,14 @@ export default function TransactionsPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleEdit(transaction)}>
                           <Edit className="mr-2 h-4 w-4" />
                           <span>Modifica</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">
+                        <DropdownMenuItem 
+                          className="text-destructive"
+                          onClick={() => handleDelete(transaction)}
+                        >
                           <Trash2 className="mr-2 h-4 w-4" />
                           <span>Elimina</span>
                         </DropdownMenuItem>
@@ -314,6 +384,36 @@ export default function TransactionsPage() {
         open={isAddTransactionOpen} 
         onOpenChange={setIsAddTransactionOpen}
       />
+      
+      {selectedTransaction && (
+        <AddTransactionForm 
+          open={isEditTransactionOpen} 
+          onOpenChange={setIsEditTransactionOpen}
+          transaction={selectedTransaction}
+        />
+      )}
+      
+      {/* Dialog di conferma eliminazione */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sei sicuro di voler eliminare questa transazione?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Questa azione non può essere annullata. La transazione verrà rimossa permanentemente dal sistema.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annulla</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete} 
+              disabled={deleteLoading}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteLoading ? "Eliminazione..." : "Elimina"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }

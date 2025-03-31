@@ -10,7 +10,9 @@ import {
   Home, 
   LogOut,
   LineChart,
-  FileText
+  FileText,
+  CalendarClock,
+  Palmtree
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -65,6 +67,8 @@ export function Sidebar() {
     { path: "/tenants", label: "Inquilini", icon: Users },
     { path: "/transactions", label: "Transazioni", icon: Receipt },
     { path: "/contracts", label: "Contratti", icon: FileText },
+    { path: "/activities", label: "Attività", icon: CalendarClock },
+    { path: "/tourism/bookings", label: "Locazioni Turistiche", icon: Palmtree },
     { path: "/reports", label: "Report & Analytics", icon: LineChart },
   ];
   

@@ -10,14 +10,25 @@ async function runMigration() {
   try {
     const client = await pool.connect();
     
-    // Leggi il file di migrazione
-    const migrationPath = path.join(__dirname, 'migrations', 'alter_tenants_table.sql');
-    const migrationSQL = fs.readFileSync(migrationPath, 'utf8');
+    // Leggi i file di migrazione
+    const migrationsPath = path.join(__dirname, 'migrations');
+    const migrationFiles = fs.readdirSync(migrationsPath)
+      .filter(file => file.endsWith('.sql'))
+      .sort(); // Ordina i file per eseguire le migrazioni in ordine
     
-    // Esegui la migrazione
-    await client.query(migrationSQL);
+    console.log('Esecuzione delle migrazioni:', migrationFiles);
     
-    console.log('Migrazione completata con successo');
+    // Esegui ogni migrazione in sequenza
+    for (const file of migrationFiles) {
+      const filePath = path.join(migrationsPath, file);
+      const migrationSQL = fs.readFileSync(filePath, 'utf8');
+      
+      console.log(`Esecuzione della migrazione: ${file}`);
+      await client.query(migrationSQL);
+      console.log(`Migrazione completata: ${file}`);
+    }
+    
+    console.log('Tutte le migrazioni sono state completate con successo');
     
     client.release();
   } catch (error) {

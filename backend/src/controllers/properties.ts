@@ -48,7 +48,7 @@ export const getPropertyById = async (req: Request, res: Response) => {
 
 export const createProperty = async (req: Request, res: Response) => {
   try {
-    const { name, address, city, type, units, unitNames } = req.body;
+    const { name, address, city, type, units, unitNames, is_tourism, max_guests } = req.body;
     // Ottengo l'user_id dall'utente autenticato
     const userId = req.user?.id;
     
@@ -60,8 +60,8 @@ export const createProperty = async (req: Request, res: Response) => {
     
     const result = await executeQuery(async (client) => {
       return client.query(
-        'INSERT INTO properties (name, address, city, type, units, value, image_url, unit_names, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
-        [name, address, city, type, units, 0, null, unitNamesJson, userId]
+        'INSERT INTO properties (name, address, city, type, units, value, image_url, unit_names, user_id, is_tourism, max_guests) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *',
+        [name, address, city, type, units, 0, null, unitNamesJson, userId, is_tourism || false, max_guests || 0]
       );
     });
     
@@ -75,7 +75,7 @@ export const createProperty = async (req: Request, res: Response) => {
 export const updateProperty = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { name, address, city, type, units } = req.body;
+    const { name, address, city, type, units, is_tourism, max_guests } = req.body;
     // Ottengo l'user_id dall'utente autenticato
     const userId = req.user?.id;
     
@@ -90,8 +90,8 @@ export const updateProperty = async (req: Request, res: Response) => {
     }
     
     const result = await pool.query(
-      'UPDATE properties SET name = $1, address = $2, city = $3, type = $4, units = $5, value = $6, updated_at = CURRENT_TIMESTAMP WHERE id = $7 AND user_id = $8 RETURNING *',
-      [name, address, city, type, units, 0, id, userId]
+      'UPDATE properties SET name = $1, address = $2, city = $3, type = $4, units = $5, value = $6, is_tourism = $7, max_guests = $8, updated_at = CURRENT_TIMESTAMP WHERE id = $9 AND user_id = $10 RETURNING *',
+      [name, address, city, type, units, 0, is_tourism || false, max_guests || 0, id, userId]
     );
     
     res.json(result.rows[0]);

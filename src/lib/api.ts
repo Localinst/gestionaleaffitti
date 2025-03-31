@@ -88,7 +88,7 @@ const getAuthHeaders = () => {
 };
 
 // Handler generico per gli errori delle richieste
-const handleRequestError = (endpoint: string, error: any) => {
+export const handleRequestError = (endpoint: string, error: any) => {
   console.error(`Errore nella richiesta a ${endpoint}:`, error);
   
   // Se è un errore di timeout, possiamo mostrare un messaggio specifico

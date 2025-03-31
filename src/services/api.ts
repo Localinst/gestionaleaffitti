@@ -134,7 +134,7 @@ export interface AuthResponse {
 }
 
 // Funzione di utilità per ottenere le opzioni di richiesta con il token di autenticazione
-const getAuthHeaders = (): HeadersInit => {
+export const getAuthHeaders = (): HeadersInit => {
   const token = localStorage.getItem('authToken');
   const headers: HeadersInit = {
     'Content-Type': 'application/json'
@@ -839,6 +839,69 @@ export async function updateActivityStatus(id: number, status: Activity['status'
     return await response.json();
   } catch (error) {
     console.error('Exception in updateActivityStatus:', error);
+    throw error;
+  }
+}
+
+export async function deleteTransaction(id: number): Promise<boolean> {
+  try {
+    const response = await fetch(`${API_URL}/transactions/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    
+    if (!response.ok) {
+      console.error('Errore nell\'eliminazione della transazione:', response.status);
+      throw new Error(`Errore nell'eliminazione della transazione: ${response.status}`);
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Exception in deleteTransaction:', error);
+    throw error;
+  }
+}
+
+export async function updateTransaction(id: number, transaction: Partial<Transaction>): Promise<Transaction> {
+  try {
+    if (!id) {
+      throw new Error('ID transazione mancante');
+    }
+    
+    // Validazioni base sui dati di aggiornamento
+    if (transaction.amount && (typeof transaction.amount !== 'number' || transaction.amount <= 0)) {
+      throw new Error('L\'importo deve essere un numero positivo');
+    }
+    
+    // Converti la data in formato ISO se è un oggetto Date
+    const dataToSend = { ...transaction };
+    if (dataToSend.date && dataToSend.date instanceof Date) {
+      // Creiamo un oggetto separato per l'invio, per non modificare l'originale
+      dataToSend.date = dataToSend.date.toISOString() as unknown as Date;
+    }
+    
+    console.log('Aggiornamento transazione:', id, dataToSend);
+    
+    const response = await fetch(`${API_URL}/transactions/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(dataToSend)
+    });
+    
+    if (!response.ok) {
+      console.error('Errore nell\'aggiornamento della transazione:', response.status);
+      
+      try {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Errore nell'aggiornamento della transazione: ${response.status}`);
+      } catch (jsonError) {
+        throw new Error(`Errore nell'aggiornamento della transazione: ${response.status}`);
+      }
+    }
+    
+    return response.json();
+  } catch (error) {
+    console.error('Exception in updateTransaction:', error);
     throw error;
   }
 }
