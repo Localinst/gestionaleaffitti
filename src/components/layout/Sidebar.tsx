@@ -14,7 +14,8 @@ import {
   CalendarClock,
   Palmtree,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  HelpCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -27,7 +28,7 @@ export function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { logout, user } = useAuth();
+  const { logout, user, startTutorial } = useAuth();
   
   // Funzione di logout
   const handleLogout = async () => {
@@ -223,7 +224,16 @@ export function Sidebar() {
         </nav>
         
         {/* Sidebar footer */}
-        <div className="border-t p-4">
+        <div className="border-t p-4 space-y-2">
+          <Button 
+            variant="outline" 
+            className="w-full justify-start"
+            onClick={() => startTutorial()}
+          >
+            <HelpCircle className="mr-2 h-5 w-5" />
+            Guida Interattiva
+          </Button>
+          
           <Button 
             variant="outline" 
             className="w-full justify-start" 

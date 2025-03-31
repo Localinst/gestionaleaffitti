@@ -517,7 +517,7 @@ export async function syncIcalCalendar(userId: string, propertyId: number, icalU
             }
             
             // Ulteriore analisi in base allo status
-            if (typedEvent.status === 'CONFIRMED' && !isRealBooking) {
+            if (typedEvent.status && typedEvent.status === 'CONFIRMED' && !isRealBooking) {
               // Lo status CONFIRMED è un forte indicatore di prenotazione
               console.log(`  Status CONFIRMED rilevato, considerato come prenotazione`);
               isRealBooking = true;

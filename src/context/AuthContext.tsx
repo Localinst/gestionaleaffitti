@@ -21,6 +21,7 @@ interface AuthContextProps {
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  startTutorial: () => void;
 }
 
 // Creazione del contesto
@@ -31,6 +32,7 @@ const AuthContext = createContext<AuthContextProps>({
   login: async () => {},
   register: async () => {},
   logout: async () => {},
+  startTutorial: () => {},
 });
 
 // Hook per utilizzare il contesto
@@ -263,6 +265,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  // Funzione per avviare il tutorial
+  const startTutorial = () => {
+    // Questo sarà implementato usando il TutorialContext
+    // Emette un evento personalizzato che sarà catturato dal TutorialContext
+    const event = new CustomEvent('start-tutorial');
+    window.dispatchEvent(event);
+    
+    // Feedback all'utente
+    toast.info('Avvio della guida interattiva', {
+      description: 'Segui le istruzioni sullo schermo',
+    });
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -272,6 +287,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         login,
         register,
         logout,
+        startTutorial,
       }}
     >
       {children}

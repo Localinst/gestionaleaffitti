@@ -20,4 +20,5 @@ export interface ICalEvent {
   description?: string;
   location?: string;
   uid: string;
+  status?: string;
 } 

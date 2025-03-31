@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { HashRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
+import { TutorialProvider } from "@/context/TutorialContext";
+import { TutorialOverlay } from "@/components/tutorial/TutorialOverlay";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
@@ -36,9 +38,9 @@ const queryClient = new QueryClient({
       // Ritentare fino a 2 volte in caso di errore
       retry: 2,
       // Non mantenere i dati precedenti durante le nuove richieste
-      keepPreviousData: false,
-      // Disabilita la cache
-      cacheTime: 0,
+      // keepPreviousData: false, // Proprietà non più supportata
+      // Disabilita la cache (rinominato in gcTime nelle versioni recenti)
+      gcTime: 0,
     },
   },
 });
@@ -51,67 +53,70 @@ const App = () => {
         <Sonner />
         <Router>
           <AuthProvider>
-            <Routes>
-              {/* Rotte pubbliche */}
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              
-              {/* Rotte protette */}
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <DashboardPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/properties" element={
-                <ProtectedRoute>
-                  <PropertiesPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/tenants" element={
-                <ProtectedRoute>
-                  <TenantsPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/transactions" element={
-                <ProtectedRoute>
-                  <TransactionsPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/contracts" element={
-                <ProtectedRoute>
-                  <ContractsPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/reports" element={
-                <ProtectedRoute>
-                  <ReportPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/activities" element={
-                <ProtectedRoute>
-                  <ActivitiesPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/tourism/bookings" element={
-                <ProtectedRoute>
-                  <BookingsPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/tourism/property/:propertyId" element={
-                <ProtectedRoute>
-                  <PropertyDetails />
-                </ProtectedRoute>
-              } />
-              <Route path="/tourism/properties" element={
-                <ProtectedRoute>
-                  <TourismPropertiesPage />
-                </ProtectedRoute>
-              } />
-              
-              {/* Pagina non trovata */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <TutorialProvider>
+              <TutorialOverlay />
+              <Routes>
+                {/* Rotte pubbliche */}
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                
+                {/* Rotte protette */}
+                <Route path="/dashboard" element={
+                  <ProtectedRoute>
+                    <DashboardPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/properties" element={
+                  <ProtectedRoute>
+                    <PropertiesPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/tenants" element={
+                  <ProtectedRoute>
+                    <TenantsPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/transactions" element={
+                  <ProtectedRoute>
+                    <TransactionsPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/contracts" element={
+                  <ProtectedRoute>
+                    <ContractsPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/reports" element={
+                  <ProtectedRoute>
+                    <ReportPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/activities" element={
+                  <ProtectedRoute>
+                    <ActivitiesPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/tourism/bookings" element={
+                  <ProtectedRoute>
+                    <BookingsPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/tourism/property/:propertyId" element={
+                  <ProtectedRoute>
+                    <PropertyDetails />
+                  </ProtectedRoute>
+                } />
+                <Route path="/tourism/properties" element={
+                  <ProtectedRoute>
+                    <TourismPropertiesPage />
+                  </ProtectedRoute>
+                } />
+                
+                {/* Pagina non trovata */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </TutorialProvider>
           </AuthProvider>
         </Router>
       </TooltipProvider>
