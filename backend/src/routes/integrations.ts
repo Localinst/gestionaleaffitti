@@ -443,57 +443,101 @@ export async function syncIcalCalendar(userId: string, propertyId: number, icalU
           if (typedEvent.type === 'VEVENT' && typedEvent.start && typedEvent.end) {
             syncedEvents++;
             
-            // Estrai date da iCal
-            let startDate = new Date(typedEvent.start);
-            let endDate = new Date(typedEvent.end);
+            // Estrai le date dell'evento
+            const startDate = new Date(typedEvent.start);
+            const endDate = new Date(typedEvent.end);
+
+            console.log(`Evento originale: inizio=${startDate.toISOString()}, fine=${endDate.toISOString()}`);
             
-            // Converti in formato ISO per la data locale
-            const checkInDate = startDate.toISOString().split('T')[0];
+            // Crea nuove date e aggiungi 1 giorno per correggere l'offset
+            const correctedStartDate = new Date(startDate);
+            correctedStartDate.setDate(correctedStartDate.getDate() + 1);
+            correctedStartDate.setHours(12, 0, 0, 0);
             
-            // Correzione per date "non inclusive" nei feed iCal
-            // Sottrai un giorno dalla data di fine poiché i feed iCal di Airbnb/Booking
-            // impostano la data di fine come il giorno DOPO l'ultimo giorno di soggiorno
-            endDate.setDate(endDate.getDate() - 1);
-            const checkOutDate = endDate.toISOString().split('T')[0];
+            const correctedEndDate = new Date(endDate);
+            correctedEndDate.setDate(correctedEndDate.getDate() + 1);
+            correctedEndDate.setHours(12, 0, 0, 0);
             
-            console.log(`Evento: ${uid}`);
-            console.log(`  Date originali: inizio=${typedEvent.start}, fine=${typedEvent.end}`);
-            console.log(`  Date corrette: check-in=${checkInDate}, check-out=${checkOutDate}`);
-            console.log(`  Titolo evento: ${typedEvent.summary}`);
-            console.log(`  UID: ${uid}`);
+            console.log(`Evento con correzione: inizio=${correctedStartDate.toISOString()}, fine=${correctedEndDate.toISOString()}`);
             
-            // Analizza l'evento in profondità per distinguere prenotazioni reali dai blocchi
-            // INVERSIONE DELLA LOGICA: consideriamo tutti gli eventi di Airbnb come prenotazioni
-            // anche se sono etichettati come "CLOSED" o "Not available"
-            let isRealBooking = true; // Default: è una prenotazione
-            let isManualBlock = false;
-            let guestName = 'Prenotazione';
+            // Correggi le date di checkin/checkout usando le date corrette
+            let checkInDate = correctedStartDate.toISOString().split('T')[0];
+            let checkOutDate = correctedEndDate.toISOString().split('T')[0];
+              
+            console.log(`Date corrette: check-in=${checkInDate}, check-out=${checkOutDate}`);
+            
+            // NUOVA LOGICA: distinguere tra prenotazioni e blocchi in base al summary e status
+            // come fa Google Calendar
+            let isRealBooking = false;
+            let guestName = 'Blocco date';
             let bookingSource = uid.includes('airbnb') ? 'airbnb' : 
                              (uid.includes('booking') ? 'booking' : 'ical');
             
-            // Identifica la piattaforma di origine dal UID o dal titolo
-            if (uid.includes('airbnb') || (typedEvent.summary && typedEvent.summary.toString().toLowerCase().includes('airbnb'))) {
-              bookingSource = 'airbnb';
-              guestName = 'Prenotazione Airbnb';
-            } else if (uid.includes('booking') || (typedEvent.summary && typedEvent.summary.toString().toLowerCase().includes('booking'))) {
-              bookingSource = 'booking';
-              guestName = 'Prenotazione Booking';
+            // Analisi del titolo dell'evento come fa Google Calendar
+            if (typedEvent.summary) {
+              const summaryText = typedEvent.summary.toString();
+              const summaryLower = summaryText.toLowerCase();
+              
+              console.log(`  Analisi titolo evento: "${summaryText}"`);
+              
+              // Google Calendar distingue "Reserved" da "not available"
+              if (summaryLower.includes('reserved') || 
+                 summaryLower.includes('booked') || 
+                 summaryLower.includes('prenotato') ||
+                 summaryLower.includes('confirmed')) {
+                // Se contiene una di queste parole chiave, è una prenotazione
+                isRealBooking = true;
+                console.log(`  Identificato come PRENOTAZIONE dal titolo`);
+                
+                if (bookingSource === 'airbnb') {
+                  guestName = 'Prenotazione Airbnb';
+                } else if (bookingSource === 'booking') {
+                  guestName = 'Prenotazione Booking';
+                } else {
+                  guestName = 'Prenotazione esterna';
+                }
+              }
+              // Identifica esplicitamente i blocchi
+              else if (summaryLower.includes('not available') || 
+                      summaryLower.includes('unavailable') || 
+                      summaryLower.includes('blocked') ||
+                      summaryLower.includes('closed')) {
+                // Questo è un blocco manuale
+                isRealBooking = false;
+                guestName = 'Blocco date';
+                console.log(`  Identificato come BLOCCO dal titolo`);
+              }
+              // Se il titolo non contiene parole chiave specifiche ma ha un testo personalizzato
+              else if (summaryText.trim() !== '') {
+                // Probabilmente è una prenotazione con titolo personalizzato
+                isRealBooking = true;
+                guestName = summaryText.trim();
+                console.log(`  Identificato come PRENOTAZIONE con titolo personalizzato: ${guestName}`);
+              }
             }
             
-            // Usa un'etichetta personalizzata in base alla piattaforma
-            if (bookingSource === 'airbnb') {
-              guestName = 'Prenotazione Airbnb';
-            } else if (bookingSource === 'booking') {
-              guestName = 'Prenotazione Booking';
-            } else {
-              guestName = 'Prenotazione esterna';
+            // Ulteriore analisi in base allo status
+            if (typedEvent.status === 'CONFIRMED' && !isRealBooking) {
+              // Lo status CONFIRMED è un forte indicatore di prenotazione
+              console.log(`  Status CONFIRMED rilevato, considerato come prenotazione`);
+              isRealBooking = true;
+              
+              if (guestName === 'Blocco date') {
+                if (bookingSource === 'airbnb') {
+                  guestName = 'Prenotazione Airbnb';
+                } else if (bookingSource === 'booking') {
+                  guestName = 'Prenotazione Booking';
+                } else {
+                  guestName = 'Prenotazione esterna';
+                }
+              }
             }
             
             const eventType = isRealBooking ? 'reservation' : 'block';
             
-            // Log dettagliati
+            // Log della decisione finale
             console.log(`  DECISIONE FINALE: ${isRealBooking ? 'PRENOTAZIONE' : 'BLOCCO'}`);
-            console.log(`  Fonte: ${bookingSource}, Nome: ${guestName}`);
+            console.log(`  Nome visualizzato: ${guestName}`);
             
             // Verifica se la prenotazione esiste già
             const existingBooking = await client.query(
@@ -515,7 +559,7 @@ export async function syncIcalCalendar(userId: string, propertyId: number, icalU
                   checkOutDate,
                   guestName,
                   bookingSource,
-                  `Importato da iCal: ${icalUrl}`,
+                  `Importato da iCal: ${icalUrl} (${eventType})`,
                   existingBooking.rows[0].id
                 ]
               );
@@ -536,7 +580,7 @@ export async function syncIcalCalendar(userId: string, propertyId: number, icalU
                   'confirmed',
                   bookingSource,
                   uid,
-                  `Importato da iCal: ${icalUrl}`,
+                  `Importato da iCal: ${icalUrl} (${eventType})`,
                   0 // Valore di default per total_price
                 ]
               );

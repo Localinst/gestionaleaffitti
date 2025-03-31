@@ -187,85 +187,55 @@ export default function IntegrationSettings() {
       
       <Separator className="my-4" />
 
-      <Tabs defaultValue="export">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="export">Esporta Calendario</TabsTrigger>
-          <TabsTrigger value="import">Importa Calendari</TabsTrigger>
-          <TabsTrigger value="existing">Integrazioni ({integrations.filter(i => i.external_id !== 'export').length})</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="export" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                Esporta il tuo calendario
-                <Badge variant="outline" className="bg-yellow-100 text-yellow-800">Funzionalità in sviluppo</Badge>
-              </CardTitle>
-              <CardDescription>
-                Questa funzionalità è attualmente in fase di sviluppo e non è ancora disponibile per l'uso.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Alert variant="warning">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Funzionalità in sviluppo</AlertTitle>
-                <AlertDescription>
-                  La sincronizzazione con calendari esterni è attualmente in fase di sviluppo e testing.
-                  Questa funzionalità sarà disponibile prossimamente. Ci scusiamo per l'inconveniente.
-                </AlertDescription>
-              </Alert>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="import" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                Importa calendari esterni
-                <Badge variant="outline" className="bg-yellow-100 text-yellow-800">Funzionalità in sviluppo</Badge>
-              </CardTitle>
-              <CardDescription>
-                Questa funzionalità è attualmente in fase di sviluppo e non è ancora disponibile per l'uso.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Alert variant="warning">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Funzionalità in sviluppo</AlertTitle>
-                <AlertDescription>
-                  La sincronizzazione con calendari esterni (Airbnb, Booking.com, ecc.) è attualmente in fase di sviluppo e testing.
-                  Questa funzionalità sarà disponibile prossimamente. Ci scusiamo per l'inconveniente.
-                </AlertDescription>
-              </Alert>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="existing" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                Integrazioni attive
-                <Badge variant="outline" className="bg-yellow-100 text-yellow-800">Funzionalità in sviluppo</Badge>
-              </CardTitle>
-              <CardDescription>
-                Questa funzionalità è attualmente in fase di sviluppo e non è ancora disponibile per l'uso.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Alert variant="warning">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Funzionalità in sviluppo</AlertTitle>
-                <AlertDescription>
-                  La sincronizzazione con calendari esterni è attualmente in fase di sviluppo e testing.
-                  Questa funzionalità sarà disponibile prossimamente. Ci scusiamo per l'inconveniente.
-                </AlertDescription>
-              </Alert>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      <Card>
+        <CardHeader>
+          <CardTitle>Importa calendari esterni</CardTitle>
+          <CardDescription>
+            Aggiungi calendari iCal da Airbnb, Booking.com o altri siti per importare automaticamente le prenotazioni.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="ical-name">Nome del calendario</Label>
+              <Input 
+                id="ical-name" 
+                placeholder="Es. Airbnb, Booking.com" 
+                value={icalName}
+                onChange={(e) => setIcalName(e.target.value)}
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="ical-url">URL iCal</Label>
+              <Input 
+                id="ical-url" 
+                placeholder="https://..." 
+                value={icalUrl}
+                onChange={(e) => setIcalUrl(e.target.value)}
+              />
+            </div>
+            
+            <Button 
+              onClick={handleAddIcal} 
+              disabled={isLoading}
+            >
+              <Calendar className="mr-2 h-4 w-4" />
+              Aggiungi Calendario
+            </Button>
+          </div>
+          
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Come ottenere l'URL iCal</AlertTitle>
+            <AlertDescription>
+              <ul className="list-disc pl-5 space-y-1 mt-2">
+                <li>Airbnb: "Da pc" → "Calendario" → "Disponibilità" → "Collega un'altro calendario" → "Esegui il collegamento a un altro sito web" → "Copia l'URL"</li>
+                 </ul>
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
     </div>
   );
 } 
