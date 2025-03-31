@@ -31,8 +31,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:8080';
 
-// Timeout globale per le richieste (12 secondi)
-app.use(timeout('12s'));
+// Timeout globale per le richieste (20 secondi)
+app.use(timeout('20s'));
 app.use(haltOnTimedout);
 
 // Tracciamento delle richieste attive per identificare richieste zombie

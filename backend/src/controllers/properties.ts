@@ -2,20 +2,52 @@ import { Request, Response } from 'express';
 import pool, { executeQuery } from '../db';
 
 export const getProperties = async (req: Request, res: Response) => {
+  // Aggiungo un timeout di sicurezza
+  const timeoutPromise = new Promise((_, reject) => 
+    setTimeout(() => reject(new Error('Timeout della query al database')), 15000)
+  );
+
   try {
     // Ottengo l'user_id dall'utente autenticato
     const userId = req.user?.id;
     
-    // Query con filtro user_id usando il wrapper
-    const result = await executeQuery(async (client) => {
+    // Controllo se la richiesta è già scaduta
+    if (req.timedout) {
+      console.log('Richiesta già in timeout, interruzione precoce');
+      return;
+    }
+
+    // Query con filtro user_id usando il wrapper e race con il timeout
+    const queryPromise = executeQuery(async (client) => {
       return client.query(
         'SELECT * FROM properties WHERE user_id = $1 ORDER BY created_at DESC',
         [userId]
       );
     });
     
+    // Utilizzo Promise.race per implementare il timeout
+    const result = await Promise.race([queryPromise, timeoutPromise]);
+    
+    // Controllo se la richiesta è scaduta durante l'esecuzione della query
+    if (req.timedout) {
+      console.log('Richiesta in timeout durante l\'esecuzione della query');
+      return;
+    }
+    
     res.json(result.rows);
   } catch (error) {
+    // Controllo se la richiesta è scaduta
+    if (req.timedout) {
+      console.log('Richiesta in timeout, nessuna risposta necessaria');
+      return;
+    }
+    
+    // Verifico se l'errore è dovuto al timeout interno
+    if (error instanceof Error && error.message === 'Timeout della query al database') {
+      console.error('Timeout interno durante il recupero delle proprietà');
+      return res.status(504).json({ error: 'Timeout durante l\'esecuzione della query, riprova più tardi' });
+    }
+    
     console.error('Errore nel recupero delle proprietà:', error);
     res.status(500).json({ error: 'Error retrieving properties' });
   }

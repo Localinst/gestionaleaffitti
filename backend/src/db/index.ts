@@ -132,16 +132,16 @@ async function setupTransactionPooler() {
     // Configurazione del pool
     max: 5, // ridotto drasticamente per evitare troppe connessioni simultanee
     min: 1,  // minimo di connessioni da mantenere
-    idleTimeoutMillis: 2000, // ridotto timeout di inattività a 2 secondi
-    connectionTimeoutMillis: 2000, // timeout di connessione ridotto a 2 secondi
+    idleTimeoutMillis: 5000, // aumentato timeout di inattività a 5 secondi
+    connectionTimeoutMillis: 10000, // aumentato timeout di connessione a 10 secondi
     maxUses: 500, // drasticamente ridotto il numero massimo di query per connessione
-    statement_timeout: 10000, // timeout delle query (10 secondi)
-    query_timeout: 10000, // timeout delle query (10 secondi)
+    statement_timeout: 20000, // aumentato timeout delle query (20 secondi)
+    query_timeout: 20000, // aumentato timeout delle query (20 secondi)
     allowExitOnIdle: true, // permette al pool di chiudersi quando è inattivo
     // Ricicla proattivamente le connessioni per evitare connessioni zombie
-    idlePingInterval: 5000, // Verifica connessioni inattive ogni 5 secondi
-    connectionRetryCount: 3, // Tentativi di riconnessione
-    connectionRetryDelay: 1000 // Attesa tra tentativi in ms
+    idlePingInterval: 10000, // Verifica connessioni inattive ogni 10 secondi
+    connectionRetryCount: 5, // Aumentato i tentativi di riconnessione
+    connectionRetryDelay: 2000 // Aumentato attesa tra tentativi in ms
   };
   
   console.log('Configurato per utilizzare il Transaction Pooler (compatibile con IPv4)');
