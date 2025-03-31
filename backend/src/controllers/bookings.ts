@@ -286,7 +286,7 @@ export const updateBooking = async (req: AuthenticatedRequest, res: Response) =>
     
     // Costruisci la query di aggiornamento in modo dinamico
     let updateQuery = 'UPDATE bookings SET ';
-    const updateParams = [];
+    const updateParams: any[] = [];
     const updateFields = [];
     let paramCount = 1;
     

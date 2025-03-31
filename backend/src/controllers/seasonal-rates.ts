@@ -237,7 +237,7 @@ export const updateSeasonalRate = async (req: AuthenticatedRequest, res: Respons
     
     // Costruisci la query di aggiornamento in modo dinamico
     let updateQuery = 'UPDATE seasonal_rates SET ';
-    const updateParams = [];
+    const updateParams: any[] = [];
     const updateFields = [];
     let paramCount = 1;
     
