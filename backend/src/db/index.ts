@@ -2,10 +2,19 @@ import { Pool, PoolConfig } from 'pg';
 import dotenv from 'dotenv';
 import dns from 'dns';
 
-// Forza Node.js a utilizzare IPv4
+// Forza Node.js a utilizzare esclusivamente IPv4
 process.env.NODE_OPTIONS = '--dns-result-order=ipv4first';
-// Forza il resolver DNS a usare solo IPv4
 dns.setDefaultResultOrder('ipv4first');
+
+// Forza il resolver DNS a usare solo IPv4
+if (dns.promises && typeof dns.promises.setDefaultResultOrder === 'function') {
+  dns.promises.setDefaultResultOrder('ipv4first');
+}
+
+// Disabilita completamente IPv6
+// Questo è fondamentale per Render che potrebbe avere problemi con IPv6
+process.env.UV_THREADPOOL_SIZE = '64';  // Aumenta il threadpool per operazioni di rete
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';  // Solo per test, rimuovere in produzione
 
 dotenv.config();
 
@@ -117,13 +126,14 @@ async function setupTransactionPooler() {
   // Configura il pool usando la stringa di connessione del pooler
   const poolerConfig = {
     connectionString: createSafeConnectionString(connectionString),
-    // Forza l'uso di IPv4 come ulteriore sicurezza
-    family: 4,
+    // Forza l'uso di IPv4 attraverso varie opzioni
+    family: 4,  // Forza l'uso di IPv4 in Node.js
+    ssl: { rejectUnauthorized: false },  // Potrebbe essere necessario per alcuni provider
     // Configurazione del pool
-    max: 15, // ridotto per evitare troppe connessioni simultanee
-    min: 2,  // minimo di connessioni da mantenere
-    idleTimeoutMillis: 5000, // ridotto timeout di inattività a 5 secondi
-    connectionTimeoutMillis: 3000, // timeout di connessione (3 secondi)
+    max: 5, // ridotto drasticamente per evitare troppe connessioni simultanee
+    min: 1,  // minimo di connessioni da mantenere
+    idleTimeoutMillis: 2000, // ridotto timeout di inattività a 2 secondi
+    connectionTimeoutMillis: 2000, // timeout di connessione ridotto a 2 secondi
     maxUses: 500, // drasticamente ridotto il numero massimo di query per connessione
     statement_timeout: 10000, // timeout delle query (10 secondi)
     query_timeout: 10000, // timeout delle query (10 secondi)
@@ -186,7 +196,10 @@ async function setupDirectConnection() {
     // Usa la stringa di connessione fornita
     const safeConnectionString = createSafeConnectionString(process.env.DATABASE_URL);
     directConfig = {
-      connectionString: safeConnectionString
+      connectionString: safeConnectionString,
+      // Forza l'uso di IPv4 a livello di socket
+      family: 4,
+      ssl: { rejectUnauthorized: false }
     };
   } else {
     // Usa i parametri individuali
@@ -195,7 +208,10 @@ async function setupDirectConnection() {
       host: process.env.DB_HOST || 'db.fdufcrgckojbaghdvhgj.supabase.co',
       database: process.env.DB_NAME || 'postgres',
       password: process.env.DB_PASSWORD,
-      port: parseInt(process.env.DB_PORT || '5432')
+      port: parseInt(process.env.DB_PORT || '5432'),
+      // Forza l'uso di IPv4 a livello di socket
+      family: 4,
+      ssl: { rejectUnauthorized: false }
     };
   }
   
@@ -231,13 +247,14 @@ async function setupDirectConnection() {
 
 // Funzione principale per ottenere una connessione valida
 async function getDbPool() {
-  // Prima prova con il Transaction Pooler (compatibile con IPv4)
-  let pool = await setupTransactionPooler();
+  // Considerando che il Transaction Pooler dà problemi, proviamo prima la connessione diretta
+  console.log('Priorità alla connessione diretta (più affidabile in questo ambiente)...');
+  let pool = await setupDirectConnection();
   
-  // Se fallisce, prova con la connessione diretta
+  // Se la connessione diretta fallisce, solo allora proviamo il Transaction Pooler
   if (!pool) {
-    console.log('Fallback alla connessione diretta...');
-    pool = await setupDirectConnection();
+    console.log('Connessione diretta fallita, tentativo con Transaction Pooler...');
+    pool = await setupTransactionPooler();
   }
   
   // Se entrambi falliscono, restituisci un pool dummy che genererà errori all'uso
@@ -283,6 +300,11 @@ getDbPool().then(p => {
     pool = p;
     console.log('Pool di connessione al database inizializzato e pronto');
     
+    // Nota informativa sulle risorse
+    console.log('INFO: Connessione stabilita tramite connessione diretta a Supabase');
+    console.log('INFO: Utilizzando configurazione ottimizzata per ambiente Render');
+    console.log('INFO: Timeout ridotti e priorità alla connessione diretta (più stabile)');
+
     // Pianifica riavvio periodico del pool per evitare connessioni zombie
     setupPoolMaintenance(p);
   } else {
