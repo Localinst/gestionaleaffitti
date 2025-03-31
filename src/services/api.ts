@@ -167,6 +167,15 @@ const handleApiError = (endpoint: string, status: number, error: any) => {
   console.error(`Errore nell'endpoint ${endpoint}:`, status, error);
 };
 
+// Funzione per gestire gli errori delle richieste API
+export const handleRequestError = (error: any, functionName: string) => {
+  console.error(`Errore in ${functionName}:`, error);
+  
+  if (error.message === 'Failed to fetch') {
+    console.error('Errore di connessione al server. Verifica che il server sia in esecuzione.');
+  }
+};
+
 /**
  * Assicura che tutti i valori numerici nelle transazioni siano effettivamente numeri
  * e non stringhe che potrebbero causare concatenazione.

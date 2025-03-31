@@ -18,6 +18,8 @@ import DashboardPage from '@/components/dashboard/DashboardPage';
 import ReportPage from "./components/dashboard/ReportPage";
 import ActivitiesPage from "./components/activities/ActivitiesPage";
 import BookingsPage from "./components/tourism/BookingsPage";
+import PropertyDetails from "./components/tourism/PropertyDetails";
+import TourismPropertiesPage from "./components/tourism/PropertiesPage";
 
 // Configurazione avanzata di QueryClient con gestione della cache
 const queryClient = new QueryClient({
@@ -94,6 +96,16 @@ const App = () => {
               <Route path="/tourism/bookings" element={
                 <ProtectedRoute>
                   <BookingsPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/tourism/property/:propertyId" element={
+                <ProtectedRoute>
+                  <PropertyDetails />
+                </ProtectedRoute>
+              } />
+              <Route path="/tourism/properties" element={
+                <ProtectedRoute>
+                  <TourismPropertiesPage />
                 </ProtectedRoute>
               } />
               

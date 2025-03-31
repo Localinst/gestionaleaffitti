@@ -12,7 +12,9 @@ import { reportsRouter } from './routes/reports';
 import contractsRouter from './routes/contracts';
 import activitiesRouter from './routes/activities';
 import { tourismRouter } from './routes/tourism';
+import integrationsRouter from './routes/integrations';
 import { authenticate } from './middleware/auth';
+import { startSyncService } from './services/sync-service';
 
 // Definisci solo requestId, timedout è già definito da connect-timeout
 declare global {
@@ -154,10 +156,19 @@ app.use('/api/reports', authenticate, reportsRouter);
 app.use('/api/contracts', authenticate, contractsRouter);
 app.use('/api/activities', authenticate, activitiesRouter);
 app.use('/api/tourism', authenticate, tourismRouter);
+app.use('/api/integrations', authenticate, integrationsRouter);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Server configurato per accettare richieste da origini definite nella lista allowedOrigins`);
+  
+  // Avvia il servizio di sincronizzazione in produzione
+  if (process.env.NODE_ENV === 'production' || process.env.ENABLE_SYNC === 'true') {
+    startSyncService();
+  } else {
+    console.log('Servizio di sincronizzazione disabilitato in ambiente di sviluppo');
+    console.log('Per abilitarlo, imposta ENABLE_SYNC=true nelle variabili d\'ambiente');
+  }
 });
 
 function haltOnTimedout(req: any, res: any, next: any) {

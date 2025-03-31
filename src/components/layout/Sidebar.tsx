@@ -12,7 +12,9 @@ import {
   LineChart,
   FileText,
   CalendarClock,
-  Palmtree
+  Palmtree,
+  ChevronDown,
+  ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -21,6 +23,7 @@ import { useAuth } from "@/context/AuthContext";
 
 export function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({});
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -61,6 +64,19 @@ export function Sidebar() {
     };
   }, []);
   
+  // Automatically open submenus based on current path
+  useEffect(() => {
+    const newOpenSubmenus: Record<string, boolean> = {};
+    
+    routes.forEach(route => {
+      if (route.submenu && location.pathname.startsWith(route.path)) {
+        newOpenSubmenus[route.path] = true;
+      }
+    });
+    
+    setOpenSubmenus(newOpenSubmenus);
+  }, [location.pathname]);
+  
   const routes = [
     { path: "/dashboard", label: "Dashboard", icon: BarChart3 },
     { path: "/properties", label: "Proprietà", icon: Building2 },
@@ -68,7 +84,15 @@ export function Sidebar() {
     { path: "/transactions", label: "Transazioni", icon: Receipt },
     { path: "/contracts", label: "Contratti", icon: FileText },
     { path: "/activities", label: "Attività", icon: CalendarClock },
-    { path: "/tourism/bookings", label: "Locazioni Turistiche", icon: Palmtree },
+    { 
+      path: "/tourism", 
+      label: "Locazioni Turistiche", 
+      icon: Palmtree,
+      submenu: [
+        { path: "/tourism/properties", label: "Proprietà" },
+        { path: "/tourism/bookings", label: "Prenotazioni" }
+      ]
+    },
     { path: "/reports", label: "Report & Analytics", icon: LineChart },
   ];
   
@@ -113,25 +137,85 @@ export function Sidebar() {
           <ul className="space-y-2">
             {routes.map((route) => {
               const Icon = route.icon;
+              const hasSubmenu = route.submenu && route.submenu.length > 0;
+              const isActive = hasSubmenu 
+                ? location.pathname.startsWith(route.path)
+                : location.pathname === route.path;
+              
               return (
                 <li key={route.path}>
-                  <NavLink
-                    to={route.path}
-                    className={({ isActive }) => cn(
-                      "flex items-center gap-3 rounded-md px-3 py-2 transition-colors",
-                      isActive 
-                        ? "bg-primary text-primary-foreground" 
-                        : "hover:bg-muted"
-                    )}
-                    onClick={() => {
-                      if (window.innerWidth < 768) {
-                        setIsOpen(false);
-                      }
-                    }}
-                  >
-                    <Icon className="h-5 w-5" />
-                    <span>{route.label}</span>
-                  </NavLink>
+                  {hasSubmenu ? (
+                    <div className="space-y-1">
+                      <div
+                        className={cn(
+                          "flex items-center justify-between rounded-md px-3 py-2 cursor-pointer transition-colors",
+                          isActive
+                            ? "bg-primary text-primary-foreground"
+                            : "hover:bg-muted"
+                        )}
+                        onClick={() => {
+                          setOpenSubmenus(prev => ({
+                            ...prev,
+                            [route.path]: !prev[route.path]
+                          }));
+                        }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Icon className="h-5 w-5" />
+                          <span>{route.label}</span>
+                        </div>
+                        {openSubmenus[route.path] ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                      </div>
+                      
+                      {/* Sottomenu */}
+                      {openSubmenus[route.path] && (
+                        <ul className="pl-6 space-y-1">
+                          {route.submenu.map((submenuItem) => (
+                            <li key={submenuItem.path}>
+                              <NavLink
+                                to={submenuItem.path}
+                                className={({ isActive }) => cn(
+                                  "flex items-center gap-3 rounded-md px-3 py-2 transition-colors text-sm",
+                                  isActive
+                                    ? "bg-primary/10 font-medium"
+                                    : "hover:bg-muted"
+                                )}
+                                onClick={() => {
+                                  if (window.innerWidth < 768) {
+                                    setIsOpen(false);
+                                  }
+                                }}
+                              >
+                                <span>{submenuItem.label}</span>
+                              </NavLink>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  ) : (
+                    <NavLink
+                      to={route.path}
+                      className={({ isActive }) => cn(
+                        "flex items-center gap-3 rounded-md px-3 py-2 transition-colors",
+                        isActive 
+                          ? "bg-primary text-primary-foreground" 
+                          : "hover:bg-muted"
+                      )}
+                      onClick={() => {
+                        if (window.innerWidth < 768) {
+                          setIsOpen(false);
+                        }
+                      }}
+                    >
+                      <Icon className="h-5 w-5" />
+                      <span>{route.label}</span>
+                    </NavLink>
+                  )}
                 </li>
               );
             })}
