@@ -4,6 +4,10 @@ declare module 'exceljs' {
     xlsx: {
       writeBuffer(): Promise<Buffer>;
     };
+    creator: string;
+    lastModifiedBy: string;
+    created: Date;
+    modified: Date;
   }
   
   export class Worksheet {
@@ -14,6 +18,8 @@ declare module 'exceljs' {
       style: any;
     };
     eachRow(callback: (row: any, rowNumber: number) => void): void;
+    getRow(rowNumber: number): any;
+    getColumn(columnNumber: number | string): any;
   }
   
   export default {

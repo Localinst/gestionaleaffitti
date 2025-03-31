@@ -473,13 +473,13 @@ router.get('/export/:format', async (req: Request, res: Response) => {
       
       // Aggiungi le righe di dati
       for (const row of result.rows) {
-        worksheet.addRow({
-          date: new Date(row.date).toLocaleDateString('it-IT'),
-          income: parseFloat(row.income) || 0,
-          expense: parseFloat(row.expense) || 0,
-          notes: row.description || '',
-          property: row.property_name || ''
-        });
+        worksheet.addRow([
+          new Date(row.date).toLocaleDateString('it-IT'),
+          parseFloat(row.income) || 0,
+          parseFloat(row.expense) || 0,
+          row.description || '',
+          row.property_name || ''
+        ]);
       }
       
       // Formatta le colonne numeriche
