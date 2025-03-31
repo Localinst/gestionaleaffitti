@@ -45,6 +45,9 @@ declare module 'pdfkit' {
     currentLineHeight(): number;
     
     end(): void;
+    
+    bufferedPageRange(): { start: number; count: number };
+    switchToPage(pageNumber: number): this;
   }
   
   export = PDFDocument;
