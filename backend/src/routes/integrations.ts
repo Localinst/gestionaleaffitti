@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth';
-import { AuthenticatedRequest } from '../types';
+import { AuthenticatedRequest, ICalEvent } from '../types';
 import { Response } from 'express';
 import { executeQuery } from '../db';
 import ical from 'node-ical';
@@ -337,7 +337,7 @@ router.get('/export/:propertyId', async (req: AuthenticatedRequest, res: Respons
     });
     
     // Aggiungi gli eventi per ogni prenotazione
-    bookings.rows.forEach(booking => {
+    bookings.rows.forEach((booking: any) => {
       calendar.createEvent({
         uid: `booking-${booking.id}@gestionale-affitti`,
         start: new Date(booking.check_in_date),
@@ -378,12 +378,15 @@ export async function syncIcalCalendar(userId: string, propertyId: number, icalU
       try {
         // Per ogni evento nel calendario
         for (const [uid, event] of Object.entries(events)) {
-          if (event.type === 'VEVENT' && event.start && event.end) {
+          // Utilizza type assertion per gestire il tipo unknown
+          const typedEvent = event as ICalEvent;
+          
+          if (typedEvent.type === 'VEVENT' && typedEvent.start && typedEvent.end) {
             syncedEvents++;
             
             // Assicurati che le date siano in formato ISO
-            const checkInDate = new Date(event.start).toISOString().split('T')[0];
-            const checkOutDate = new Date(event.end).toISOString().split('T')[0];
+            const checkInDate = new Date(typedEvent.start).toISOString().split('T')[0];
+            const checkOutDate = new Date(typedEvent.end).toISOString().split('T')[0];
             
             // Verifica se la prenotazione esiste già
             const existingBooking = await client.query(
@@ -402,7 +405,7 @@ export async function syncIcalCalendar(userId: string, propertyId: number, icalU
                 [
                   checkInDate, 
                   checkOutDate,
-                  event.summary || 'Prenotazione esterna',
+                  typedEvent.summary || 'Prenotazione esterna',
                   existingBooking.rows[0].id
                 ]
               );
@@ -417,7 +420,7 @@ export async function syncIcalCalendar(userId: string, propertyId: number, icalU
                 [
                   propertyId,
                   userId,
-                  event.summary || 'Prenotazione esterna',
+                  typedEvent.summary || 'Prenotazione esterna',
                   checkInDate,
                   checkOutDate,
                   'confirmed',

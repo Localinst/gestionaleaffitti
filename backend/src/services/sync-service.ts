@@ -2,6 +2,17 @@ import cron from 'node-cron';
 import { executeQuery } from '../db';
 import { syncIcalCalendar } from '../routes/integrations';
 
+// Definizione dell'interfaccia per le integrazioni
+interface Integration {
+  id: number;
+  user_id: string;
+  property_id: number;
+  integration_type: string;
+  sync_url: string;
+  external_id?: string;
+  is_active?: boolean;
+}
+
 /**
  * Avvia il servizio di sincronizzazione periodica per i calendari esterni.
  */
@@ -35,7 +46,7 @@ export function startSyncService() {
       let failedSync = 0;
       
       // Esecuzione sequenziale per evitare sovraccarichi
-      for (const integration of integrations.rows) {
+      for (const integration of integrations.rows as Integration[]) {
         try {
           console.log(`Sincronizzazione integrazione ID ${integration.id} per proprietà ${integration.property_id}`);
           
@@ -56,8 +67,10 @@ export function startSyncService() {
           );
           
           completedSync++;
-        } catch (error) {
+        } catch (error: unknown) {
           failedSync++;
+          // Type assertion per error
+          const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
           console.error(`Errore nella sincronizzazione dell'integrazione ${integration.id}:`, error);
           
           // Registra l'errore nell'integrazione
@@ -68,7 +81,7 @@ export function startSyncService() {
                  SET credentials = jsonb_set(credentials, '{last_error}', $1::jsonb)
                  WHERE id = $2`,
                 [JSON.stringify({
-                  message: error.message || 'Errore sconosciuto',
+                  message: errorMessage,
                   timestamp: new Date().toISOString()
                 }), integration.id]
               );
@@ -112,7 +125,7 @@ export async function syncAllIntegrations() {
     
     // Esegui sincronizzazioni in parallelo (con limite di concorrenza)
     const results = await Promise.allSettled(
-      integrations.rows.map(integration => 
+      (integrations.rows as Integration[]).map(integration => 
         syncIcalCalendar(
           integration.user_id,
           integration.property_id,
