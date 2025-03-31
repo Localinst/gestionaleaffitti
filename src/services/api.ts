@@ -21,10 +21,6 @@ export interface Tenant {
   name: string;
   email: string;
   phone: string;
-  lease_start: Date | string;
-  lease_end: Date | string;
-  rent_amount: number;
-  rent: number;
   unit?: string;
   status?: 'active' | 'late' | 'pending';
 }

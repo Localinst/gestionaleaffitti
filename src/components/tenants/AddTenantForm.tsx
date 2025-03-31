@@ -46,8 +46,8 @@ interface UnitOption {
 const tenantFormSchema = z.object({
   unit_id: z.string().min(1, "Seleziona un'unità immobiliare"),
   name: z.string().min(1, "Il nome è obbligatorio"),
-  email: z.string().email("Inserisci un'email valida"),
-  phone: z.string().min(1, "Il numero di telefono è obbligatorio"),
+  email: z.string().email("Inserisci un'email valida").optional().or(z.literal("")),
+  phone: z.string().min(1, "Il numero di telefono è obbligatorio").optional().or(z.literal("")),
 });
 
 type TenantFormValues = z.infer<typeof tenantFormSchema>;
@@ -86,7 +86,7 @@ export function AddTenantForm({
               unitNames.forEach((unitName: string, index: number) => {
                 options.push({
                   id: `${property.id}::${index}`,
-                  propertyId: property.id,
+                  propertyId: property.id.toString(),
                   unitIndex: index.toString(),
                   name: unitName || `Unità ${index + 1}`,
                   displayName: `${property.name} - ${unitName || `Unità ${index + 1}`}`
@@ -99,7 +99,7 @@ export function AddTenantForm({
               for (let i = 0; i < property.units; i++) {
                 options.push({
                   id: `${property.id}::${i}`,
-                  propertyId: property.id,
+                  propertyId: property.id.toString(),
                   unitIndex: i.toString(),
                   name: `Unità ${i + 1}`,
                   displayName: `${property.name} - Unità ${i + 1}`
@@ -110,7 +110,7 @@ export function AddTenantForm({
             // Se la proprietà ha solo 1 unità, aggiungiamo solo la proprietà
             options.push({
               id: `${property.id}::0`,
-              propertyId: property.id,
+              propertyId: property.id.toString(),
               unitIndex: "0",
               name: property.name,
               displayName: property.name
@@ -149,8 +149,8 @@ export function AddTenantForm({
       const tenantData: Omit<Tenant, 'id'> = {
         property_id: propertyId,
         name: data.name,
-        email: data.email,
-        phone: data.phone,
+        email: data.email || "",
+        phone: data.phone || "",
         unit: unitIndex || "0",
         status: "active"
       };

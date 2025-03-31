@@ -143,9 +143,6 @@ export const createTenant = async (req: Request, res: Response) => {
       name, 
       email, 
       phone, 
-      lease_start, 
-      lease_end, 
-      rent, 
       property_id, 
       unit = "EMPTY",  // Valore di default aggiornato a "EMPTY"
       status = "active"  // Valore di default se non specificato
@@ -169,10 +166,9 @@ export const createTenant = async (req: Request, res: Response) => {
     const result = await executeQuery(async (client) => {
       return client.query(
         `INSERT INTO tenants (
-          name, email, phone, lease_start, lease_end, 
-          rent, property_id, unit, status, user_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
-        [name, email, phone, lease_start, lease_end, rent, property_id, unit, status, userId]
+          name, email, phone, property_id, unit, status, user_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+        [name, email, phone, property_id, unit, status, userId]
       );
     });
     
