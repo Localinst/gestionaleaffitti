@@ -29,8 +29,7 @@ export function startSyncService() {
         return client.query(
           `SELECT * FROM external_integrations 
            WHERE is_active = TRUE 
-           AND integration_type = 'ical'
-           AND external_id != 'export'`
+           AND integration_type = 'ical'`
         );
       });
       
@@ -113,8 +112,7 @@ export async function syncAllIntegrations() {
       return client.query(
         `SELECT * FROM external_integrations 
          WHERE is_active = TRUE 
-         AND integration_type = 'ical'
-         AND external_id != 'export'`
+         AND integration_type = 'ical'`
       );
     });
     

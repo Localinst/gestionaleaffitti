@@ -197,57 +197,23 @@ export default function IntegrationSettings() {
         <TabsContent value="export" className="mt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Esporta il tuo calendario</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                Esporta il tuo calendario
+                <Badge variant="outline" className="bg-yellow-100 text-yellow-800">Funzionalità in sviluppo</Badge>
+              </CardTitle>
               <CardDescription>
-                Usa questo URL per sincronizzare le tue prenotazioni con Airbnb, Booking.com o altri servizi.
+                Questa funzionalità è attualmente in fase di sviluppo e non è ancora disponibile per l'uso.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="export-url">URL iCal da copiare</Label>
-                <div className="flex gap-2">
-                  <Input id="export-url" value={exportUrl} readOnly className="flex-1" />
-                  <Button 
-                    onClick={() => {
-                      navigator.clipboard.writeText(exportUrl);
-                      toast({
-                        title: "URL copiato",
-                        description: "L'URL è stato copiato negli appunti"
-                      });
-                    }}
-                    variant="outline"
-                  >
-                    <Copy className="mr-2 h-4 w-4" />
-                    Copia
-                  </Button>
-                </div>
-              </div>
-              
-              <Alert>
+              <Alert variant="warning">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Come usare questo URL</AlertTitle>
+                <AlertTitle>Funzionalità in sviluppo</AlertTitle>
                 <AlertDescription>
-                  <ol className="list-decimal pl-5 space-y-1 mt-2">
-                    <li>Copia l'URL sopra</li>
-                    <li>Su Airbnb: vai su "Calendario" → "Sincronizzazione con altri calendari" → "Importa"</li>
-                    <li>Su Booking.com: vai su "Extranet" → "Calendario" → "Sincronizzazione" → "Importa"</li>
-                    <li>Incolla l'URL e salva</li>
-                  </ol>
+                  La sincronizzazione con calendari esterni è attualmente in fase di sviluppo e testing.
+                  Questa funzionalità sarà disponibile prossimamente. Ci scusiamo per l'inconveniente.
                 </AlertDescription>
               </Alert>
-
-              <div className="flex items-center gap-2 mt-4">
-                <Button 
-                  onClick={getExportToken}
-                  variant="outline"
-                >
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Genera nuovo token
-                </Button>
-                <p className="text-sm text-muted-foreground">
-                  Se rigenerato, gli URL precedenti smetteranno di funzionare.
-                </p>
-              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -255,50 +221,21 @@ export default function IntegrationSettings() {
         <TabsContent value="import" className="mt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Importa calendari esterni</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                Importa calendari esterni
+                <Badge variant="outline" className="bg-yellow-100 text-yellow-800">Funzionalità in sviluppo</Badge>
+              </CardTitle>
               <CardDescription>
-                Aggiungi calendari iCal da Airbnb, Booking.com o altri siti per importare automaticamente le prenotazioni.
+                Questa funzionalità è attualmente in fase di sviluppo e non è ancora disponibile per l'uso.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="ical-name">Nome del calendario</Label>
-                  <Input 
-                    id="ical-name" 
-                    placeholder="Es. Airbnb, Booking.com" 
-                    value={icalName}
-                    onChange={(e) => setIcalName(e.target.value)}
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="ical-url">URL iCal</Label>
-                  <Input 
-                    id="ical-url" 
-                    placeholder="https://..." 
-                    value={icalUrl}
-                    onChange={(e) => setIcalUrl(e.target.value)}
-                  />
-                </div>
-                
-                <Button 
-                  onClick={handleAddIcal} 
-                  disabled={isLoading}
-                >
-                  <Calendar className="mr-2 h-4 w-4" />
-                  Aggiungi Calendario
-                </Button>
-              </div>
-              
-              <Alert>
+              <Alert variant="warning">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Come ottenere l'URL iCal</AlertTitle>
+                <AlertTitle>Funzionalità in sviluppo</AlertTitle>
                 <AlertDescription>
-                  <ul className="list-disc pl-5 space-y-1 mt-2">
-                    <li>Airbnb: vai su "Calendario" → "Esporta Calendario" → Copia l'URL</li>
-                    <li>Booking.com: vai su "Extranet" → "Calendario" → "Sincronizzazione" → "Esporta"</li>
-                  </ul>
+                  La sincronizzazione con calendari esterni (Airbnb, Booking.com, ecc.) è attualmente in fase di sviluppo e testing.
+                  Questa funzionalità sarà disponibile prossimamente. Ci scusiamo per l'inconveniente.
                 </AlertDescription>
               </Alert>
             </CardContent>
@@ -308,64 +245,23 @@ export default function IntegrationSettings() {
         <TabsContent value="existing" className="mt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Integrazioni attive</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                Integrazioni attive
+                <Badge variant="outline" className="bg-yellow-100 text-yellow-800">Funzionalità in sviluppo</Badge>
+              </CardTitle>
               <CardDescription>
-                Gestisci le tue integrazioni esistenti con canali esterni.
+                Questa funzionalità è attualmente in fase di sviluppo e non è ancora disponibile per l'uso.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {integrations.filter(i => i.external_id !== 'export').length === 0 ? (
-                <div className="bg-muted p-4 rounded-md flex items-center justify-center flex-col">
-                  <Calendar className="h-8 w-8 text-muted-foreground mb-2" />
-                  <p className="text-center text-muted-foreground">
-                    Nessuna integrazione configurata.<br />
-                    Vai alla scheda "Importa Calendari" per aggiungere la tua prima integrazione.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {integrations
-                    .filter(i => i.external_id !== 'export')
-                    .map(integration => (
-                      <div key={integration.id} className="p-4 border rounded-md shadow-sm">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h3 className="font-medium flex items-center">
-                              {getIntegrationName(integration)}
-                              <Badge variant="outline" className="ml-2">
-                                {integration.integration_type.toUpperCase()}
-                              </Badge>
-                            </h3>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              Ultimo aggiornamento: {renderLastSync(integration.last_sync)}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1 truncate max-w-[300px]">
-                              {integration.sync_url}
-                            </p>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => handleSync(integration.id)}
-                              disabled={isSyncing[integration.id]}
-                            >
-                              <RefreshCw className={`h-4 w-4 mr-1 ${isSyncing[integration.id] ? 'animate-spin' : ''}`} />
-                              {isSyncing[integration.id] ? 'Sincronizzazione...' : 'Sincronizza'}
-                            </Button>
-                            <Button 
-                              variant="destructive" 
-                              size="sm"
-                              onClick={() => handleDelete(integration.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              )}
+              <Alert variant="warning">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Funzionalità in sviluppo</AlertTitle>
+                <AlertDescription>
+                  La sincronizzazione con calendari esterni è attualmente in fase di sviluppo e testing.
+                  Questa funzionalità sarà disponibile prossimamente. Ci scusiamo per l'inconveniente.
+                </AlertDescription>
+              </Alert>
             </CardContent>
           </Card>
         </TabsContent>

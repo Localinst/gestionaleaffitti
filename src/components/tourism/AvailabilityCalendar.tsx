@@ -160,7 +160,7 @@ export function AvailabilityCalendar({ propertyId }: AvailabilityCalendarProps) 
             </div>
             <div className="grid grid-cols-7">
               {/* Aggiungi celle vuote per allineare il primo giorno del mese */}
-              {Array.from({ length: new Date(daysInMonth[0]).getDay() || 7 }).map((_, i) => (
+              {Array.from({ length: (new Date(daysInMonth[0]).getDay() === 0 ? 6 : new Date(daysInMonth[0]).getDay() - 1) }).map((_, i) => (
                 <div key={`empty-${i}`} className="p-2 h-12"></div>
               ))}
               

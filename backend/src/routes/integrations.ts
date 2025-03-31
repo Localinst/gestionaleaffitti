@@ -118,16 +118,75 @@ router.post('/ical', async (req: AuthenticatedRequest, res: Response) => {
       return res.status(400).json({ error: 'Impossibile scaricare il calendario iCal' });
     }
     
-    // Aggiungi l'integrazione
-    const result = await executeQuery(async (client) => {
+    // Verifica se esiste già un'integrazione iCal per questa proprietà
+    const existingIntegration = await executeQuery(async (client) => {
       return client.query(
-        `INSERT INTO external_integrations 
-         (user_id, property_id, integration_type, sync_url, credentials, last_sync) 
-         VALUES ($1, $2, 'ical', $3, $4, NOW())
-         RETURNING *`,
-        [userId, property_id, sync_url, JSON.stringify({ name: name || 'Calendario esterno' })]
+        `SELECT id FROM external_integrations 
+         WHERE property_id = $1 AND integration_type = 'ical'`,
+        [property_id]
       );
     });
+    
+    let result;
+    
+    if (existingIntegration.rows.length > 0) {
+      // Aggiorna l'integrazione esistente
+      const integrationId = existingIntegration.rows[0].id;
+      
+      // Log dettagliato per debug
+      console.log(`Aggiornamento integrazione esistente ID ${integrationId} per proprietà ${property_id}`);
+      
+      result = await executeQuery(async (client) => {
+        return client.query(
+          `UPDATE external_integrations 
+           SET sync_url = $1, credentials = $2, last_sync = NOW(), user_id = $3
+           WHERE id = $4
+           RETURNING *`,
+          [sync_url, JSON.stringify({ name: name || 'Calendario esterno' }), userId, integrationId]
+        );
+      });
+      
+      console.log(`Integrazione iCal aggiornata per la proprietà ${property_id}`);
+    } else {
+      // Aggiungi una nuova integrazione
+      console.log(`Creazione nuova integrazione per proprietà ${property_id}`);
+      
+      try {
+        result = await executeQuery(async (client) => {
+          return client.query(
+            `INSERT INTO external_integrations 
+             (user_id, property_id, integration_type, sync_url, credentials, last_sync) 
+             VALUES ($1, $2, 'ical', $3, $4, NOW())
+             RETURNING *`,
+            [userId, property_id, sync_url, JSON.stringify({ name: name || 'Calendario esterno' })]
+          );
+        });
+        
+        console.log(`Nuova integrazione iCal creata per la proprietà ${property_id}`);
+      } catch (insertError: any) {
+        console.error('Errore specifico durante l\'inserimento:', insertError);
+        
+        // Fallback: se c'è un errore di chiave duplicata, tenta un aggiornamento forzato
+        if (insertError.code === '23505') { // PostgreSQL unique violation error code
+          console.log('Rilevata violazione di unicità, tentativo di aggiornamento forzato');
+          
+          result = await executeQuery(async (client) => {
+            return client.query(
+              `UPDATE external_integrations 
+               SET sync_url = $1, credentials = $2, last_sync = NOW(), user_id = $3
+               WHERE property_id = $4 AND integration_type = 'ical'
+               RETURNING *`,
+              [sync_url, JSON.stringify({ name: name || 'Calendario esterno' }), userId, property_id]
+            );
+          });
+          
+          console.log('Aggiornamento forzato completato');
+        } else {
+          // Se non è un errore di unicità, rilancia l'eccezione
+          throw insertError;
+        }
+      }
+    }
     
     // Sincronizza immediatamente il calendario
     syncIcalCalendar(userId, property_id, sync_url)
@@ -384,9 +443,57 @@ export async function syncIcalCalendar(userId: string, propertyId: number, icalU
           if (typedEvent.type === 'VEVENT' && typedEvent.start && typedEvent.end) {
             syncedEvents++;
             
-            // Assicurati che le date siano in formato ISO
-            const checkInDate = new Date(typedEvent.start).toISOString().split('T')[0];
-            const checkOutDate = new Date(typedEvent.end).toISOString().split('T')[0];
+            // Estrai date da iCal
+            let startDate = new Date(typedEvent.start);
+            let endDate = new Date(typedEvent.end);
+            
+            // Converti in formato ISO per la data locale
+            const checkInDate = startDate.toISOString().split('T')[0];
+            
+            // Correzione per date "non inclusive" nei feed iCal
+            // Sottrai un giorno dalla data di fine poiché i feed iCal di Airbnb/Booking
+            // impostano la data di fine come il giorno DOPO l'ultimo giorno di soggiorno
+            endDate.setDate(endDate.getDate() - 1);
+            const checkOutDate = endDate.toISOString().split('T')[0];
+            
+            console.log(`Evento: ${uid}`);
+            console.log(`  Date originali: inizio=${typedEvent.start}, fine=${typedEvent.end}`);
+            console.log(`  Date corrette: check-in=${checkInDate}, check-out=${checkOutDate}`);
+            console.log(`  Titolo evento: ${typedEvent.summary}`);
+            console.log(`  UID: ${uid}`);
+            
+            // Analizza l'evento in profondità per distinguere prenotazioni reali dai blocchi
+            // INVERSIONE DELLA LOGICA: consideriamo tutti gli eventi di Airbnb come prenotazioni
+            // anche se sono etichettati come "CLOSED" o "Not available"
+            let isRealBooking = true; // Default: è una prenotazione
+            let isManualBlock = false;
+            let guestName = 'Prenotazione';
+            let bookingSource = uid.includes('airbnb') ? 'airbnb' : 
+                             (uid.includes('booking') ? 'booking' : 'ical');
+            
+            // Identifica la piattaforma di origine dal UID o dal titolo
+            if (uid.includes('airbnb') || (typedEvent.summary && typedEvent.summary.toString().toLowerCase().includes('airbnb'))) {
+              bookingSource = 'airbnb';
+              guestName = 'Prenotazione Airbnb';
+            } else if (uid.includes('booking') || (typedEvent.summary && typedEvent.summary.toString().toLowerCase().includes('booking'))) {
+              bookingSource = 'booking';
+              guestName = 'Prenotazione Booking';
+            }
+            
+            // Usa un'etichetta personalizzata in base alla piattaforma
+            if (bookingSource === 'airbnb') {
+              guestName = 'Prenotazione Airbnb';
+            } else if (bookingSource === 'booking') {
+              guestName = 'Prenotazione Booking';
+            } else {
+              guestName = 'Prenotazione esterna';
+            }
+            
+            const eventType = isRealBooking ? 'reservation' : 'block';
+            
+            // Log dettagliati
+            console.log(`  DECISIONE FINALE: ${isRealBooking ? 'PRENOTAZIONE' : 'BLOCCO'}`);
+            console.log(`  Fonte: ${bookingSource}, Nome: ${guestName}`);
             
             // Verifica se la prenotazione esiste già
             const existingBooking = await client.query(
@@ -400,12 +507,15 @@ export async function syncIcalCalendar(userId: string, propertyId: number, icalU
               await client.query(
                 `UPDATE bookings 
                  SET check_in_date = $1, check_out_date = $2, 
-                     guest_name = $3, status = 'confirmed', updated_at = NOW()
-                 WHERE id = $4`,
+                     guest_name = $3, status = 'confirmed', updated_at = NOW(),
+                     booking_source = $4, notes = $5
+                 WHERE id = $6`,
                 [
                   checkInDate, 
                   checkOutDate,
-                  typedEvent.summary || 'Prenotazione esterna',
+                  guestName,
+                  bookingSource,
+                  `Importato da iCal: ${icalUrl}`,
                   existingBooking.rows[0].id
                 ]
               );
@@ -415,18 +525,19 @@ export async function syncIcalCalendar(userId: string, propertyId: number, icalU
               await client.query(
                 `INSERT INTO bookings 
                  (property_id, user_id, guest_name, check_in_date, check_out_date, 
-                  status, booking_source, external_id, notes)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+                  status, booking_source, external_id, notes, total_price)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
                 [
                   propertyId,
                   userId,
-                  typedEvent.summary || 'Prenotazione esterna',
+                  guestName,
                   checkInDate,
                   checkOutDate,
                   'confirmed',
-                  'ical',
+                  bookingSource,
                   uid,
-                  `Importato da iCal: ${icalUrl}`
+                  `Importato da iCal: ${icalUrl}`,
+                  0 // Valore di default per total_price
                 ]
               );
               newEvents++;
