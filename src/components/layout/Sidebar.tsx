@@ -21,6 +21,8 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/context/AuthContext";
+import { useTutorial } from '@/context/TutorialContext';
+import { DEFAULT_TUTORIAL_STEPS } from '@/context/TutorialContext';
 
 export function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -28,7 +30,8 @@ export function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { logout, user, startTutorial } = useAuth();
+  const { logout, user } = useAuth();
+  const { startTutorial } = useTutorial();
   
   // Funzione di logout
   const handleLogout = async () => {
@@ -97,6 +100,12 @@ export function Sidebar() {
     { path: "/reports", label: "Report & Analytics", icon: LineChart },
   ];
   
+  const handleTutorialClick = () => {
+    console.log('Click su guida interattiva rilevato');
+    startTutorial();
+    console.log('Tutorial avviato');
+  };
+  
   return (
     <>
       {/* Mobile sidebar toggle */}
@@ -160,6 +169,7 @@ export function Sidebar() {
                             [route.path]: !prev[route.path]
                           }));
                         }}
+                        data-tutorial={`menu-${route.path.substring(1)}`}
                       >
                         <div className="flex items-center gap-3">
                           <Icon className="h-5 w-5" />
@@ -190,6 +200,7 @@ export function Sidebar() {
                                     setIsOpen(false);
                                   }
                                 }}
+                                data-tutorial={`submenu-${submenuItem.path.substring(1)}`}
                               >
                                 <span>{submenuItem.label}</span>
                               </NavLink>
@@ -212,6 +223,7 @@ export function Sidebar() {
                           setIsOpen(false);
                         }
                       }}
+                      data-tutorial={`menu-${route.path.substring(1)}`}
                     >
                       <Icon className="h-5 w-5" />
                       <span>{route.label}</span>
@@ -228,7 +240,7 @@ export function Sidebar() {
           <Button 
             variant="outline" 
             className="w-full justify-start"
-            onClick={() => startTutorial()}
+            onClick={handleTutorialClick}
           >
             <HelpCircle className="mr-2 h-5 w-5" />
             Guida Interattiva

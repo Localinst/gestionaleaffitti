@@ -24,6 +24,8 @@ import {
 import { getTenants, getProperties } from "@/services/api";
 import { AddTenantForm } from "./AddTenantForm";
 import { Tenant, Property } from "@/services/api";
+import { useNavigate } from 'react-router-dom';
+import { usePageTutorial } from '@/hooks';
 
 export default function TenantsPage() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
@@ -32,7 +34,12 @@ export default function TenantsPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddTenantOpen, setIsAddTenantOpen] = useState(false);
-  
+  const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
+  const navigate = useNavigate();
+
+  // Aggiungo l'hook per il tutorial
+  usePageTutorial();
+
   useEffect(() => {
     loadTenants();
     loadProperties();

@@ -1,223 +1,242 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import type { Step } from 'react-joyride';
 
-// Definizione delle fasi del tutorial
-export interface TutorialStep {
-  id: string;
-  title: string;
-  description: string;
-  target: string; // Selettore CSS o ID dell'elemento da evidenziare
-  position: 'top' | 'right' | 'bottom' | 'left';
-  page?: string; // URL della pagina in cui mostrare questo step
-}
-
-// Lista predefinita di fasi del tutorial
-const DEFAULT_TUTORIAL_STEPS: TutorialStep[] = [
+// Definizione delle fasi del tutorial corrette per react-joyride
+export const DEFAULT_TUTORIAL_STEPS: Step[] = [
   {
-    id: 'welcome',
-    title: 'Benvenuto nel Gestionale Affitti',
-    description: 'Questo tutorial ti guiderà attraverso le funzionalità principali dell\'applicazione.',
     target: 'body',
-    position: 'top',
+    content: (
+      <div>
+        <h2 style={{ color: '#1e3a8a', fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>👋 Benvenuto nel Gestionale Affitti</h2>
+        <p style={{ fontSize: '15px', lineHeight: '1.5' }}>Questo tutorial ti guiderà attraverso le funzionalità principali dell'applicazione.</p>
+      </div>
+    ),
+    placement: 'center',
+    disableBeacon: true,
   },
   {
-    id: 'sidebar',
-    title: 'Menu di navigazione',
-    description: 'Utilizza questa barra laterale per navigare tra le diverse sezioni dell\'applicazione.',
     target: 'aside',
-    position: 'right',
+    content: (
+      <div>
+        <h2 style={{ color: '#1e3a8a', fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>🧭 Menu di navigazione</h2>
+        <p style={{ fontSize: '15px', lineHeight: '1.5' }}>Utilizza questa barra laterale per navigare tra le diverse sezioni dell'applicazione.</p>
+      </div>
+    ),
+    placement: 'right',
+    disableBeacon: true,
   },
   {
-    id: 'dashboard',
-    title: 'Dashboard',
-    description: 'La dashboard ti mostra una panoramica di tutte le informazioni importanti.',
-    target: '[href="/dashboard"]',
-    position: 'right',
-    page: '/dashboard'
+    target: '[data-tutorial="menu-dashboard"]',
+    content: (
+      <div>
+        <h2 style={{ color: '#1e3a8a', fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>📊 Dashboard</h2>
+        <p style={{ fontSize: '15px', lineHeight: '1.5' }}>La dashboard ti mostra una panoramica di tutte le informazioni importanti:</p>
+        <ul style={{ fontSize: '14px', paddingLeft: '20px', lineHeight: '1.4', marginTop: '8px' }}>
+          <li>Statistiche sulle proprietà</li>
+          <li>Occupazione e incassi</li>
+          <li>Attività recenti</li>
+        </ul>
+      </div>
+    ),
+    placement: 'right',
+    disableBeacon: true,
   },
   {
-    id: 'properties',
-    title: 'Gestione Proprietà',
-    description: 'Qui puoi visualizzare e gestire tutte le tue proprietà.',
-    target: '[href="/properties"]',
-    position: 'right',
-    page: '/properties'
+    target: '[data-tutorial="menu-properties"]',
+    content: (
+      <div>
+        <h2 style={{ color: '#1e3a8a', fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>🏠 Gestione Proprietà</h2>
+        <p style={{ fontSize: '15px', lineHeight: '1.5' }}>Gestisci tutti i tuoi immobili da questa sezione. Puoi:</p>
+        <ul style={{ fontSize: '14px', paddingLeft: '20px', lineHeight: '1.4', marginTop: '8px' }}>
+          <li>Aggiungere nuove proprietà</li>
+          <li>Visualizzare i dettagli</li>
+          <li>Modificare le informazioni</li>
+        </ul>
+      </div>
+    ),
+    placement: 'right',
+    disableBeacon: true,
   },
   {
-    id: 'tenants',
-    title: 'Gestione Inquilini',
-    description: 'Qui puoi visualizzare e gestire tutti i tuoi inquilini.',
-    target: '[href="/tenants"]',
-    position: 'right',
-    page: '/tenants'
+    target: '[data-tutorial="menu-tenants"]',
+    content: (
+      <div>
+        <h2 style={{ color: '#1e3a8a', fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>👥 Gestione Inquilini</h2>
+        <p style={{ fontSize: '15px', lineHeight: '1.5' }}>Tieni traccia di tutti gli inquilini dei tuoi immobili:</p>
+        <ul style={{ fontSize: '14px', paddingLeft: '20px', lineHeight: '1.4', marginTop: '8px' }}>
+          <li>Registra nuovi inquilini</li>
+          <li>Visualizza i contatti</li>
+          <li>Controlla i pagamenti</li>
+        </ul>
+      </div>
+    ),
+    placement: 'right',
+    disableBeacon: true,
   },
   {
-    id: 'transactions',
-    title: 'Gestione Transazioni',
-    description: 'Qui puoi visualizzare e gestire tutte le transazioni finanziarie.',
-    target: '[href="/transactions"]',
-    position: 'right',
-    page: '/transactions'
+    target: '[data-tutorial="menu-transactions"]',
+    content: (
+      <div>
+        <h2 style={{ color: '#1e3a8a', fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>💰 Gestione Transazioni</h2>
+        <p style={{ fontSize: '15px', lineHeight: '1.5' }}>Monitora tutti i movimenti economici:</p>
+        <ul style={{ fontSize: '14px', paddingLeft: '20px', lineHeight: '1.4', marginTop: '8px' }}>
+          <li>Registra incassi</li>
+          <li>Monitora spese</li>
+          <li>Visualizza il bilancio</li>
+        </ul>
+      </div>
+    ),
+    placement: 'right',
+    disableBeacon: true,
   },
   {
-    id: 'contracts',
-    title: 'Gestione Contratti',
-    description: 'Qui puoi visualizzare e gestire tutti i contratti di affitto.',
-    target: '[href="/contracts"]',
-    position: 'right',
-    page: '/contracts'
+    target: '[data-tutorial="menu-contracts"]',
+    content: (
+      <div>
+        <h2 style={{ color: '#1e3a8a', fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>📝 Gestione Contratti</h2>
+        <p style={{ fontSize: '15px', lineHeight: '1.5' }}>Gestisci i contratti di affitto:</p>
+        <ul style={{ fontSize: '14px', paddingLeft: '20px', lineHeight: '1.4', marginTop: '8px' }}>
+          <li>Crea nuovi contratti</li>
+          <li>Monitora le scadenze</li>
+          <li>Gestisci i rinnovi</li>
+        </ul>
+      </div>
+    ),
+    placement: 'right',
+    disableBeacon: true,
   },
   {
-    id: 'tourism',
-    title: 'Locazioni Turistiche',
-    description: 'Gestisci le tue proprietà per affitti turistici e controlla le prenotazioni.',
-    target: '[href="/tourism"]',
-    position: 'right',
-    page: '/tourism/properties'
+    target: '[data-tutorial="menu-tourism"]',
+    content: (
+      <div>
+        <h2 style={{ color: '#1e3a8a', fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>🏝️ Locazioni Turistiche</h2>
+        <p style={{ fontSize: '15px', lineHeight: '1.5' }}>Gestisci proprietà per affitti a breve termine:</p>
+        <ul style={{ fontSize: '14px', paddingLeft: '20px', lineHeight: '1.4', marginTop: '8px' }}>
+          <li>Visualizza prenotazioni</li>
+          <li>Gestisci disponibilità</li>
+          <li>Monitora le performance</li>
+        </ul>
+      </div>
+    ),
+    placement: 'right',
+    disableBeacon: true,
   },
   {
-    id: 'activities',
-    title: 'Gestione Attività',
-    description: 'Pianifica e monitora le attività relative agli immobili.',
-    target: '[href="/activities"]',
-    position: 'right',
-    page: '/activities'
+    target: '[data-tutorial="menu-activities"]',
+    content: (
+      <div>
+        <h2 style={{ color: '#1e3a8a', fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>📅 Gestione Attività</h2>
+        <p style={{ fontSize: '15px', lineHeight: '1.5' }}>Pianifica e gestisci tutte le attività:</p>
+        <ul style={{ fontSize: '14px', paddingLeft: '20px', lineHeight: '1.4', marginTop: '8px' }}>
+          <li>Manutenzioni programmate</li>
+          <li>Incontri con inquilini</li>
+          <li>Promemoria importanti</li>
+        </ul>
+      </div>
+    ),
+    placement: 'right',
+    disableBeacon: true,
   },
   {
-    id: 'reports',
-    title: 'Report e Analisi',
-    description: 'Visualizza report dettagliati e analizza i dati delle tue proprietà.',
-    target: '[href="/reports"]',
-    position: 'right',
-    page: '/reports'
+    target: '[data-tutorial="menu-reports"]',
+    content: (
+      <div>
+        <h2 style={{ color: '#1e3a8a', fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>📈 Report e Analisi</h2>
+        <p style={{ fontSize: '15px', lineHeight: '1.5' }}>Analizza i dati delle tue proprietà:</p>
+        <ul style={{ fontSize: '14px', paddingLeft: '20px', lineHeight: '1.4', marginTop: '8px' }}>
+          <li>Rendimento degli investimenti</li>
+          <li>Statistiche di occupazione</li>
+          <li>Previsioni finanziarie</li>
+        </ul>
+      </div>
+    ),
+    placement: 'right',
+    disableBeacon: true,
   },
   {
-    id: 'end',
-    title: 'Tutorial completato!',
-    description: 'Hai completato il tour dell\'applicazione. Puoi riavviare questo tutorial in qualsiasi momento dal menu delle impostazioni.',
     target: 'body',
-    position: 'top',
+    content: (
+      <div>
+        <h2 style={{ color: '#1e3a8a', fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>🎉 Tutorial completato!</h2>
+        <p style={{ fontSize: '15px', lineHeight: '1.5' }}>Congratulazioni! Hai completato il tour dell'applicazione.</p>
+        <p style={{ fontSize: '14px', marginTop: '10px', color: '#64748b' }}>Puoi riavviare questo tutorial in qualsiasi momento dal menu laterale.</p>
+      </div>
+    ),
+    placement: 'center',
+    disableBeacon: true,
   }
 ];
 
-// Tipizzazione del context
 interface TutorialContextType {
-  isActive: boolean;
-  currentStep: number;
-  steps: TutorialStep[];
-  startTutorial: () => void;
-  endTutorial: () => void;
-  nextStep: () => void;
-  prevStep: () => void;
-  goToStep: (step: number) => void;
-  skipTutorial: () => void;
+  isOpen: boolean;
+  setIsOpen: (open: boolean) => void;
+  steps: Step[];
+  setSteps: (steps: Step[]) => void;
+  completedTutorials: string[];
+  markTutorialAsCompleted: (tutorialId: string) => void;
+  startTutorial: (newSteps?: Step[]) => void;
 }
 
-// Creazione del context con valori di default
-const TutorialContext = createContext<TutorialContextType>({
-  isActive: false,
-  currentStep: 0,
-  steps: DEFAULT_TUTORIAL_STEPS,
-  startTutorial: () => {},
-  endTutorial: () => {},
-  nextStep: () => {},
-  prevStep: () => {},
-  goToStep: () => {},
-  skipTutorial: () => {},
-});
+const TutorialContext = createContext<TutorialContextType | undefined>(undefined);
 
-// Hook per usare il context
-export const useTutorial = () => useContext(TutorialContext);
-
-// Storage key per salvare lo stato del tutorial
 const TUTORIAL_STORAGE_KEY = 'tutorial_completed';
 
-// Provider del context
-export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isActive, setIsActive] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [steps] = useState<TutorialStep[]>(DEFAULT_TUTORIAL_STEPS);
-  const location = useLocation();
+export function TutorialProvider({ children }: { children: React.ReactNode }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [steps, setSteps] = useState<Step[]>([]);
+  const [completedTutorials, setCompletedTutorials] = useState<string[]>(() => {
+    const saved = localStorage.getItem('completedTutorials');
+    return saved ? JSON.parse(saved) : [];
+  });
 
-  // Controlla se il tutorial è già stato completato
+  // Log quando isOpen cambia
   useEffect(() => {
-    const tutorialCompleted = localStorage.getItem(TUTORIAL_STORAGE_KEY) === 'true';
-    // Se è il primo accesso all'app e il tutorial non è stato completato, mostralo automaticamente
-    if (!tutorialCompleted && location.pathname === '/dashboard') {
-      setIsActive(true);
-    }
-  }, [location]);
+    console.log('TutorialContext: isOpen cambiato a:', isOpen);
+  }, [isOpen]);
 
-  // Ascolta l'evento personalizzato per avviare il tutorial
+  // Log quando steps cambia
   useEffect(() => {
-    const handleStartTutorial = () => {
-      startTutorial();
-    };
+    console.log('TutorialContext: steps aggiornati:', steps);
+  }, [steps]);
 
-    window.addEventListener('start-tutorial', handleStartTutorial);
-
-    return () => {
-      window.removeEventListener('start-tutorial', handleStartTutorial);
-    };
-  }, []);
-
-  // Avvia il tutorial
-  const startTutorial = () => {
-    setCurrentStep(0);
-    setIsActive(true);
+  const markTutorialAsCompleted = (tutorialId: string) => {
+    console.log('TutorialContext: Marking tutorial as completed:', tutorialId);
+    setCompletedTutorials(prev => {
+      const newCompleted = [...prev, tutorialId];
+      localStorage.setItem('completedTutorials', JSON.stringify(newCompleted));
+      return newCompleted;
+    });
   };
 
-  // Termina il tutorial
-  const endTutorial = () => {
-    setIsActive(false);
-    localStorage.setItem(TUTORIAL_STORAGE_KEY, 'true');
-  };
-
-  // Passa al prossimo step
-  const nextStep = () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(prev => prev + 1);
-    } else {
-      endTutorial();
-    }
-  };
-
-  // Torna allo step precedente
-  const prevStep = () => {
-    if (currentStep > 0) {
-      setCurrentStep(prev => prev - 1);
-    }
-  };
-
-  // Vai ad uno step specifico
-  const goToStep = (step: number) => {
-    if (step >= 0 && step < steps.length) {
-      setCurrentStep(step);
-    }
-  };
-
-  // Salta il tutorial
-  const skipTutorial = () => {
-    endTutorial();
+  const startTutorial = (newSteps: Step[] = DEFAULT_TUTORIAL_STEPS) => {
+    console.log('TutorialContext: Avvio tutorial con steps:', newSteps);
+    setSteps(newSteps);
+    // Impostiamo isOpen a true dopo un piccolo delay per assicurarci che gli steps siano stati impostati
+    setTimeout(() => {
+      setIsOpen(true);
+    }, 100);
   };
 
   return (
-    <TutorialContext.Provider
-      value={{
-        isActive,
-        currentStep,
-        steps,
-        startTutorial,
-        endTutorial,
-        nextStep,
-        prevStep,
-        goToStep,
-        skipTutorial,
-      }}
-    >
+    <TutorialContext.Provider value={{ 
+      isOpen, 
+      setIsOpen, 
+      steps, 
+      setSteps, 
+      completedTutorials, 
+      markTutorialAsCompleted,
+      startTutorial 
+    }}>
       {children}
     </TutorialContext.Provider>
   );
-};
+}
 
-export default TutorialProvider; 
+export function useTutorial() {
+  const context = useContext(TutorialContext);
+  if (context === undefined) {
+    throw new Error('useTutorial deve essere usato all\'interno di un TutorialProvider');
+  }
+  return context;
+} 

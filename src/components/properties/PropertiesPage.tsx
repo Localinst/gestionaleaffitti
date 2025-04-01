@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Home, Plus, Loader2, Eye, Edit, Trash2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { usePageTutorial } from '@/hooks';
 
 // Componente ActionButton
 interface ActionButtonProps {
@@ -69,6 +70,9 @@ export default function PropertiesPage() {
   
   // Utilizzo del hook personalizzato per caricare le proprietà
   const { data: properties = [], isLoading: loading, error } = useProperties();
+  
+  // Aggiungo l'hook per il tutorial
+  usePageTutorial();
   
   // Utilizzo di useMutation per l'eliminazione delle proprietà
   const deleteMutation = useMutation({
@@ -123,10 +127,15 @@ export default function PropertiesPage() {
             text="Gestisci il tuo portfolio immobiliare"
             icon={<Home className="h-6 w-6" />}
           >
-            <Button onClick={() => {
-              setSelectedProperty(null);
-              setOpenAddForm(true);
-            }} size="sm" className="h-9">
+            <Button 
+              onClick={() => {
+                setSelectedProperty(null);
+                setOpenAddForm(true);
+              }} 
+              size="sm" 
+              className="h-9"
+              data-tutorial="properties-add"
+            >
               <Plus className="mr-2 h-4 w-4" />
               Aggiungi Proprietà
             </Button>
@@ -152,7 +161,7 @@ export default function PropertiesPage() {
               </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6" data-tutorial="properties-list">
               {properties.map((property) => (
                 <Card key={property.id} className="flex flex-col">
                   <CardHeader className="pb-2">

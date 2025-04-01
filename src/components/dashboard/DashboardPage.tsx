@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
+import { usePageTutorial } from '@/hooks';
 
 import { 
   AreaChart, 
@@ -17,7 +18,7 @@ import {
   Legend,
   ComposedChart
 } from "recharts";
-import { ArrowUpRight, ArrowDownRight, Building2, Users, DollarSign, ChevronRight, Receipt, Calendar, RefreshCcw } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Building2, Users, DollarSign, ChevronRight, Receipt, Calendar, RefreshCcw, FilePieChart, Percent } from "lucide-react";
 import { 
   AppLayout, 
   PageHeader, 
@@ -41,7 +42,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableBody, TableCell, TableHead, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { generateActivitiesFromContracts } from "@/lib/activities";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 
 // Definisci un tipo per il riepilogo della dashboard
 interface DashboardSummaryData {
@@ -921,6 +922,14 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const location = useLocation();
 
+  // Funzione per generare report
+  const generateReport = () => {
+    toast.success("Generazione report avviata", {
+      description: "Riceverai una notifica quando il report sarà pronto."
+    });
+    // In futuro qui andrà l'implementazione effettiva della generazione del report
+  };
+
   // Aggiungiamo dati per i trend
   const [trends, setTrends] = useState({
     properties: { trend: "neutral" as "up" | "down" | "neutral", value: "0%" },
@@ -1058,57 +1067,68 @@ export default function DashboardPage() {
         description="Panoramica delle prestazioni dei tuoi immobili in affitto"
       />
       
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard
-          title="Proprietà"
-          value={summary.totalProperties}
-          icon={Building2}
-          trend={trends.properties.trend}
-          trendValue={trends.properties.value}
-          to="/properties"
-          className="h-[120px] md:h-auto"
-        />
-        <StatCard
-          title="Inquilini"
-          value={summary.totalTenants}
-          icon={Users}
-          trend={trends.tenants.trend}
-          trendValue={trends.tenants.value}
-          to="/tenants"
-          className="h-[120px] md:h-auto"
-        />
-        <StatCard
-          title="Ricavo mensile"
-          value={`€${summary.rentIncome.toLocaleString()}`}
-          icon={DollarSign}
-          trend={trends.income.trend}
-          trendValue={trends.income.value}
-          to="/transactions"
-          className="h-[120px] md:h-auto"
-        />
-        <StatCard
-          title="Tasso occupazione"
-          value={formatOccupancyRate(summary.occupancyRate)}
-          icon={Users}
-          trend={trends.occupancy.trend}
-          trendValue={trends.occupancy.value}
-          to="/tenants"
-          className="h-[120px] md:h-auto"
-        />
-      </div>
-      
-      <div className="mt-4 md:mt-8">
-        <IncomeChart />
-      </div>
-      
-      <Grid cols={3} className="mt-8">
-        <OccupancyChart />
-        <PropertyTypeChart />
-        <RecentActivities />
-      </Grid>
-      
-      <div className="mt-8">
-        <RentCollectionChart />
+      <div className="container mx-auto p-6">
+        <div className="flex justify-between items-center mb-6" data-tutorial="dashboard-overview">
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <Button onClick={generateReport}>
+            <FilePieChart className="mr-2 h-4 w-4" />
+            Genera Report
+          </Button>
+        </div>
+        
+        {/* Statistiche */}
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 mb-8" data-tutorial="dashboard-stats">
+          <StatCard
+            title="Proprietà"
+            value={summary.totalProperties}
+            icon={Building2}
+            trend={trends.properties.trend}
+            trendValue={trends.properties.value}
+            to="/properties"
+            className="h-[120px] md:h-auto"
+          />
+          <StatCard
+            title="Inquilini"
+            value={summary.totalTenants}
+            icon={Users}
+            trend={trends.tenants.trend}
+            trendValue={trends.tenants.value}
+            to="/tenants"
+            className="h-[120px] md:h-auto"
+          />
+          <StatCard
+            title="Ricavo mensile"
+            value={`€${summary.rentIncome.toLocaleString()}`}
+            icon={Receipt}
+            trend={trends.income.trend}
+            trendValue={trends.income.value}
+            to="/transactions"
+            className="h-[120px] md:h-auto"
+          />
+          <StatCard
+            title="Tasso occupazione"
+            value={formatOccupancyRate(summary.occupancyRate)}
+            icon={Users}
+            trend={trends.occupancy.trend}
+            trendValue={trends.occupancy.value}
+            to="/tenants"
+            className="h-[120px] md:h-auto"
+          />
+        </div>
+        
+        <div className="mt-4 md:mt-8">
+          <IncomeChart />
+        </div>
+        
+        <Grid cols={3} className="mt-8">
+          <OccupancyChart />
+          <PropertyTypeChart />
+          <RecentActivities />
+        </Grid>
+        
+        <div className="mt-8">
+          <RentCollectionChart />
+        </div>
       </div>
     </AppLayout>
   );

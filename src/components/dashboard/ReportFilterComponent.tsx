@@ -36,8 +36,8 @@ export function ReportFilterComponent({ onFiltersChange }: ReportFilterComponent
   // Stato per i filtri
   const [filters, setFilters] = useState<ReportFilters>({
     periodType: "month",
-    startDate: startOfMonth(new Date()),
-    endDate: endOfMonth(new Date()),
+    startDate: subDays(new Date(), 30), // Ultimi 30 giorni invece dell'intero mese
+    endDate: new Date(), // Data corrente
     propertyId: "all"
   });
 
@@ -86,8 +86,9 @@ export function ReportFilterComponent({ onFiltersChange }: ReportFilterComponent
         endDate = endOfWeek(now, { locale: it });
         break;
       case "month":
-        startDate = startOfMonth(now);
-        endDate = endOfMonth(now);
+        // Mostro gli ultimi 30 giorni invece dell'intero mese
+        endDate = now; // Data corrente
+        startDate = subDays(now, 30); // 30 giorni indietro
         break;
       case "year":
         startDate = startOfYear(now);
@@ -134,7 +135,7 @@ export function ReportFilterComponent({ onFiltersChange }: ReportFilterComponent
     
     const labels = {
       week: "Questa settimana",
-      month: "Questo mese",
+      month: "Ultimi 30 giorni",
       year: "Quest'anno",
     };
     

@@ -399,20 +399,20 @@ export default function ReportPage() {
           // Ultimi 3 mesi
           queryEndDate = new Date();
           queryStartDate = new Date();
-          queryStartDate.setMonth(queryStartDate.getMonth() - 2);
-          queryStartDate.setDate(1); // Inizio del mese
+          queryStartDate.setMonth(queryStartDate.getMonth() - 3);
+          queryStartDate.setDate(queryStartDate.getDate() + 1); // Dal giorno dopo per avere esattamente 3 mesi
         } else if (timeFilter === "6months") {
           // Ultimi 6 mesi
           queryEndDate = new Date();
           queryStartDate = new Date();
-          queryStartDate.setMonth(queryStartDate.getMonth() - 5);
-          queryStartDate.setDate(1); // Inizio del mese
+          queryStartDate.setMonth(queryStartDate.getMonth() - 6);
+          queryStartDate.setDate(queryStartDate.getDate() + 1); // Dal giorno dopo per avere esattamente 6 mesi
         } else if (timeFilter === "year") {
           // Ultimo anno (12 mesi incluso quello corrente)
           queryEndDate = new Date();
           queryStartDate = new Date();
-          queryStartDate.setMonth(queryStartDate.getMonth() - 11);
-          queryStartDate.setDate(1); // Inizio del mese
+          queryStartDate.setMonth(queryStartDate.getMonth() - 12);
+          queryStartDate.setDate(queryStartDate.getDate() + 1); // Dal giorno dopo per avere esattamente 12 mesi
         } else if (timeFilter === "specific-year") {
           // Anno specifico (1 gen - 31 dic)
           queryStartDate = new Date(selectedYear, 0, 1);
@@ -421,12 +421,16 @@ export default function ReportPage() {
           // Use custom dates if provided
           queryStartDate = filters.startDate;
           queryEndDate = filters.endDate;
-        } else {
-          // Default: ultimo anno (12 mesi)
+        } else if (filters.periodType === "month") {
+          // Per "questo mese", mostra gli ultimi 30 giorni
           queryEndDate = new Date();
           queryStartDate = new Date();
-          queryStartDate.setMonth(queryStartDate.getMonth() - 11);
-          queryStartDate.setDate(1); // Inizio del mese
+          queryStartDate.setDate(queryStartDate.getDate() - 30);
+        } else {
+          // Default: ultimi 30 giorni
+          queryEndDate = new Date();
+          queryStartDate = new Date();
+          queryStartDate.setDate(queryStartDate.getDate() - 30);
         }
         
         // Se i dati non sono in cache o sono vecchi, inizia il caricamento
@@ -442,92 +446,91 @@ export default function ReportPage() {
         
         try {
           // Prima prova a caricare dati reali dall'API
-          const data = await api.reports.getFinancialData(queryParams);
+          const rawData = await api.reports.getFinancialData(queryParams);
           if (!isMounted) return; // Non aggiornare lo stato se il componente è smontato
           
-          console.log("Dati ricevuti dall'API:", data);
+          console.log("Dati finanziari ricevuti dall'API:", rawData);
           
-          if (!data || !Array.isArray(data) || data.length === 0) {
-            console.log("Nessun dato ricevuto dall'API, carico dati di esempio");
+          if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
+            console.log("Nessun dato finanziario ricevuto dall'API, carico dati di esempio");
             // Use sample data but adjust dates to match the query period
             const adjustedSampleData = generateSampleData(timeFilter, selectedYear);
             setFinancialData(adjustedSampleData);
             return;
           }
           
-          // Se i dati hanno già il formato corretto, li usiamo direttamente
-          if (data.every(item => 
-            typeof item.income !== 'undefined' && 
-            typeof item.expenses !== 'undefined' && 
-            typeof item.net !== 'undefined' && 
-            typeof item.date !== 'undefined'
-          )) {
-            console.log("Dati API già nel formato corretto, li uso direttamente");
-            // Assicuriamoci che i numeri siano numeri
-            const cleanData = data.map(item => ({
-              ...item,
-              income: typeof item.income === 'string' ? parseFloat(item.income) : item.income,
-              expenses: typeof item.expenses === 'string' ? parseFloat(item.expenses) : item.expenses,
-              net: typeof item.net === 'string' ? parseFloat(item.net) : item.net,
-              date: typeof item.month === 'number' && typeof item.year === 'number' ? 
-                    `${item.date} ${item.year}` : item.date
-            }));
+          // Assicuriamoci che i dati siano nel formato corretto
+          const validatedData = rawData.map(item => {
+            // Verifico che l'elemento esista e sia un oggetto
+            if (!item || typeof item !== 'object') return null;
             
-            console.log("Dati puliti:", cleanData);
-            setFinancialData(cleanData);
+            // Estrai dati dalle proprietà dell'oggetto con validazione
+            const income = typeof item.income === 'number' ? item.income : 
+                          typeof item.income === 'string' ? parseFloat(item.income) : 0;
+            
+            const expenses = typeof item.expenses === 'number' ? item.expenses : 
+                            typeof item.expenses === 'string' ? parseFloat(item.expenses) : 0;
+            
+            const net = typeof item.net === 'number' ? item.net : 
+                       typeof item.net === 'string' ? parseFloat(item.net) : income - expenses;
+            
+            // Determina il formato della data
+            let date = item.date || '';
+            
+            // Se abbiamo mese e anno numerici, formattiamo la data
+            if (typeof item.month === 'number' && typeof item.year === 'number') {
+              date = `${getItalianMonthName(item.month)} ${item.year}`;
+            }
+            
+            // Crea la chiave di ordinamento
+            let sortKey = item.sortKey;
+            if (!sortKey && typeof item.year === 'number' && typeof item.month === 'number') {
+              sortKey = `${item.year}-${String(item.month + 1).padStart(2, '0')}`;
+            } else if (!sortKey) {
+              // Prova a estrarre da date se è una stringa
+              const parsedDate = typeof item.date === 'string' ? parseDate(item.date) : null;
+              sortKey = parsedDate ? format(parsedDate, 'yyyy-MM') : format(new Date(), 'yyyy-MM');
+            }
+            
+            return {
+              date,
+              month: typeof item.month === 'number' ? item.month : 0,
+              year: typeof item.year === 'number' ? item.year : new Date().getFullYear(),
+              income: isNaN(income) ? 0 : income,
+              expenses: isNaN(expenses) ? 0 : expenses,
+              net: isNaN(net) ? 0 : net,
+              sortKey
+            };
+          }).filter(Boolean);
+          
+          // Se dopo la validazione non abbiamo dati, usiamo dati di esempio
+          if (!validatedData || validatedData.length === 0) {
+            console.log("Dati finanziari non validi dopo la validazione, carico dati di esempio");
+            const adjustedSampleData = generateSampleData(timeFilter, selectedYear);
+            setFinancialData(adjustedSampleData);
             return;
           }
           
           // Ensure we have data for each month in the range
-          const formattedData = ensureMonthlyData(
-            data, 
+          const completeData = ensureMonthlyData(
+            validatedData, 
             queryStartDate, 
             queryEndDate
           );
           
-          console.log("Dati formattati dopo ensureMonthlyData:", formattedData);
-          
-          if (!formattedData || formattedData.length === 0) {
-            // Use sample data but adjust dates to match the query period
-            console.log("Dati formattati vuoti, carico dati di esempio");
-            const adjustedSampleData = generateSampleData(timeFilter, selectedYear);
-            setFinancialData(adjustedSampleData);
-            return;
-          }
+          console.log("Dati finanziari completi dopo la validazione:", completeData);
           
           // Ordina i dati per data
-          formattedData.sort((a, b) => {
+          completeData.sort((a, b) => {
             if (a.sortKey && b.sortKey) {
-              // Se abbiamo le chiavi di ordinamento, usiamo quelle
               return a.sortKey.localeCompare(b.sortKey);
             }
-            
-            // Fallback al metodo precedente
-            const dateA = new Date(a.date);
-            const dateB = new Date(b.date);
-            return dateA.getTime() - dateB.getTime();
+            return 0;
           });
           
-          // Assicuriamoci che ogni elemento abbia la proprietà 'net' calcolata correttamente
-          const dataWithNet = formattedData.map(item => {
-            // Convertiamo i valori in numeri
-            const income = typeof item.income === 'string' ? parseFloat(item.income) : (item.income || 0);
-            const expenses = typeof item.expenses === 'string' ? parseFloat(item.expenses) : (item.expenses || 0); 
-            const netValue = typeof item.net !== 'undefined' ? 
-              (typeof item.net === 'string' ? parseFloat(item.net) : item.net) : 
-              (income - expenses);
-            
-            return {
-              ...item,
-              income: isNaN(income) ? 0 : income,
-              expenses: isNaN(expenses) ? 0 : expenses,
-              net: isNaN(netValue) ? 0 : netValue
-            };
-          });
-          
-          console.log("Dati finali con net calcolato:", dataWithNet);
-          setFinancialData(dataWithNet);
+          setFinancialData(completeData);
         } catch (apiError) {
+          console.error("Errore API durante il caricamento dei dati finanziari:", apiError);
           // Use sample data but adjust dates to match the query period
           const adjustedSampleData = generateSampleData(timeFilter, selectedYear);
           
@@ -565,10 +568,15 @@ export default function ReportPage() {
         
         // Verifica che ci siano date valide all'inizio
         if (!queryStartDate || !queryEndDate) {
-          // Se non ci sono date valide, imposta un periodo predefinito (ultimo mese)
+          // Se non ci sono date valide, imposta un periodo predefinito (ultimi 30 giorni)
           queryEndDate = new Date();
           queryStartDate = new Date();
-          queryStartDate.setMonth(queryStartDate.getMonth() - 1);
+          queryStartDate.setDate(queryStartDate.getDate() - 30); // Ultimi 30 giorni invece dell'intero mese
+        } else if (filters.periodType === "month") {
+          // Se il filtro è "questo mese", impostiamo gli ultimi 30 giorni
+          queryEndDate = new Date();
+          queryStartDate = new Date();
+          queryStartDate.setDate(queryStartDate.getDate() - 30);
         }
         
         const queryParams = {
@@ -579,18 +587,55 @@ export default function ReportPage() {
         
         try {
           // Prima prova a caricare dati reali
-          const data = await api.reports.getSummary(queryParams);
+          const rawData = await api.reports.getSummary(queryParams);
           
-          if (!data) {
+          if (!rawData) {
+            console.log("Nessun dato ricevuto dall'API, caricamento dati di esempio");
             setSummaryData(SAMPLE_SUMMARY_DATA);
             return;
           }
           
-          setSummaryData(data);
+          // Validazione e normalizzazione dei dati ricevuti
+          const validatedData: SummaryData = {
+            totalIncome: typeof rawData.totalIncome === 'number' ? rawData.totalIncome : 
+                         typeof rawData.totalIncome === 'string' ? parseFloat(rawData.totalIncome) : 0,
+                         
+            totalExpenses: typeof rawData.totalExpenses === 'number' ? rawData.totalExpenses : 
+                          typeof rawData.totalExpenses === 'string' ? parseFloat(rawData.totalExpenses) : 0,
+                          
+            netIncome: typeof rawData.netIncome === 'number' ? rawData.netIncome : 
+                      typeof rawData.netIncome === 'string' ? parseFloat(rawData.netIncome) : 
+                      (typeof rawData.totalIncome === 'number' && typeof rawData.totalExpenses === 'number') ? 
+                      rawData.totalIncome - rawData.totalExpenses : 0,
+                      
+            occupancyRate: typeof rawData.occupancyRate === 'number' ? rawData.occupancyRate : 
+                          typeof rawData.occupancyRate === 'string' ? parseFloat(rawData.occupancyRate) : 0,
+                          
+            propertyCount: typeof rawData.propertyCount === 'number' ? rawData.propertyCount : 
+                          typeof rawData.propertyCount === 'string' ? parseInt(rawData.propertyCount, 10) : 0,
+                          
+            tenantCount: typeof rawData.tenantCount === 'number' ? rawData.tenantCount : 
+                        typeof rawData.tenantCount === 'string' ? parseInt(rawData.tenantCount, 10) : 0,
+                        
+            avgRent: typeof rawData.avgRent === 'number' ? rawData.avgRent : 
+                    typeof rawData.avgRent === 'string' ? parseFloat(rawData.avgRent) : 0
+          };
+          
+          // Verifica che non ci siano valori NaN o undefined dopo la conversione
+          Object.keys(validatedData).forEach(key => {
+            if (isNaN(validatedData[key as keyof SummaryData]) || validatedData[key as keyof SummaryData] === undefined) {
+              validatedData[key as keyof SummaryData] = 0;
+            }
+          });
+          
+          console.log("Dati di riepilogo validati:", validatedData);
+          setSummaryData(validatedData);
         } catch (apiError) {
+          console.error("Errore API durante il caricamento dei dati di riepilogo:", apiError);
           setSummaryData(SAMPLE_SUMMARY_DATA);
         }
       } catch (error) {
+        console.error("Errore generale durante il caricamento dei dati di riepilogo:", error);
         toast({
           title: "Attenzione",
           description: "Utilizzando dati di esempio a causa di problemi di connessione al database",
@@ -618,10 +663,15 @@ export default function ReportPage() {
         
         // Verifica che ci siano date valide all'inizio
         if (!queryStartDate || !queryEndDate) {
-          // Se non ci sono date valide, imposta un periodo predefinito (ultimo mese)
+          // Se non ci sono date valide, imposta un periodo predefinito (ultimi 30 giorni)
           queryEndDate = new Date();
           queryStartDate = new Date();
-          queryStartDate.setMonth(queryStartDate.getMonth() - 1);
+          queryStartDate.setDate(queryStartDate.getDate() - 30); // Ultimi 30 giorni invece dell'intero mese
+        } else if (filters.periodType === "month") {
+          // Se il filtro è "questo mese", impostiamo gli ultimi 30 giorni
+          queryEndDate = new Date();
+          queryStartDate = new Date();
+          queryStartDate.setDate(queryStartDate.getDate() - 30);
         }
         
         const queryParams = {
@@ -632,18 +682,54 @@ export default function ReportPage() {
         
         try {
           // Prima prova a caricare dati reali dall'API
-          const data = await api.reports.getPropertyPerformance(queryParams);
+          const rawData = await api.reports.getPropertyPerformance(queryParams);
           
-          if (!data || !Array.isArray(data) || data.length === 0) {
+          if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
+            console.log("Nessun dato valido di proprietà ricevuto dall'API, caricamento dati di esempio");
             setPropertyData(SAMPLE_PROPERTY_DATA);
             return;
           }
           
-          setPropertyData(data);
+          // Validazione e normalizzazione dei dati ricevuti
+          const validatedData: PropertyPerformanceData[] = rawData.map(item => {
+            // Verifica che item sia un oggetto
+            if (!item || typeof item !== 'object') {
+              return null;
+            }
+            
+            const validItem: PropertyPerformanceData = {
+              propertyId: item.propertyId?.toString() || '',
+              propertyName: item.propertyName?.toString() || 'Proprietà sconosciuta',
+              income: typeof item.income === 'number' ? item.income : 
+                    typeof item.income === 'string' ? parseFloat(item.income) : 0,
+              expenses: typeof item.expenses === 'number' ? item.expenses : 
+                      typeof item.expenses === 'string' ? parseFloat(item.expenses) : 0,
+              occupancyRate: typeof item.occupancyRate === 'number' ? item.occupancyRate : 
+                           typeof item.occupancyRate === 'string' ? parseFloat(item.occupancyRate) : 0
+            };
+            
+            // Verifica che non ci siano valori NaN dopo la conversione
+            if (isNaN(validItem.income)) validItem.income = 0;
+            if (isNaN(validItem.expenses)) validItem.expenses = 0;
+            if (isNaN(validItem.occupancyRate)) validItem.occupancyRate = 0;
+            
+            return validItem;
+          }).filter(Boolean) as PropertyPerformanceData[];
+          
+          if (validatedData.length === 0) {
+            console.log("Nessun dato valido di proprietà dopo la validazione, caricamento dati di esempio");
+            setPropertyData(SAMPLE_PROPERTY_DATA);
+            return;
+          }
+          
+          console.log("Dati delle proprietà validati:", validatedData);
+          setPropertyData(validatedData);
         } catch (apiError) {
+          console.error("Errore API durante il caricamento dei dati delle proprietà:", apiError);
           setPropertyData(SAMPLE_PROPERTY_DATA);
         }
       } catch (error) {
+        console.error("Errore generale durante il caricamento dei dati delle proprietà:", error);
         toast({
           title: "Attenzione",
           description: "Utilizzando dati di esempio a causa di problemi di connessione al database",

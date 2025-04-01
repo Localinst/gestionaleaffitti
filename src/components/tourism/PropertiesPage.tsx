@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { usePageTutorial } from '@/hooks';
 import { api } from '@/services/api';
 import { Property } from '@/types/property';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -21,6 +22,9 @@ export default function PropertiesPage() {
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const navigate = useNavigate();
+
+  // Aggiungo l'hook per il tutorial
+  usePageTutorial();
 
   useEffect(() => {
     loadProperties();

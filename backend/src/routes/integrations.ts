@@ -6,6 +6,7 @@ import { executeQuery } from '../db';
 import ical from 'node-ical';
 import * as icalGenerator from 'ical-generator';
 import crypto from 'crypto';
+import { format } from 'date-fns';
 
 const router = Router();
 router.use(authenticate);
@@ -449,22 +450,15 @@ export async function syncIcalCalendar(userId: string, propertyId: number, icalU
 
             console.log(`Evento originale: inizio=${startDate.toISOString()}, fine=${endDate.toISOString()}`);
             
-            // Crea nuove date e aggiungi 1 giorno per correggere l'offset
-            const correctedStartDate = new Date(startDate);
-            correctedStartDate.setDate(correctedStartDate.getDate() + 1);
-            correctedStartDate.setHours(12, 0, 0, 0);
+            // Imposta le ore alle 18:00 (6 PM) per evitare problemi di fuso orario
+            startDate.setHours(18, 0, 0, 0);
+            endDate.setHours(18, 0, 0, 0);
             
-            const correctedEndDate = new Date(endDate);
-            correctedEndDate.setDate(correctedEndDate.getDate() + 1);
-            correctedEndDate.setHours(12, 0, 0, 0);
+            console.log(`Evento con correzione: inizio=${startDate.toISOString()}, fine=${endDate.toISOString()}`);
             
-            console.log(`Evento con correzione: inizio=${correctedStartDate.toISOString()}, fine=${correctedEndDate.toISOString()}`);
-            
-            // Correggi le date di checkin/checkout usando le date corrette
-            let checkInDate = correctedStartDate.toISOString().split('T')[0];
-            let checkOutDate = correctedEndDate.toISOString().split('T')[0];
-              
-            console.log(`Date corrette: check-in=${checkInDate}, check-out=${checkOutDate}`);
+            // Converti le date in formato YYYY-MM-DD
+            let checkInDate = format(startDate, 'yyyy-MM-dd');
+            let checkOutDate = format(endDate, 'yyyy-MM-dd');
             
             // NUOVA LOGICA: distinguere tra prenotazioni e blocchi in base al summary e status
             // come fa Google Calendar

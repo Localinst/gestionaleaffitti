@@ -2,11 +2,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { HashRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import { TutorialProvider } from "@/context/TutorialContext";
-import { TutorialOverlay } from "@/components/tutorial/TutorialOverlay";
+import { TourGuide } from "@/components/tour/TourGuide";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
@@ -54,7 +53,7 @@ const App = () => {
         <Router>
           <AuthProvider>
             <TutorialProvider>
-              <TutorialOverlay />
+              <TourGuide />
               <Routes>
                 {/* Rotte pubbliche */}
                 <Route path="/" element={<LandingPage />} />
