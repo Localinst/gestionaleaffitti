@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Reindirizzamento SPA</title>
+  <script type="text/javascript">
+    // Soluzione corretta per Single Page Application
+    // Reindirizza tutte le richieste a index.html senza parametri speciali
+    var location = window.location;
+    
+    // Redirect semplice alla root con il percorso originale
+    var pathname = location.pathname;
+    
+    // Se siamo già in un percorso reindirizzato (inizia con /?/), non fare nulla
+    if (location.search.indexOf('?/') === 0) {
+      console.log('Già reindirizzato. Non fare nulla.');
+    } else {
+      // Altrimenti, reindirizza alla root
+      var newPath = location.origin + '/';
+      console.log('Reindirizzando a:', newPath);
+      window.location.href = newPath + '#' + pathname.substring(1);
+    }
+  </script>
+</head>
+<body>
+  Reindirizzamento alla homepage...
+</body>
+</html> 

@@ -1,0 +1,50 @@
+{
+  "name": "property-management-backend",
+  "version": "1.0.0",
+  "description": "Backend for property management application",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "node dist/index.js",
+    "dev": "nodemon -e ts --exec \"ts-node --transpileOnly src/index.ts\"",
+    "build": "tsc",
+    "migrate": "node dist/db/migrations/run.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.3",
+    "@types/bcrypt": "^5.0.2",
+    "@types/connect-timeout": "^0.0.39",
+    "@types/cookie-parser": "^1.4.8",
+    "@types/cors": "^2.8.17",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/pg": "^8.11.11",
+    "bcrypt": "^5.1.1",
+    "connect-timeout": "^1.9.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "date-fns": "^3.6.0",
+    "dotenv": "^16.0.3",
+    "exceljs": "^4.4.0",
+    "express": "^4.18.2",
+    "ical-generator": "^8.1.1",
+    "jsonwebtoken": "^9.0.2",
+    "node-cron": "^3.0.3",
+    "node-ical": "^0.20.1",
+    "pdfkit": "^0.14.0",
+    "pdfkit-table": "^0.1.99",
+    "pg": "^8.11.0",
+    "stripe": "^18.0.0",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.17",
+    "@types/node": "^20.2.5",
+    "@types/node-cron": "^3.0.11",
+    "@types/pdfkit": "^0.13.9",
+    "@types/pg": "^8.11.11",
+    "@types/stripe": "^8.0.416",
+    "nodemon": "^2.0.22",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.1.3"
+  }
+}

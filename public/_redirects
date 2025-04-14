@@ -1,0 +1,5 @@
+# Proxy per le chiamate API
+/api/*  https://gestionaleaffitti.onrender.com/api/:splat  200
+
+# SPA fallback
+/*  /index.html  200 

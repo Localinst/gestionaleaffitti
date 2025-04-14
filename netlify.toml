@@ -1,0 +1,15 @@
+[build]
+  publish = "dist"  # La cartella di output del tuo build (cambia se usi una cartella diversa)
+
+# Configurazione proxy per reindirizzare le chiamate API
+[[redirects]]
+  from = "/api/*"
+  to = "https://gestionaleaffitti.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+# Header per le SPA (Single Page Applications)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200 
