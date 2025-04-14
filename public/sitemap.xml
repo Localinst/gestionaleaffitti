@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Pagina principale -->
+  <url>
+    <loc>https://tenoris360.com/</loc>
+    <lastmod>2025-04-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  
+  <!-- Sezione Blog -->
+  <url>
+    <loc>https://tenoris360.com/blog</loc>
+    <lastmod>2025-04-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- Articoli del blog specifici -->
+  <url>
+    <loc>https://tenoris360.com/blog/come-massimizzare-i-rendimenti-dai-tuoi-immobili-in-affitto</loc>
+    <lastmod>2025-03-20</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://tenoris360.com/blog/guida-completa-ai-contratti-di-locazione-in-italia</loc>
+    <lastmod>2025-02-15</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://tenoris360.com/blog/le-migliori-pratiche-per-la-gestione-degli-inquilini</loc>
+    <lastmod>2025-01-18</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <!-- Sezione Guide -->
+  <url>
+    <loc>https://tenoris360.com/guide</loc>
+    <lastmod>2025-04-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- Guide specifiche -->
+  <url>
+    <loc>https://tenoris360.com/guide/ottimizzare-la-gestione-degli-affitti-brevi</loc>
+    <lastmod>2025-03-12</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://tenoris360.com/guide/adempimenti-fiscali-per-proprietari-di-immobili</loc>
+    <lastmod>2025-02-20</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://tenoris360.com/guide/massimizzare-occupazione-affitti-brevi</loc>
+    <lastmod>2025-01-25</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://tenoris360.com/guide/tipologie-contratti-affitto</loc>
+    <lastmod>2025-01-10</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <!-- Pagine informative -->
+  <url>
+    <loc>https://tenoris360.com/supporto</loc>
+    <lastmod>2025-04-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://tenoris360.com/pricing</loc>
+    <lastmod>2025-04-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://tenoris360.com/privacy</loc>
+    <lastmod>2025-03-15</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://tenoris360.com/termini</loc>
+    <lastmod>2025-03-15</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://tenoris360.com/cookie</loc>
+    <lastmod>2025-03-15</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+</urlset> 

@@ -1,14 +1,26 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
+# Configurazione robots.txt per tenoris360.com
 
 User-agent: *
 Allow: /
+
+# Pagine pubbliche accessibili
+Allow: /blog
+Allow: /guide
+Allow: /supporto
+Allow: /privacy
+Allow: /termini
+Allow: /cookie
+Allow: /pricing
+
+# Disabilita accesso alle pagine protette (anche se già protette da autenticazione)
+Disallow: /dashboard
+Disallow: /properties
+Disallow: /tenants
+Disallow: /transactions
+Disallow: /contracts
+Disallow: /reports
+Disallow: /activities
+Disallow: /tourism
+
+# Sitemap
+Sitemap: https://tenoris360.com/sitemap.xml
