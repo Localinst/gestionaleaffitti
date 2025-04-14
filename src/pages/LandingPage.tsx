@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { ArrowRight, BarChart3, Building, Home, KeyRound, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,22 @@ import { LandingNav } from "@/components/layout/LandingNav";
 
 const LandingPage = () => {
   const [activeFeature, setActiveFeature] = useState<number>(0);
+  const featuresRef = useRef<HTMLElement>(null);
+  const testimonialsRef = useRef<HTMLElement>(null);
+  const location = useLocation();
+
+  useEffect(() => {
+    // Gestisce lo scroll alle sezioni quando si accede tramite URL
+    if (location.pathname === "/features") {
+      featuresRef.current?.scrollIntoView({ behavior: "smooth" });
+    } else if (location.pathname === "/testimonials") {
+      testimonialsRef.current?.scrollIntoView({ behavior: "smooth" });
+    } else if (location.hash === "#features") {
+      featuresRef.current?.scrollIntoView({ behavior: "smooth" });
+    } else if (location.hash === "#testimonials") {
+      testimonialsRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [location]);
 
   const features = [
     {
@@ -108,7 +124,7 @@ const LandingPage = () => {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 bg-muted/50">
+      <section id="features" ref={featuresRef} className="py-20 bg-muted/50">
         <div className="container px-4 md:px-6">
           <div className="flex flex-col items-center text-center mb-12">
             <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
@@ -239,6 +255,109 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* Testimonials Section */}
+      <section id="testimonials" ref={testimonialsRef} className="py-20 bg-background">
+        <div className="container px-4 md:px-6">
+          <div className="flex flex-col items-center text-center mb-12">
+            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+              Cosa Dicono i Nostri Clienti
+            </h2>
+            <p className="mt-4 text-muted-foreground text-lg max-w-[800px]">
+              Scopri le esperienze di chi utilizza Tenoris360 per gestire i propri immobili in affitto.
+            </p>
+          </div>
+
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+            <Card className="bg-muted/40">
+              <CardContent className="p-6">
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center gap-2">
+                    <div className="flex text-amber-400">
+                      {[...Array(5)].map((_, i) => (
+                        <svg key={i} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                          <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clipRule="evenodd" />
+                        </svg>
+                      ))}
+                    </div>
+                    <p className="text-sm font-medium">5.0</p>
+                  </div>
+                  <p className="text-foreground italic">
+                    "Tenoris360 ha semplificato enormemente la gestione dei miei 5 appartamenti. Le notifiche automatiche mi aiutano a non dimenticare scadenze importanti."
+                  </p>
+                  <div className="flex items-center gap-3 mt-4">
+                    <div className="rounded-full bg-primary/10 p-1 w-10 h-10 flex items-center justify-center text-primary font-semibold">
+                      ML
+                    </div>
+                    <div>
+                      <p className="font-medium">Marco Lombardi</p>
+                      <p className="text-sm text-muted-foreground">Proprietario, Milano</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-muted/40">
+              <CardContent className="p-6">
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center gap-2">
+                    <div className="flex text-amber-400">
+                      {[...Array(5)].map((_, i) => (
+                        <svg key={i} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                          <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clipRule="evenodd" />
+                        </svg>
+                      ))}
+                    </div>
+                    <p className="text-sm font-medium">5.0</p>
+                  </div>
+                  <p className="text-foreground italic">
+                    "Come agenzia immobiliare, Tenoris360 ci ha permesso di digitalizzare tutti i processi. L'analisi finanziaria è straordinaria e i nostri clienti apprezzano la trasparenza."
+                  </p>
+                  <div className="flex items-center gap-3 mt-4">
+                    <div className="rounded-full bg-primary/10 p-1 w-10 h-10 flex items-center justify-center text-primary font-semibold">
+                      GR
+                    </div>
+                    <div>
+                      <p className="font-medium">Giulia Rossi</p>
+                      <p className="text-sm text-muted-foreground">Immobiliare Aurora, Roma</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-muted/40">
+              <CardContent className="p-6">
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center gap-2">
+                    <div className="flex text-amber-400">
+                      {[...Array(5)].map((_, i) => (
+                        <svg key={i} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                          <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clipRule="evenodd" />
+                        </svg>
+                      ))}
+                    </div>
+                    <p className="text-sm font-medium">5.0</p>
+                  </div>
+                  <p className="text-foreground italic">
+                    "Da quando uso Tenoris360, risparmio almeno 10 ore a settimana. La gestione automatica dei pagamenti è fantastica e il supporto clienti è sempre disponibile."
+                  </p>
+                  <div className="flex items-center gap-3 mt-4">
+                    <div className="rounded-full bg-primary/10 p-1 w-10 h-10 flex items-center justify-center text-primary font-semibold">
+                      AF
+                    </div>
+                    <div>
+                      <p className="font-medium">Antonio Ferrari</p>
+                      <p className="text-sm text-muted-foreground">Property Manager, Napoli</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20 bg-primary text-primary-foreground">
         <div className="container px-4 md:px-6 text-center">
@@ -297,19 +416,19 @@ const LandingPage = () => {
               <h3 className="font-semibold mb-4">Risorse</h3>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                  <Link to="/blog" className="text-muted-foreground hover:text-foreground transition-colors">
                     Blog
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                  <Link to="/guide" className="text-muted-foreground hover:text-foreground transition-colors">
                     Guide
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                  <Link to="/supporto" className="text-muted-foreground hover:text-foreground transition-colors">
                     Supporto
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -317,19 +436,19 @@ const LandingPage = () => {
               <h3 className="font-semibold mb-4">Legale</h3>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                  <Link to="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">
                     Privacy Policy
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                  <Link to="/termini" className="text-muted-foreground hover:text-foreground transition-colors">
                     Termini di Servizio
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                  <Link to="/cookie" className="text-muted-foreground hover:text-foreground transition-colors">
                     Cookie Policy
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>
