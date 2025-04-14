@@ -61,7 +61,9 @@ const allowedOrigins = [
   'http://localhost:8080',
   'http://localhost:8081',
   'https://statuesque-malabi-216764.netlify.app',
-  'https://gestionaleaffitti.netlify.app'
+  'https://gestionaleaffitti.netlify.app',
+  'https://tenoris360.com',
+  'http://tenoris360.com'
 ];
 
 // Aggiungiamo un controllo per verificare se siamo in produzione
@@ -79,7 +81,8 @@ app.use((req, res, next) => {
     !isProduction || 
     allowedOrigins.includes(origin) || 
     origin.includes('netlify.app') || 
-    origin.includes('localhost')
+    origin.includes('localhost') ||
+    origin.includes('tenoris360.com')
   );
   
   if (isAllowed) {
@@ -118,7 +121,12 @@ app.options('*', (req, res) => {
   console.log(`Headers: ${JSON.stringify(req.headers)}`);
 
   // Imposta le intestazioni CORS per la risposta preflight
-  if (origin && allowedOrigins.includes(origin)) {
+  if (origin && (
+    allowedOrigins.includes(origin) || 
+    origin.includes('netlify.app') || 
+    origin.includes('localhost') ||
+    origin.includes('tenoris360.com')
+  )) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
