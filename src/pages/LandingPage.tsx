@@ -38,8 +38,8 @@ const LandingPage = () => {
       <header className="bg-background border-b border-border sticky top-0 z-10">
         <div className="container flex items-center justify-between h-16 px-4 md:px-6">
           <div className="flex items-center gap-2">
-            <Home className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold">Gestionale Affitti</span>
+            <img src="/simbolologo.png" alt="Tenoris360 Logo" className="h-8 w-auto" />
+            <span className="text-xl font-bold">Tenoris360</span>
           </div>
           <nav className="hidden md:flex items-center gap-6">
             <a href="#features" className="text-sm font-medium hover:text-primary transition-colors">
@@ -67,33 +67,33 @@ const LandingPage = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="relative py-20 lg:py-32 overflow-hidden">
+      <section className="relative py-24 lg:py-36 overflow-hidden bg-gradient-to-b from-background to-muted/30">
         <div className="container px-4 md:px-6">
-          <div className="grid gap-6 lg:grid-cols-2 lg:gap-12 items-center">
+          <div className="grid gap-8 lg:grid-cols-2 lg:gap-16 items-center">
             <div className="flex flex-col gap-4">
               <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
-                Semplifica la gestione dei tuoi affitti
+                Semplifica la gestione dei tuoi affitti con Tenoris360
               </h1>
               <p className="text-muted-foreground text-lg md:text-xl">
                 La piattaforma completa per proprietari e amministratori immobiliari che desiderano 
                 gestire contratti, inquilini e pagamenti in modo efficiente.
               </p>
-              <div className="flex flex-col sm:flex-row gap-3 mt-6">
+              <div className="flex flex-col sm:flex-row gap-4 mt-8">
                 <Link to="/register">
-                  <Button size="lg" className="gap-2">
+                  <Button size="lg" className="gap-2 w-full sm:w-auto">
                     Inizia Gratuitamente
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
                 <a href="#features">
-                  <Button size="lg" variant="outline">
+                  <Button size="lg" variant="outline" className="w-full sm:w-auto mt-3 sm:mt-0">
                     Scopri di più
                   </Button>
                 </a>
               </div>
             </div>
             <div className="relative lg:ml-auto">
-              <div className="relative w-full aspect-video overflow-hidden rounded-lg shadow-xl">
+              <div className="relative w-full aspect-video overflow-hidden rounded-xl shadow-2xl border border-primary/10">
                 <div className="glass-card hover-scale animate-fade-in w-full h-full flex items-center justify-center">
                   <img 
                     src="/dashboard.png" 
@@ -108,7 +108,7 @@ const LandingPage = () => {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-16 bg-muted/50">
+      <section id="features" className="py-20 bg-muted/50">
         <div className="container px-4 md:px-6">
           <div className="flex flex-col items-center text-center mb-12">
             <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
@@ -240,20 +240,20 @@ const LandingPage = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-primary text-primary-foreground">
+      <section className="py-20 bg-primary text-primary-foreground">
         <div className="container px-4 md:px-6 text-center">
-          <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">
+          <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
             Pronto a semplificare la gestione dei tuoi affitti?
           </h2>
-          <p className="mt-4 text-primary-foreground/90 text-lg max-w-[800px] mx-auto">
+          <p className="mt-6 text-primary-foreground/90 text-lg max-w-[700px] mx-auto">
             Registrati oggi e scopri come il nostro gestionale può aiutarti 
             a risparmiare tempo e aumentare la redditività dei tuoi investimenti.
           </p>
-          <div className="mt-8">
+          <div className="mt-10">
             <Link to="/register">
-              <Button size="lg" variant="secondary" className="gap-2">
+              <Button size="lg" variant="secondary" className="gap-2 px-8 py-6 text-lg">
                 Inizia Gratuitamente
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight className="h-5 w-5" />
               </Button>
             </Link>
           </div>
@@ -266,8 +266,8 @@ const LandingPage = () => {
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <Home className="h-5 w-5 text-primary" />
-                <span className="font-bold">Gestionale Affitti</span>
+                <img src="/simbolologo.png" alt="Tenoris360 Logo" className="h-5 w-auto" />
+                <span className="font-bold">Tenoris360</span>
               </div>
               <p className="text-muted-foreground text-sm">
                 La soluzione completa per la gestione degli affitti e delle proprietà immobiliari.
@@ -335,7 +335,7 @@ const LandingPage = () => {
             </div>
           </div>
           <div className="mt-12 pt-8 border-t border-border text-center text-sm text-muted-foreground">
-            <p>© {new Date().getFullYear()} Gestionale Affitti. Tutti i diritti riservati.</p>
+            <p>© {new Date().getFullYear()} Tenoris360. Tutti i diritti riservati.</p>
           </div>
         </div>
       </footer>

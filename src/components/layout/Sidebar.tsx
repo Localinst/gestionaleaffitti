@@ -134,7 +134,14 @@ export function Sidebar() {
       )}>
         {/* Sidebar header */}
         <div className="border-b p-4">
-          <h2 className="text-xl font-semibold">Gestionale Affitti</h2>
+          <div className="flex items-center mb-2">
+            <img 
+              src="/simbolologo.png" 
+              alt="tenoris360 Logo" 
+              className="h-8 mr-2" 
+            />
+            <h2 className="text-xl font-semibold">tenoris360</h2>
+          </div>
           {user && (
             <p className="text-sm text-muted-foreground mt-1">
               Ciao, {user.name}

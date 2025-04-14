@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -52,7 +51,7 @@ export default function Login() {
       // Simulate login success
       toast({
         title: "Accesso effettuato",
-        description: "Benvenuto nel gestionale affitti",
+        description: "Benvenuto in tenoris360",
       });
       
       navigate("/");
@@ -70,7 +69,10 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold">Gestionale Affitti</h1>
+          <div className="flex items-center justify-center mb-2">
+            <img src="/simbolologo.png" alt="tenoris360 Logo" className="h-12 w-auto" />
+          </div>
+          <h1 className="text-3xl font-bold">tenoris360</h1>
           <p className="text-muted-foreground mt-2">
             Accedi al tuo account per continuare
           </p>
