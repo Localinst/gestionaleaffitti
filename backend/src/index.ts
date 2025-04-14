@@ -158,6 +158,7 @@ app.get('/api/cors-test', (req, res) => {
 
 // Rotte pubbliche
 app.use('/api/auth', authRouter);
+app.use('/api/payments', paymentsRouter);
 
 // Rotte protette
 app.use('/api/properties', authenticate, propertiesRouter);
@@ -169,7 +170,6 @@ app.use('/api/contracts', authenticate, contractsRouter);
 app.use('/api/activities', authenticate, activitiesRouter);
 app.use('/api/tourism', authenticate, tourismRouter);
 app.use('/api/integrations', authenticate, integrationsRouter);
-app.use('/api/payments', authenticate, paymentsRouter);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
