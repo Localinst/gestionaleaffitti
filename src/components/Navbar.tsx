@@ -31,7 +31,7 @@ const Navbar = () => {
             to="/pricing"
             className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
-            Prezzi
+            Servizio Gratuito
           </Link>
           <Link
             to="/blog"
@@ -117,7 +117,7 @@ const Navbar = () => {
               className="text-base font-medium text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
-              Prezzi
+              Servizio Gratuito
             </Link>
             <Link
               to="/blog"

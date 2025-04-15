@@ -113,4 +113,13 @@ export const generateToken = (userId: string, email: string, name: string): stri
     throw new Error('JWT_SECRET non è definito nelle variabili d\'ambiente');
   }
   return jwt.sign({ id: userId, email, name }, JWT_SECRET, { expiresIn: '1d' });
+};
+
+/**
+ * Middleware per verificare lo stato dell'abbonamento dell'utente
+ * Ora restituisce sempre true per rendere il servizio gratuito per tutti
+ */
+export const isSubscribed = (req: Request, res: Response, next: NextFunction) => {
+  // Ora tutti gli utenti sono considerati abbonati, quindi passiamo sempre al next middleware
+  next();
 }; 

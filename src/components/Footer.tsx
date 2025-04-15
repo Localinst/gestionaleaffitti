@@ -25,7 +25,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Piani e Prezzi
+                  Servizio Gratuito
                 </Link>
               </li>
               <li>

@@ -62,7 +62,7 @@ const LandingPage = () => {
               Funzionalità
             </a>
             <Link to="/pricing" className="text-sm font-medium hover:text-primary transition-colors">
-              Piani
+              Gratis
             </Link>
             <a href="#testimonials" className="text-sm font-medium hover:text-primary transition-colors">
               Testimonianze
@@ -76,7 +76,7 @@ const LandingPage = () => {
               <Button size="sm">Registrati</Button>
             </Link>
             <Link to="/pricing">
-              <Button variant="outline" size="sm">Abbonamenti</Button>
+              <Button variant="outline" size="sm">Servizio Gratuito</Button>
             </Link>
           </div>
         </div>
@@ -402,7 +402,7 @@ const LandingPage = () => {
                 </li>
                 <li>
                   <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
-                    Piani e Prezzi
+                    Servizio Gratuito
                   </Link>
                 </li>
                 <li>

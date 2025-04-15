@@ -6,6 +6,7 @@ import { HashRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import { TutorialProvider } from "@/context/TutorialContext";
 import { CookieConsentProvider } from "@/context/CookieConsentContext";
+import { SubscriptionProvider } from './context/SubscriptionContext';
 import { TourGuide } from "@/components/tour/TourGuide";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import CookieConsent from "@/components/CookieConsent";
@@ -65,85 +66,87 @@ const App = () => {
           <AuthProvider>
             <TutorialProvider>
               <CookieConsentProvider>
-                <AnalyticsWrapper>
-                  <TourGuide />
-                  <CookieConsent />
-                  <Routes>
-                    {/* Rotte pubbliche */}
-                    <Route path="/" element={<LandingPage />} />
-                    <Route path="/login" element={<LoginPage />} />
-                    <Route path="/register" element={<RegisterPage />} />
-                    <Route path="/pricing" element={<Pricing />} />
-                    <Route path="/abbonamento-confermato" element={<AbbonamentoConfermato />} />
-                    
-                    {/* Nuove pagine landing */}
-                    <Route path="/blog" element={<BlogPage />} />
-                    <Route path="/blog/:slug" element={<BlogDetail />} />
-                    <Route path="/guide" element={<Guides />} />
-                    <Route path="/guide/:slug" element={<GuideDetail />} />
-                    <Route path="/supporto" element={<SupportoPage />} />
-                    <Route path="/privacy" element={<PrivacyPolicy />} />
-                    <Route path="/termini" element={<TerminiServizio />} />
-                    <Route path="/cookie" element={<CookiePolicy />} />
-                    <Route path="/features" element={<LandingPage />} />
-                    <Route path="/testimonials" element={<LandingPage />} />
-                    
-                    {/* Rotte protette */}
-                    <Route path="/dashboard" element={
-                      <ProtectedRoute>
-                        <DashboardPage />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/properties" element={
-                      <ProtectedRoute>
-                        <PropertiesPage />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/tenants" element={
-                      <ProtectedRoute>
-                        <TenantsPage />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/transactions" element={
-                      <ProtectedRoute>
-                        <TransactionsPage />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/contracts" element={
-                      <ProtectedRoute>
-                        <ContractsPage />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/reports" element={
-                      <ProtectedRoute>
-                        <ReportPage />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/activities" element={
-                      <ProtectedRoute>
-                        <ActivitiesPage />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/tourism/bookings" element={
-                      <ProtectedRoute>
-                        <BookingsPage />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/tourism/property/:propertyId" element={
-                      <ProtectedRoute>
-                        <PropertyDetails />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/tourism/properties" element={
-                      <ProtectedRoute>
-                        <TourismPropertiesPage />
-                      </ProtectedRoute>
-                    } />
-                    
-                    {/* Pagina non trovata */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </AnalyticsWrapper>
+                <SubscriptionProvider>
+                  <AnalyticsWrapper>
+                    <TourGuide />
+                    <CookieConsent />
+                    <Routes>
+                      {/* Rotte pubbliche */}
+                      <Route path="/" element={<LandingPage />} />
+                      <Route path="/login" element={<LoginPage />} />
+                      <Route path="/register" element={<RegisterPage />} />
+                      <Route path="/pricing" element={<Pricing />} />
+                      <Route path="/abbonamento-confermato" element={<AbbonamentoConfermato />} />
+                      
+                      {/* Nuove pagine landing */}
+                      <Route path="/blog" element={<BlogPage />} />
+                      <Route path="/blog/:slug" element={<BlogDetail />} />
+                      <Route path="/guide" element={<Guides />} />
+                      <Route path="/guide/:slug" element={<GuideDetail />} />
+                      <Route path="/supporto" element={<SupportoPage />} />
+                      <Route path="/privacy" element={<PrivacyPolicy />} />
+                      <Route path="/termini" element={<TerminiServizio />} />
+                      <Route path="/cookie" element={<CookiePolicy />} />
+                      <Route path="/features" element={<LandingPage />} />
+                      <Route path="/testimonials" element={<LandingPage />} />
+                      
+                      {/* Rotte protette */}
+                      <Route path="/dashboard" element={
+                        <ProtectedRoute>
+                          <DashboardPage />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/properties" element={
+                        <ProtectedRoute>
+                          <PropertiesPage />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/tenants" element={
+                        <ProtectedRoute>
+                          <TenantsPage />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/transactions" element={
+                        <ProtectedRoute>
+                          <TransactionsPage />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/contracts" element={
+                        <ProtectedRoute>
+                          <ContractsPage />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/reports" element={
+                        <ProtectedRoute>
+                          <ReportPage />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/activities" element={
+                        <ProtectedRoute>
+                          <ActivitiesPage />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/tourism/bookings" element={
+                        <ProtectedRoute>
+                          <BookingsPage />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/tourism/property/:propertyId" element={
+                        <ProtectedRoute>
+                          <PropertyDetails />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/tourism/properties" element={
+                        <ProtectedRoute>
+                          <TourismPropertiesPage />
+                        </ProtectedRoute>
+                      } />
+                      
+                      {/* Pagina non trovata */}
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </AnalyticsWrapper>
+                </SubscriptionProvider>
               </CookieConsentProvider>
             </TutorialProvider>
           </AuthProvider>
