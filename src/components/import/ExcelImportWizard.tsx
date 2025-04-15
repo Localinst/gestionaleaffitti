@@ -461,10 +461,15 @@ export function ExcelImportWizard() {
                 <Input 
                   id="fileInput" 
                   type="file" 
-                  accept=".xlsx, .csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, text/csv" 
+                  // Tentativo con solo MIME types principali
+                  accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, text/csv" 
                   onChange={handleFileChange} 
                  />
                 <p className="text-xs text-muted-foreground mt-1">La prima riga del file deve contenere le intestazioni delle colonne.</p>
+                {/* Aggiunta nota per l'utente mobile */}
+                <p className="text-xs text-blue-600 mt-1 md:hidden"> 
+                  (Se vedi "Fotocamera" o simili, cerca l'opzione "File" o "Sfoglia" per trovare il tuo documento.)
+                </p>
               </div>
             </div>
           )}
