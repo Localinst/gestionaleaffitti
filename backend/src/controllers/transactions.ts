@@ -131,11 +131,23 @@ export const createTransaction = async (req: AuthRequest, res: Response) => {
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error('Errore nella creazione della transazione:', error);
-    // Controlla se l'errore è dovuto a una violazione di chiave esterna (improbabile ora)
-    if (error.code === '23503') {
+    let errorMessage = 'Errore sconosciuto nella creazione della transazione';
+    let errorCode: string | undefined;
+
+    // Verifica se è un errore standard
+    if (error instanceof Error) {
+      errorMessage = error.message;
+      // Verifica se ha una proprietà 'code'
+       if (typeof error === 'object' && error !== null && 'code' in error) {
+         errorCode = (error as any).code; 
+      }
+    }
+    
+    // Controlla se l'errore è dovuto a una violazione di chiave esterna
+    if (errorCode === '23503') { // Usiamo la variabile verificata
          return res.status(400).json({ error: 'ID Proprietà o Inquilino non valido.' });
     }
-    res.status(500).json({ error: 'Errore nella creazione della transazione', details: error.message });
+    res.status(500).json({ error: 'Errore nella creazione della transazione', details: errorMessage });
   }
 };
 
@@ -202,10 +214,22 @@ export const updateTransaction = async (req: AuthRequest, res: Response) => {
     res.json(result.rows[0]);
   } catch (error) {
     console.error("Errore nell'aggiornamento della transazione:", error);
-     if (error.code === '23503') {
+    let errorMessage = "Errore sconosciuto nell'aggiornamento della transazione";
+    let errorCode: string | undefined;
+
+    // Verifica se è un errore standard
+    if (error instanceof Error) {
+      errorMessage = error.message;
+      // Verifica se ha una proprietà 'code'
+       if (typeof error === 'object' && error !== null && 'code' in error) {
+         errorCode = (error as any).code; 
+      }
+    }
+
+     if (errorCode === '23503') { // Usiamo la variabile verificata
       return res.status(400).json({ error: "ID Proprietà o Inquilino fornito non valido." });
     }
-    res.status(500).json({ error: "Errore nell'aggiornamento della transazione", details: error.message });
+    res.status(500).json({ error: "Errore nell'aggiornamento della transazione", details: errorMessage });
   }
 };
 

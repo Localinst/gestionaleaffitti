@@ -77,7 +77,12 @@ export const getAllContracts = async (req: AuthRequest, res: Response) => {
     res.json(result.rows);
   } catch (error) {
     console.error('Errore nel recupero dei contratti:', error);
-    res.status(500).json({ error: 'Error retrieving contracts', message: error.message });
+    // Type checking per l'errore
+    let errorMessage = 'Errore sconosciuto nel recupero dei contratti';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    res.status(500).json({ error: 'Error retrieving contracts', message: errorMessage });
   }
 };
 
