@@ -1,6 +1,8 @@
 import { Pool, PoolConfig } from 'pg';
 import dotenv from 'dotenv';
 import dns from 'dns';
+import * as net from 'net';
+import { promisify } from 'util';
 
 // Forza Node.js a utilizzare esclusivamente IPv4
 process.env.NODE_OPTIONS = '--dns-result-order=ipv4first';
@@ -85,6 +87,63 @@ console.log('Project ID individuato:', PROJECT_ID);
 const TRANSACTION_POOLER_HOST = `aws-0-eu-central-1.pooler.supabase.com`;
 const TRANSACTION_POOLER_PORT = 6543;
 
+// Funzione per testare la connettività di rete verso l'host del Transaction Pooler
+async function testNetworkConnectivity(host: string, port: number): Promise<boolean> {
+  console.log(`Test di connettività di rete verso ${host}:${port}...`);
+  
+  // Test 1: Risoluzione DNS
+  try {
+    const lookup = promisify(dns.lookup);
+    const result = await lookup(host);
+    console.log(`Risoluzione DNS di ${host}: ${result.address} (${result.family === 4 ? 'IPv4' : 'IPv6'})`);
+  } catch (error) {
+    console.error(`Errore nella risoluzione DNS di ${host}:`, error);
+    return false;
+  }
+  
+  // Test 2: Connessione TCP
+  return new Promise((resolve) => {
+    const socket = new net.Socket();
+    let isConnected = false;
+    
+    // Timeout dopo 5 secondi
+    socket.setTimeout(5000);
+    
+    socket.on('connect', () => {
+      console.log(`✓ Connessione TCP a ${host}:${port} riuscita!`);
+      isConnected = true;
+      socket.end();
+      resolve(true);
+    });
+    
+    socket.on('timeout', () => {
+      console.error(`✗ Timeout nella connessione a ${host}:${port}`);
+      socket.destroy();
+      resolve(false);
+    });
+    
+    socket.on('error', (err) => {
+      console.error(`✗ Errore nella connessione TCP a ${host}:${port}:`, err);
+      resolve(false);
+    });
+    
+    socket.on('close', () => {
+      if (!isConnected) {
+        console.error(`✗ Connessione a ${host}:${port} chiusa senza successo`);
+        resolve(false);
+      }
+    });
+    
+    // Tenta la connessione
+    try {
+      socket.connect(port, host);
+    } catch (err) {
+      console.error(`✗ Errore nell'avvio della connessione a ${host}:${port}:`, err);
+      resolve(false);
+    }
+  });
+}
+
 // PRIMA TENTATIVO: Configurazione Transaction Pooler
 async function setupTransactionPooler() {
   console.log('Tentativo di connessione tramite Transaction Pooler...');
@@ -105,10 +164,12 @@ async function setupTransactionPooler() {
         // Codifica la password per URL
         const encodedPassword = encodeURIComponent(password);
         connectionString = `${protocol}://${username}:${encodedPassword}@${host}:${port}/${database}`;
-        console.log('POOLER_URL con password codificata');
+        console.log('POOLER_URL con password codificata.');
+        console.log(`Host: ${host}, Port: ${port}, Username: ${username}, Database: ${database}`);
       } else {
         connectionString = poolerUrl;
         console.log('Formato POOLER_URL non riconosciuto, uso originale');
+        console.log('URL Transaction Pooler: ' + poolerUrl.replace(/:[^:@]+@/, ':****@'));
       }
     } catch (error) {
       console.error('Errore nella codifica della password di POOLER_URL:', error);
@@ -126,6 +187,19 @@ async function setupTransactionPooler() {
       console.log('Stringa di connessione del pooler creata');
     }
   }
+  
+  // Test connettività di rete prima di tentare la connessione al database
+  const isReachable = await testNetworkConnectivity(TRANSACTION_POOLER_HOST, TRANSACTION_POOLER_PORT);
+  if (!isReachable) {
+    console.error(`✗ Host del Transaction Pooler (${TRANSACTION_POOLER_HOST}:${TRANSACTION_POOLER_PORT}) non raggiungibile dalla rete corrente`);
+    console.error('Questo potrebbe essere dovuto a:');
+    console.error('1. Problemi di rete o firewall');
+    console.error('2. Restrizioni di rete sul servizio hosting (Render, ecc.)');
+    console.error('3. Il servizio Supabase Transaction Pooler non è disponibile');
+    return null;
+  }
+  
+  console.log(`✓ Host del Transaction Pooler (${TRANSACTION_POOLER_HOST}:${TRANSACTION_POOLER_PORT}) raggiungibile dalla rete`);
   
   // Configura il pool usando la stringa di connessione del pooler
   const poolerConfig = {
@@ -167,6 +241,7 @@ async function setupTransactionPooler() {
     return poolerPool;
   } catch (err) {
     console.error('✗ Errore nella connessione al Transaction Pooler:', err);
+    console.error('Dettagli completi dell\'errore:', JSON.stringify(err, null, 2));
     
     // Chiudi il pool per evitare memory leak
     poolerPool.end();
@@ -176,6 +251,8 @@ async function setupTransactionPooler() {
     console.log('1. La password nel pooler URL è errata');
     console.log('2. Il progetto Supabase non ha il Transaction Pooler abilitato');
     console.log('3. Le credenziali non hanno accesso al Transaction Pooler');
+    console.log('4. Il servizio Supabase Pooler non è raggiungibile dalla rete corrente');
+    console.log('5. Errore nella risoluzione DNS del dominio del pooler');
     
     // Prova con la connessione diretta
     return null;
@@ -197,30 +274,24 @@ async function getDbPool() {
   console.log('Utilizzo esclusivo del Transaction Pooler (compatibile con IPv4)...');
   let pool = await setupTransactionPooler();
   
-  // Se il Transaction Pooler fallisce, restituiamo un pool dummy che genererà errori all'uso
+  // Se il Transaction Pooler fallisce, restituiamo un pool che genererà errori chiari all'uso
   if (!pool) {
     console.error('CRITICO: Connessione al Transaction Pooler fallita!');
     
-    // Crea un pool dummy che lancerà errori quando utilizzato
-    pool = new Pool({
-      host: 'localhost',
-      port: 5432,
-      user: 'postgres',
-      password: 'postgres',
-      database: 'postgres'
-    });
-    
-    // Sovrascrivi il metodo connect per mostrare un errore chiaro
-    const originalConnect = pool.connect.bind(pool);
-    pool.connect = function() {
-      console.error('ERRORE: Tentativo di connessione al database fallito. Database non configurato correttamente.');
-      return originalConnect().then(() => {
-        throw new Error('Connessione riuscita ma non dovrebbe essere possibile.');
-      }).catch((err: Error) => {
-        console.error('Dettagli errore di connessione:', err);
-        throw new Error('Database non disponibile. Verificare la configurazione.');
-      });
+    // Crea un pool che non tenterà di connettersi a localhost ma genererà errori chiari
+    const mockPool = {
+      connect: () => Promise.reject(new Error('Database non disponibile. Connessione al Transaction Pooler fallita.')),
+      query: () => Promise.reject(new Error('Database non disponibile. Connessione al Transaction Pooler fallita.')),
+      end: () => Promise.resolve(),
+      on: () => {},
+      // Altre proprietà necessarie per compatibilità
+      totalCount: 0,
+      idleCount: 0,
+      waitingCount: 0
     };
+    
+    // Crea un oggetto che implementa l'interfaccia Pool ma non si connette realmente
+    return mockPool as unknown as Pool;
   }
   
   // Gestione degli errori di connessione
