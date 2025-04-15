@@ -191,95 +191,15 @@ const constructPoolerUrl = (): string => {
   return `postgresql://${username}:${encodeURIComponent(password)}@${TRANSACTION_POOLER_HOST}:${TRANSACTION_POOLER_PORT}/${database}`;
 };
 
-// SECONDO TENTATIVO: Configurazione connessione diretta
-async function setupDirectConnection() {
-  console.log('Tentativo di connessione diretta al database...');
-  
-  // Forzare esplicitamente l'uso di IPv4
-  try {
-    // Risolvi manualmente l'host in un indirizzo IPv4
-    const host = process.env.DB_HOST || 'db.fdufcrgckojbaghdvhgj.supabase.co';
-    console.log(`Tentativo di risolvere ${host} in indirizzo IPv4...`);
-    
-    // Forza l'ambiente a usare IPv4 per questa connessione
-    process.env.NODE_OPTIONS = '--dns-result-order=ipv4first';
-  } catch (err) {
-    console.error('Errore durante la risoluzione IPv4:', err);
-  }
-  
-  // Configurazione per connessione diretta
-  let directConfig: PoolConfig;
-  
-  if (process.env.DATABASE_URL) {
-    // Usa la stringa di connessione fornita
-    const safeConnectionString = createSafeConnectionString(process.env.DATABASE_URL);
-    directConfig = {
-      connectionString: safeConnectionString,
-      // Forza l'uso di IPv4 a livello di socket
-      family: 4,
-      // Aggiungi opzioni extra TCP per forzare IPv4
-      ssl: { rejectUnauthorized: false }
-    };
-  } else {
-    // Usa i parametri individuali
-    directConfig = {
-      user: process.env.DB_USER || 'postgres',
-      host: process.env.DB_HOST || 'db.fdufcrgckojbaghdvhgj.supabase.co',
-      database: process.env.DB_NAME || 'postgres',
-      password: process.env.DB_PASSWORD,
-      port: parseInt(process.env.DB_PORT || '5432'),
-      // Forza l'uso di IPv4 a livello di socket
-      family: 4,
-      // Aggiungi opzioni extra TCP per forzare IPv4
-      ssl: { rejectUnauthorized: false }
-    };
-  }
-  
-  console.log('Configurazione connessione diretta:', {
-    connectionString: directConfig.connectionString ? 'impostato' : 'non impostato',
-    host: directConfig.host || 'da connection string'
-  });
-  
-  const directPool = new Pool(directConfig);
-      
-      try {
-        const client = await directPool.connect();
-    console.log('✓ Connessione diretta al database riuscita!');
-        const result = await client.query('SELECT version()');
-        console.log('Versione database:', result.rows[0].version);
-        client.release();
-    return directPool;
-  } catch (err) {
-    console.error('✗ Anche la connessione diretta fallita:', err);
-    
-    // Chiudi il pool per evitare memory leak
-    directPool.end();
-    
-    // Non è possibile connettersi in nessun modo
-    console.error('Non è possibile connettersi al database Supabase. Verifica:');
-    console.error('1. Le credenziali sono corrette');
-    console.error('2. La rete supporta il tipo di connessione (IPv4/IPv6)');
-    console.error('3. Il database è attivo e raggiungibile');
-    
-    return null;
-  }
-}
-
 // Funzione principale per ottenere una connessione valida
 async function getDbPool() {
-  // Dato che il database accetta solo IPv4, proviamo prima con il Transaction Pooler
-  console.log('Priorità al Transaction Pooler (compatibile con IPv4)...');
+  // Utilizziamo solo il Transaction Pooler
+  console.log('Utilizzo esclusivo del Transaction Pooler (compatibile con IPv4)...');
   let pool = await setupTransactionPooler();
   
-  // Se il Transaction Pooler fallisce, solo allora proviamo la connessione diretta
+  // Se il Transaction Pooler fallisce, restituiamo un pool dummy che genererà errori all'uso
   if (!pool) {
-    console.log('Transaction Pooler fallito, tentativo con connessione diretta...');
-    pool = await setupDirectConnection();
-  }
-  
-  // Se entrambi falliscono, restituisci un pool dummy che genererà errori all'uso
-  if (!pool) {
-    console.error('CRITICO: Tutte le connessioni al database sono fallite!');
+    console.error('CRITICO: Connessione al Transaction Pooler fallita!');
     
     // Crea un pool dummy che lancerà errori quando utilizzato
     pool = new Pool({
