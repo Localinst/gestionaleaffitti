@@ -43,58 +43,91 @@ export function ExcelImportWizard() {
   const [expenseLabel, setExpenseLabel] = useState('Uscite'); // Valore predefinito
   const [isImporting, setIsImporting] = useState(false); // Stato per indicare l'importazione
 
-  // Carica il file Excel e leggi le intestazioni
+  // Carica il file Excel/CSV e leggi le intestazioni
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
     if (!fileList || fileList.length === 0) return;
     
     const selectedFile = fileList[0];
+    const fileExtension = selectedFile.name.split('.').pop()?.toLowerCase();
     setFile(selectedFile);
     
     try {
       const workbook = new ExcelJS.Workbook();
-      await workbook.xlsx.load(await selectedFile.arrayBuffer());
-      
-      const worksheet = workbook.worksheets[0];
+      let worksheet: ExcelJS.Worksheet;
+
+      // ---> LOGICA PER TIPO FILE <---
+      if (fileExtension === 'xlsx') {
+         console.log("Rilevato file .xlsx, uso xlsx.load()");
+         await workbook.xlsx.load(await selectedFile.arrayBuffer());
+         worksheet = workbook.worksheets[0];
+      } else if (fileExtension === 'csv') {
+         console.log("Rilevato file .csv, uso csv.read()");
+         // Per CSV, leggiamo come testo e usiamo csv.read
+         // Potrebbe essere necessario specificare opzioni di parsing (delimitatore, encoding) se diverse dallo standard
+         worksheet = await workbook.csv.read(selectedFile.stream()); // Usiamo lo stream
+      } else {
+         toast.error("Formato file non supportato. Usa .xlsx o .csv");
+         return;
+      }
+      // ---> FINE LOGICA PER TIPO FILE <---
+
+      // Verifica se il worksheet è stato caricato
+      if (!worksheet) {
+        toast.error("Impossibile leggere il contenuto del file.");
+        return;
+      }
+
       const headerRow = worksheet.getRow(1);
-      
       const columnHeaders: string[] = [];
-      headerRow.eachCell((cell) => {
+      // La lettura degli header potrebbe variare leggermente tra xlsx e csv
+      headerRow.eachCell({ includeEmpty: false }, (cell) => { // includeEmpty: false potrebbe aiutare
         const value = cell.value?.toString()?.trim();
         if (value) {
           columnHeaders.push(value);
         }
       });
       
+      console.log("Intestazioni lette dal file:", columnHeaders);
+      if (columnHeaders.length === 0) {
+         toast.warning("Nessuna intestazione trovata nella prima riga del file. Assicurati che la prima riga contenga i nomi delle colonne.");
+         // Non resettare tutto, ma magari non passare allo step 2?
+         // return; 
+      }
       setHeaders(columnHeaders);
       
       // Carica mappature salvate se esistono
       const savedMapping = savedMappings[entityType];
       setMappings(savedMapping || {}); // Resetta se non c'è mappatura salvata per il nuovo tipo
       
-      // Genera anteprima dei dati
+      // Genera anteprima dei dati (limitata per CSV potenzialmente grandi)
       const previewData: any[] = [];
-      for (let i = 2; i <= Math.min(5, worksheet.rowCount); i++) {
-        const row = worksheet.getRow(i);
-        const rowData: Record<string, any> = {};
-        
-        columnHeaders.forEach((header, index) => {
-          const value = row.getCell(index + 1).value;
-          if (value !== null && value !== undefined) {
-            rowData[header] = formatPreviewValue(value); // Usa funzione per formattare anteprima
-          }
-        });
-        
-        previewData.push(rowData);
-      }
-      
+      // Usiamo un ciclo sicuro che non si blocchi se worksheet.rowCount non è affidabile (CSV)
+      let rowCount = 0;
+      worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+        if (rowNumber > 1 && rowCount < 5) { // Salta header, max 5 righe preview
+          const rowData: Record<string, any> = {};
+          columnHeaders.forEach((header, index) => {
+             // Per CSV l'indice potrebbe non essere +1, ma basato su header
+             // Usiamo l'indice trovato in headers
+             const cell = row.getCell(index + 1); // Tentativo, potrebbe variare per CSV
+             const value = cell?.value; // Accedi in modo sicuro
+            if (value !== null && value !== undefined) {
+              rowData[header] = formatPreviewValue(value);
+            }
+          });
+          previewData.push(rowData);
+          rowCount++;
+        }
+      });
+      console.log("Anteprima generata:", previewData);
       setPreview(previewData);
-      setValidationErrors([]); // Resetta errori
+      setValidationErrors([]);
       setStep(2);
+
     } catch (error) {
-      toast.error("Errore nella lettura del file Excel");
-      console.error(error);
-      // Resetta stato in caso di errore
+      toast.error(`Errore nella lettura del file ${fileExtension?.toUpperCase()}`);
+      console.error(`Errore lettura ${fileExtension}:`, error);
       setFile(null);
       setHeaders([]);
       setMappings({});
@@ -212,37 +245,58 @@ export function ExcelImportWizard() {
   // Importa i dati mappati
   const importData = async () => {
     if (!file || !validateMapping()) return;
-    setIsImporting(true); // Inizia importazione
+    setIsImporting(true); 
+    
+    const fileExtension = file.name.split('.').pop()?.toLowerCase();
 
     try {
       const workbook = new ExcelJS.Workbook();
-      await workbook.xlsx.load(await file.arrayBuffer());
-      const worksheet = workbook.worksheets[0];
-      
-      let rawData: any[] = []; // Dati letti dal file
+      let worksheet: ExcelJS.Worksheet;
 
+      // ---> LOGICA PER TIPO FILE <---
+      if (fileExtension === 'xlsx') {
+         await workbook.xlsx.load(await file.arrayBuffer());
+         worksheet = workbook.worksheets[0];
+      } else if (fileExtension === 'csv') {
+         worksheet = await workbook.csv.read(file.stream());
+      } else {
+         toast.error("Formato file non supportato.");
+         setIsImporting(false);
+         return;
+      }
+      // ---> FINE LOGICA PER TIPO FILE <---
+
+      if (!worksheet) {
+        toast.error("Impossibile leggere il contenuto del file per l'importazione.");
+        setIsImporting(false);
+        return;
+      }
+      
+      let rawData: any[] = []; 
+      
       worksheet.eachRow((row, rowNumber) => {
         if (rowNumber === 1) return; // Salta intestazione
         
         const rowData: Record<string, any> = {};
-        let hasValue = false; // Flag per righe vuote
+        let hasValue = false; 
         headers.forEach((header, index) => {
           const mappedField = mappings[header] || 'none';
           if (mappedField && mappedField !== 'none') {
-            // Prendiamo il valore grezzo qui per la normalizzazione successiva
-            const value = row.getCell(index + 1).value;
-            rowData[mappedField] = value; // Manteniamo il tipo originale per ora
+            const cell = row.getCell(index + 1); // Tentativo, potrebbe variare per CSV
+            const value = cell?.value;
+            rowData[mappedField] = value; 
             if (value !== null && value !== undefined && value.toString().trim() !== '') {
               hasValue = true;
             }
           }
         });
 
-        // Aggiungi solo se la riga non è completamente vuota (in base ai campi mappati)
         if (hasValue) {
           rawData.push(rowData);
         }
       });
+
+      console.log("Dati GREZZI letti dal file (prima di trasformazioni/normalizzazioni):", rawData);
 
       let dataToImport = rawData;
 
@@ -294,10 +348,10 @@ export function ExcelImportWizard() {
         }
       }
     } catch (error) {
-      toast.error("Errore durante la lettura del file Excel per l'importazione");
-      console.error(error);
+      toast.error(`Errore durante la lettura del file ${fileExtension?.toUpperCase()} per l'importazione`);
+      console.error(`Errore lettura ${fileExtension} per import:`, error);
     } finally {
-      setIsImporting(false); // Fine importazione
+       setIsImporting(false); 
     }
   };
 
