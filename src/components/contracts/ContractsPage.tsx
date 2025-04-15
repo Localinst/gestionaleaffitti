@@ -46,18 +46,29 @@ export default function ContractsPage() {
   };
 
   // Funzione per ottenere il nome della proprietà
-  const getPropertyName = (propertyId: string | number): string => {
+  const getPropertyName = (propertyId: string | number | null | undefined): string => {
+    // Gestisci il caso in cui propertyId sia null o undefined
+    if (!propertyId) {
+      return "Nessuna"; 
+    }
+    // Procedi con la ricerca solo se propertyId è valido
     const property = properties.find(p => p.id.toString() === propertyId.toString());
-    return property ? property.name : "Proprietà sconosciuta";
+    return property ? property.name : "ID Proprietà non trovato"; // Cambiato messaggio per chiarezza
   };
 
   // Funzione per ottenere il nome dell'inquilino
-  const getTenantName = (tenantId: string | number): string => {
+  const getTenantName = (tenantId: string | number | null | undefined): string => {
+    // Gestisci il caso in cui tenantId sia null o undefined
+    if (!tenantId) {
+      return "Nessuno";
+    }
+    // Procedi con la ricerca solo se tenantId è valido
     const tenant = tenants.find(t => t.id.toString() === tenantId.toString());
-    return tenant ? tenant.name : "Inquilino sconosciuto";
+    return tenant ? tenant.name : "ID Inquilino non trovato"; // Cambiato messaggio per chiarezza
   };
 
   const filteredContracts = contracts.filter(contract => {
+    // Chiama le funzioni aggiornate che gestiscono i null
     const propertyName = getPropertyName(contract.property_id).toLowerCase();
     const tenantName = getTenantName(contract.tenant_id).toLowerCase();
     const searchLower = searchTerm.toLowerCase();

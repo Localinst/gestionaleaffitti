@@ -13,6 +13,7 @@ import contractsRouter from './routes/contracts';
 import activitiesRouter from './routes/activities';
 import { tourismRouter } from './routes/tourism';
 import integrationsRouter from './routes/integrations';
+import { importRouter } from './routes/import';
 import { authenticate } from './middleware/auth';
 import { startSyncService } from './services/sync-service';
 import paymentsRouter from './routes/payments';
@@ -178,6 +179,7 @@ app.use('/api/contracts', authenticate, contractsRouter);
 app.use('/api/activities', authenticate, activitiesRouter);
 app.use('/api/tourism', authenticate, tourismRouter);
 app.use('/api/integrations', authenticate, integrationsRouter);
+app.use('/api/import', authenticate, importRouter);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

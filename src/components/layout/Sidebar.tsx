@@ -15,7 +15,8 @@ import {
   Palmtree,
   ChevronDown,
   ChevronRight,
-  HelpCircle
+  HelpCircle,
+  Upload
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -98,6 +99,7 @@ export function Sidebar() {
       ]
     },
     { path: "/reports", label: "Report & Analytics", icon: LineChart },
+    { path: "/import", label: "Importazione", icon: Upload },
   ];
   
   const handleTutorialClick = () => {

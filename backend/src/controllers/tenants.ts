@@ -14,16 +14,25 @@ export const getTenants = async (req: Request, res: Response) => {
       return getTenantsByProperty(req, res);
     }
     
-    // Query con join a properties e filtro user_id in properties
+    // Query che recupera tutti gli inquilini dell'utente corrente
+    // Usa LEFT JOIN per includere anche inquilini senza proprietà
     const result = await executeQuery(async (client) => {
       return client.query(`
-        SELECT t.*, p.name as property_name 
-        FROM tenants t 
-        JOIN properties p ON t.property_id = p.id 
-        WHERE p.user_id = $1
-        ORDER BY t.created_at DESC
+        SELECT 
+          t.*, 
+          p.name as property_name 
+        FROM 
+          tenants t 
+        LEFT JOIN 
+          properties p ON t.property_id = p.id 
+        WHERE 
+          t.user_id = $1 OR (p.user_id = $1)
+        ORDER BY 
+          t.created_at DESC
       `, [userId]);
     });
+    
+    console.log(`Trovati ${result.rows.length} inquilini per l'utente ${userId}`);
     
     res.json(result.rows);
   } catch (error) {

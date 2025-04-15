@@ -33,6 +33,7 @@ import Guides from './pages/Guides';
 import GuideDetail from './pages/GuideDetail';
 import SupportoPage from './pages/Supporto';
 import { PrivacyPolicy, TerminiServizio, CookiePolicy } from './pages/Legali';
+import ImportPage from './pages/ImportPage';
 
 // Configurazione avanzata di QueryClient con gestione della cache
 const queryClient = new QueryClient({
@@ -139,6 +140,11 @@ const App = () => {
                       <Route path="/tourism/properties" element={
                         <ProtectedRoute>
                           <TourismPropertiesPage />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/import" element={
+                        <ProtectedRoute>
+                          <ImportPage />
                         </ProtectedRoute>
                       } />
                       

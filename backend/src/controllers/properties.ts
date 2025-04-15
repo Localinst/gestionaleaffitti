@@ -141,7 +141,7 @@ export const deleteProperty = async (req: Request, res: Response) => {
     
     const result = await executeQuery(async (client) => {
       return client.query(
-        'DELETE FROM properties WHERE id = $1 AND user_id = $2 RETURNING *', 
+        'DELETE FROM properties WHERE id = $1 AND user_id = $2::uuid RETURNING *', 
         [id, userId]
       );
     });

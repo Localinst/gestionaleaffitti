@@ -1,190 +1,238 @@
 import { Request, Response } from 'express';
 import pool, { executeQuery } from '../db';
 
-export const getTransactions = async (req: Request, res: Response) => {
+// Interfaccia per la richiesta autenticata
+type AuthRequest = Request & {
+  user?: {
+    id?: string; // L'ID utente dal token (UUID)
+  };
+};
+
+export const getTransactions = async (req: AuthRequest, res: Response) => {
+  const userId = req.user?.id; // UUID
+
+  if (!userId) {
+    return res.status(401).json({ error: 'Utente non autenticato' });
+  }
+
   try {
-    // Ottengo l'user_id dall'utente autenticato
-    const userId = req.user?.id;
-    console.log('Recupero transazioni per user_id:', userId);
-    
-    // Query con join a properties e filtro user_id in properties
+    console.log('Recupero transazioni per user_id (UUID):', userId);
+    // La query ora usa LEFT JOIN e filtra solo su t.user_id
     const query = `
-      SELECT t.*, p.name as property_name, tn.name as tenant_name
+      SELECT t.*, p.name AS property_name
       FROM transactions t
-      JOIN properties p ON t.property_id = p.id
-      LEFT JOIN tenants tn ON t.tenant_id = tn.id
-      WHERE p.user_id = $1
+      LEFT JOIN properties p ON t.property_id = p.id -- LEFT JOIN per gestire property_id NULL
+      WHERE t.user_id = $1::uuid -- Filtra per user_id (UUID) della transazione
       ORDER BY t.date DESC
     `;
-    console.log('Query eseguita:', query);
-    
+
+    console.log('Query getTransactions eseguita:', query);
+
     const result = await executeQuery(async (client) => {
       return client.query(query, [userId]);
     });
-    
+
     console.log('Numero di transazioni trovate:', result.rows.length);
-    
     res.json(result.rows);
   } catch (error) {
     console.error('Errore nel recupero delle transazioni:', error);
-    res.status(500).json({ error: 'Error retrieving transactions' });
+    res.status(500).json({ error: 'Errore nel recupero delle transazioni' });
   }
 };
 
-export const getTransactionById = async (req: Request, res: Response) => {
+export const getTransactionById = async (req: AuthRequest, res: Response) => {
+  const userId = req.user?.id; // UUID
+  const { id } = req.params; // transaction ID (UUID)
+
+  if (!userId) {
+    return res.status(401).json({ error: 'Utente non autenticato' });
+  }
+
   try {
-    const { id } = req.params;
-    // Ottengo l'user_id dall'utente autenticato
-    const userId = req.user?.id;
-    
-    // Query con join a properties e filtro user_id in properties
-    const result = await pool.query(`
-      SELECT t.*
+    // La query ora filtra su t.id e t.user_id
+    const query = `
+      SELECT t.*, p.name as property_name
       FROM transactions t
-      JOIN properties p ON t.property_id = p.id
-      WHERE t.id = $1 AND p.user_id = $2
-    `, [id, userId]);
-    
+      LEFT JOIN properties p ON t.property_id = p.id -- LEFT JOIN per gestire property_id NULL
+      WHERE t.id = $1::uuid AND t.user_id = $2::uuid -- Filtra per ID transazione e ID utente
+    `;
+    const result = await pool.query(query, [id, userId]);
+
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Transaction not found' });
+      return res.status(404).json({ error: 'Transazione non trovata o non accessibile' });
     }
-    
+
     res.json(result.rows[0]);
   } catch (error) {
     console.error('Errore nel recupero della transazione:', error);
-    res.status(500).json({ error: 'Error retrieving transaction' });
+    res.status(500).json({ error: 'Errore nel recupero della transazione' });
   }
 };
 
-export const createTransaction = async (req: Request, res: Response) => {
+export const createTransaction = async (req: AuthRequest, res: Response) => {
+  // LOG AGGIUNTIVO ALL'INGRESSO
+  console.log('>>> Entrato in createTransaction controller'); 
+  
+  const userId = req.user?.id; // UUID
+
+  if (!userId) {
+    return res.status(401).json({ error: 'Utente non autenticato' });
+  }
+
   try {
-    const { 
+    const {
       date,
       amount,
       type,
       category,
       description,
-      property_id,
-      tenant_id
+      property_id, // Può essere null o un UUID valido
+      tenant_id    // Può essere null o un UUID valido
     } = req.body;
-    
-    console.log("Creazione transazione con dati:", { 
-      date, amount, type, category, description, property_id, 
-      tenant_id: tenant_id || "null", 
-      tenant_id_type: tenant_id ? typeof tenant_id : "null" 
-    });
-    
-    // Ottengo l'user_id dall'utente autenticato
-    const userId = req.user?.id;
-    
-    // Verifica che la proprietà appartenga all'utente
-    const propertyCheck = await pool.query(
-      'SELECT id FROM properties WHERE id = $1 AND user_id = $2',
-      [property_id, userId]
-    );
-    
-    if (propertyCheck.rows.length === 0) {
-      return res.status(403).json({ error: 'Property not found or not owned by user' });
+
+    // Validazione base - Rimosso controllo per category
+    if (!date || amount === undefined || amount === null || !type) { 
+        return res.status(400).json({ error: 'Campi date, amount, type sono obbligatori' });
     }
-    
-    // Se tenant_id è una stringa "none" o vuota, impostiamo a null
+
+    console.log("Creazione transazione con dati:", {
+      date, amount, type, category, description, // category può essere undefined ora
+      property_id: property_id || null, 
+      tenant_id: tenant_id || null      
+    });
+
+    // Rimosso il controllo sull'esistenza della proprietà
+    // const propertyCheck = await pool.query(...)
+
+    // Se tenant_id è una stringa vuota o "none", impostiamo a null (anche se il || null sopra dovrebbe già bastare)
     const finalTenantId = tenant_id && tenant_id !== "none" && tenant_id !== "" ? tenant_id : null;
-    
-    console.log("tenant_id finale per la transazione:", finalTenantId);
-    
-    // Procedi con l'inserimento
+    const finalPropertyId = property_id && property_id !== "none" && property_id !== "" ? property_id : null;
+
+    console.log("ID finale per la transazione:", { finalPropertyId, finalTenantId });
+
+    // Procedi con l'inserimento, usando user_id (UUID)
     const result = await pool.query(
       `INSERT INTO transactions (
-        date, amount, type, category, description, 
+        date, amount, type, category, description,
         property_id, tenant_id, user_id
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-      [date, amount, type, category, description, property_id, finalTenantId, userId]
+      ) VALUES ($1, $2, $3, $4, $5, $6::uuid, $7::uuid, $8::uuid) RETURNING *`,
+      [
+        date,
+        amount,
+        type,
+        category || null, // Assicura null se category è omesso o non fornito
+        description || null, 
+        finalPropertyId,     
+        finalTenantId,       
+        userId               
+      ]
     );
-    
+
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error('Errore nella creazione della transazione:', error);
-    res.status(500).json({ error: 'Error creating transaction' });
+    // Controlla se l'errore è dovuto a una violazione di chiave esterna (improbabile ora)
+    if (error.code === '23503') {
+         return res.status(400).json({ error: 'ID Proprietà o Inquilino non valido.' });
+    }
+    res.status(500).json({ error: 'Errore nella creazione della transazione', details: error.message });
   }
 };
 
-export const updateTransaction = async (req: Request, res: Response) => {
+export const updateTransaction = async (req: AuthRequest, res: Response) => {
+  const userId = req.user?.id; // UUID
+  const { id } = req.params; // transaction ID (UUID)
+
+  if (!userId) {
+    return res.status(401).json({ error: 'Utente non autenticato' });
+  }
+
   try {
-    const { id } = req.params;
-    const { 
+    const {
       date,
       amount,
       type,
       category,
       description,
-      property_id,
-      tenant_id
+      property_id, // Può essere null o UUID
+      tenant_id    // Può essere null o UUID
     } = req.body;
-    
-    // Ottengo l'user_id dall'utente autenticato
-    const userId = req.user?.id;
-    
-    // Verifica che la transazione appartenga all'utente
+
+     // Validazione base
+     if (!date || amount === undefined || amount === null || !type || !category) {
+      return res.status(400).json({ error: 'Campi date, amount, type, category sono obbligatori' });
+    }
+
+    // Verifica che la transazione esista e appartenga all'utente usando t.user_id
     const transactionCheck = await pool.query(`
       SELECT t.id
       FROM transactions t
-      JOIN properties p ON t.property_id = p.id
-      WHERE t.id = $1 AND p.user_id = $2
+      WHERE t.id = $1::uuid AND t.user_id = $2::uuid
     `, [id, userId]);
-    
+
     if (transactionCheck.rows.length === 0) {
-      return res.status(404).json({ error: 'Transaction not found or not accessible' });
+      return res.status(404).json({ error: 'Transazione non trovata o non accessibile' });
     }
-    
-    // Verifica che la nuova proprietà appartenga all'utente
-    const propertyCheck = await pool.query(
-      'SELECT id FROM properties WHERE id = $1 AND user_id = $2',
-      [property_id, userId]
-    );
-    
-    if (propertyCheck.rows.length === 0) {
-      return res.status(403).json({ error: 'Property not found or not owned by user' });
-    }
-    
+
+    // Rimosso il controllo sull'esistenza della nuova proprietà
+
+    const finalTenantId = tenant_id && tenant_id !== "none" && tenant_id !== "" ? tenant_id : null;
+    const finalPropertyId = property_id && property_id !== "none" && property_id !== "" ? property_id : null;
+
     const result = await pool.query(
-      `UPDATE transactions SET 
+      `UPDATE transactions SET
         date = $1, amount = $2, type = $3, category = $4,
-        description = $5, property_id = $6, tenant_id = $7,
+        description = $5, property_id = $6::uuid, tenant_id = $7::uuid,
         updated_at = CURRENT_TIMESTAMP
-      WHERE id = $8 RETURNING *`,
-      [date, amount, type, category, description, property_id, tenant_id, id]
+      WHERE id = $8::uuid AND user_id = $9::uuid RETURNING *`,
+      [
+        date, amount, type, category, description || null,
+        finalPropertyId, // UUID o null
+        finalTenantId,   // UUID o null
+        id,              // transaction ID (UUID)
+        userId           // user ID (UUID)
+      ]
     );
-    
+
+     if (result.rows.length === 0) {
+      // Questo non dovrebbe accadere se il check iniziale ha funzionato, ma per sicurezza
+      return res.status(404).json({ error: 'Aggiornamento fallito, transazione non trovata.' });
+    }
+
     res.json(result.rows[0]);
   } catch (error) {
-    console.error('Errore nell\'aggiornamento della transazione:', error);
-    res.status(500).json({ error: 'Error updating transaction' });
+    console.error("Errore nell'aggiornamento della transazione:", error);
+     if (error.code === '23503') {
+      return res.status(400).json({ error: "ID Proprietà o Inquilino fornito non valido." });
+    }
+    res.status(500).json({ error: "Errore nell'aggiornamento della transazione", details: error.message });
   }
 };
 
-export const deleteTransaction = async (req: Request, res: Response) => {
+export const deleteTransaction = async (req: AuthRequest, res: Response) => {
+  const userId = req.user?.id; // UUID
+  const { id } = req.params; // transaction ID (UUID)
+
+  if (!userId) {
+    return res.status(401).json({ error: 'Utente non autenticato' });
+  }
+
   try {
-    const { id } = req.params;
-    // Ottengo l'user_id dall'utente autenticato
-    const userId = req.user?.id;
-    
-    // Verifica che la transazione appartenga all'utente
-    const transactionCheck = await pool.query(`
-      SELECT t.id
-      FROM transactions t
-      JOIN properties p ON t.property_id = p.id
-      WHERE t.id = $1 AND p.user_id = $2
-    `, [id, userId]);
-    
-    if (transactionCheck.rows.length === 0) {
-      return res.status(404).json({ error: 'Transaction not found or not accessible' });
+    // Verifica che la transazione esista e appartenga all'utente usando t.user_id
+    // Esegui direttamente DELETE con clausola WHERE per id e user_id
+    const result = await pool.query(
+      'DELETE FROM transactions WHERE id = $1::uuid AND user_id = $2::uuid RETURNING id',
+      [id, userId]
+    );
+
+    // Controlla se una riga è stata effettivamente eliminata
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Transazione non trovata o non accessibile" });
     }
-    
-    const result = await pool.query('DELETE FROM transactions WHERE id = $1 RETURNING *', [id]);
-    
-    res.json({ message: 'Transaction deleted successfully' });
+
+    res.json({ message: "Transazione eliminata con successo" });
   } catch (error) {
-    console.error('Errore nell\'eliminazione della transazione:', error);
-    res.status(500).json({ error: 'Error deleting transaction' });
+    console.error("Errore nell'eliminazione della transazione:", error);
+    res.status(500).json({ error: "Errore nell'eliminazione della transazione" });
   }
 }; 
