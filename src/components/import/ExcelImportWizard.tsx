@@ -458,7 +458,12 @@ export function ExcelImportWizard() {
 
               <div>
                 <Label htmlFor="fileInput">2. Seleziona il file Excel (.xlsx) o CSV (.csv)</Label>
-                <Input id="fileInput" type="file" accept=".xlsx, .csv" onChange={handleFileChange} />
+                <Input 
+                  id="fileInput" 
+                  type="file" 
+                  accept=".xlsx, .csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, text/csv" 
+                  onChange={handleFileChange} 
+                 />
                 <p className="text-xs text-muted-foreground mt-1">La prima riga del file deve contenere le intestazioni delle colonne.</p>
               </div>
             </div>
