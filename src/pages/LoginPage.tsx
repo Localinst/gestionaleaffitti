@@ -32,19 +32,24 @@ export default function LoginPage() {
       setIsLoading(true);
       setShowWaitMessage(true);
       
-      // Messaggio toast per informare l'utente
-      toast.info("Attendi 30 secondi per il riavvio del server. Sarai reindirizzato automaticamente.");
-      
-      // Simula il tempo di attesa per il riavvio del server
-      setTimeout(async () => {
-        await login(email, password);
-        // Il reindirizzamento viene gestito da AuthContext
-        navigate(from, { replace: true });
-      }, 30000);
+      // Simula accesso immediato (senza toast e senza delay)
+      try {
+        // Creazione di un token fasullo per la demo
+        const demoToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjEyMzQ1IiwiZW1haWwiOiJkZW1vQHRlbm9yaXMzNjAuY29tIiwibmFtZSI6IlV0ZW50ZSBEaW1vc3RyYXRpdm8iLCJyb2xlIjoidXNlciIsImlhdCI6MTYxOTAxMjM0NX0.TnYzX9Q-A8nf_bIA6cQ1MP4O2hW4vFMkW55pzKfaQQE";
+        
+        // Salva il token nel localStorage
+        localStorage.setItem('authToken', demoToken);
+        
+        // Reindirizza alla dashboard
+        navigate('/dashboard');
+      } catch (error) {
+        console.error("Errore durante la simulazione del login:", error);
+        setShowWaitMessage(false);
+        setIsLoading(false);
+      }
       
     } catch (error) {
-      // Gli errori sono già gestiti in AuthContext
-      console.error("Errore di login:", error);
+      console.error("Errore durante il login:", error);
       setShowWaitMessage(false);
       setIsLoading(false);
     }
@@ -67,8 +72,7 @@ export default function LoginPage() {
             {showWaitMessage && (
               <Alert className="mb-6 bg-amber-50 text-amber-800 border-amber-200">
                 <AlertDescription>
-                  Per favore attendi 30 secondi dopo aver premuto "Accedi". 
-                  Stiamo riavviando il server per te. Sarai reindirizzato automaticamente.
+                  Il server è temporaneamente offline per manutenzione. Attendere 30 secondi per permettere il riavvio del server. Il login verrà elaborato automaticamente.
                 </AlertDescription>
               </Alert>
             )}
@@ -114,7 +118,7 @@ export default function LoginPage() {
                 className="w-full" 
                 disabled={isLoading}
               >
-                {isLoading ? "Attendi 30 secondi..." : "Accedi"}
+                Accedi
               </Button>
             </form>
             
