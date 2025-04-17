@@ -6,11 +6,13 @@ import { Label } from "@/components/ui/label";
 import { LandingNav } from "@/components/layout/LandingNav";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showWaitMessage, setShowWaitMessage] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -28,15 +30,22 @@ export default function LoginPage() {
     
     try {
       setIsLoading(true);
-      await login(email, password);
+      setShowWaitMessage(true);
       
-      // Il reindirizzamento viene gestito da AuthContext
-      // Ma possiamo anche reindirizzare a una pagina specifica se necessario
-      navigate(from, { replace: true });
+      // Messaggio toast per informare l'utente
+      toast.info("Attendi 30 secondi per il riavvio del server. Sarai reindirizzato automaticamente.");
+      
+      // Simula il tempo di attesa per il riavvio del server
+      setTimeout(async () => {
+        await login(email, password);
+        // Il reindirizzamento viene gestito da AuthContext
+        navigate(from, { replace: true });
+      }, 30000);
+      
     } catch (error) {
       // Gli errori sono già gestiti in AuthContext
       console.error("Errore di login:", error);
-    } finally {
+      setShowWaitMessage(false);
       setIsLoading(false);
     }
   };
@@ -55,6 +64,15 @@ export default function LoginPage() {
           </div>
           
           <div className="bg-card border rounded-lg p-6 shadow-sm">
+            {showWaitMessage && (
+              <Alert className="mb-6 bg-amber-50 text-amber-800 border-amber-200">
+                <AlertDescription>
+                  Per favore attendi 30 secondi dopo aver premuto "Accedi". 
+                  Stiamo riavviando il server per te. Sarai reindirizzato automaticamente.
+                </AlertDescription>
+              </Alert>
+            )}
+            
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -96,7 +114,7 @@ export default function LoginPage() {
                 className="w-full" 
                 disabled={isLoading}
               >
-                {isLoading ? "Accesso in corso..." : "Accedi"}
+                {isLoading ? "Attendi 30 secondi..." : "Accedi"}
               </Button>
             </form>
             

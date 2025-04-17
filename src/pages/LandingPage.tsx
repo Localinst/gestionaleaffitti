@@ -68,12 +68,12 @@ const LandingPage = () => {
   return (
     <>
       <SEO 
-        title="Software Gestionale per Affitti e Immobili"
-        description="Tenoris360: il software gestionale per affitti e immobili. Semplifica la gestione di proprietà, inquilini, B&B, contratti, pagamenti e report. Ottimizza i rendimenti."
+        title="Software Gestionale GRATUITO per Affitti e Immobili"
+        description="Tenoris360: il software gestionale GRATUITO per affitti e immobili. Semplifica la gestione di proprietà, inquilini, B&B, contratti, pagamenti e report. Ottimizza i rendimenti."
         keywords={[
-          "software gestione affitti", 
-          "gestionale immobiliare", 
-          "property management software", 
+          "software gestione affitti gratuito", 
+          "gestionale immobiliare gratis", 
+          "property management software free", 
           "affitti brevi", 
           "B&B", 
           "contratti di locazione"
@@ -86,7 +86,7 @@ const LandingPage = () => {
           <div className="container flex items-center justify-between h-16 px-4 md:px-6">
             <div className="flex items-center gap-2">
               <img src="/simbolologo.png" alt="Tenoris360 Logo" className="h-8 w-auto" />
-              <span className="text-xl font-bold">Tenoris360</span>
+              <span className="text-xl font-bold">Tenoris360 <span className="text-primary">GRATUITO</span></span>
             </div>
             <nav className="hidden md:flex items-center gap-6">
               <a href="#features" className="text-sm font-medium hover:text-primary transition-colors">
@@ -119,10 +119,10 @@ const LandingPage = () => {
             <div className="grid gap-8 lg:grid-cols-2 lg:gap-16 items-center">
               <div className="flex flex-col gap-4">
                 <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
-                  Semplifica la gestione dei tuoi affitti con Tenoris360
+                  Semplifica la gestione dei tuoi affitti con Tenoris360 <span className="text-primary">GRATUITO</span>
                 </h1>
                 <p className="text-muted-foreground text-lg md:text-xl">
-                  La piattaforma completa per proprietari e amministratori immobiliari che desiderano 
+                  La piattaforma completa e GRATUITA per proprietari e amministratori immobiliari che desiderano 
                   gestire contratti, inquilini e pagamenti in modo efficiente.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 mt-8">
