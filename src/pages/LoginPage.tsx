@@ -32,21 +32,11 @@ export default function LoginPage() {
       setIsLoading(true);
       setShowWaitMessage(true);
       
-      // Simula accesso immediato (senza toast e senza delay)
-      try {
-        // Creazione di un token fasullo per la demo
-        const demoToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjEyMzQ1IiwiZW1haWwiOiJkZW1vQHRlbm9yaXMzNjAuY29tIiwibmFtZSI6IlV0ZW50ZSBEaW1vc3RyYXRpdm8iLCJyb2xlIjoidXNlciIsImlhdCI6MTYxOTAxMjM0NX0.TnYzX9Q-A8nf_bIA6cQ1MP4O2hW4vFMkW55pzKfaQQE";
-        
-        // Salva il token nel localStorage
-        localStorage.setItem('authToken', demoToken);
-        
-        // Reindirizza alla dashboard
-        navigate('/dashboard');
-      } catch (error) {
-        console.error("Errore durante la simulazione del login:", error);
-        setShowWaitMessage(false);
-        setIsLoading(false);
-      }
+      // Chiamata diretta all'autenticazione senza toast e senza delay
+      await login(email, password);
+      
+      // Il reindirizzamento viene gestito da AuthContext
+      navigate(from, { replace: true });
       
     } catch (error) {
       console.error("Errore durante il login:", error);
