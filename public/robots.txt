@@ -1,9 +1,22 @@
 # Configurazione robots.txt per tenoris360.com
 
+# Configura l'accesso dei crawler per tutte le risorse
 User-agent: *
-Allow: /
 
-# Pagine pubbliche accessibili
+# Consenti l'accesso a tutte le pagine pubbliche e risorse statiche
+Allow: /
+Allow: /*.png$
+Allow: /*.jpg$
+Allow: /*.svg$
+Allow: /*.webp$
+Allow: /*.gif$
+Allow: /*.css$
+Allow: /*.js$
+Allow: /*.woff$
+Allow: /*.woff2$
+Allow: /*.ttf$
+
+# Conferma esplicitamente l'accesso alle pagine pubbliche
 Allow: /blog
 Allow: /guide
 Allow: /supporto
@@ -11,16 +24,27 @@ Allow: /privacy
 Allow: /termini
 Allow: /cookie
 Allow: /pricing
+Allow: /login
+Allow: /register
+Allow: /assets/
 
-# Disabilita accesso alle pagine protette (anche se già protette da autenticazione)
-Disallow: /dashboard
-Disallow: /properties
-Disallow: /tenants
-Disallow: /transactions
-Disallow: /contracts
-Disallow: /reports
-Disallow: /activities
-Disallow: /tourism
+# Disabilita l'accesso alle pagine protette/amministrative (solo le rotte, non le risorse)
+Disallow: /dashboard$
+Disallow: /dashboard/
+Disallow: /properties$
+Disallow: /properties/
+Disallow: /tenants$
+Disallow: /tenants/
+Disallow: /transactions$
+Disallow: /transactions/
+Disallow: /contracts$
+Disallow: /contracts/
+Disallow: /reports$
+Disallow: /reports/
+Disallow: /activities$
+Disallow: /activities/
+Disallow: /tourism$
+Disallow: /tourism/
 
 # Sitemap
 Sitemap: https://tenoris360.com/sitemap.xml
