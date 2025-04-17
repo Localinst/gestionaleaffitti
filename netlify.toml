@@ -13,3 +13,21 @@
   from = "/*"
   to = "/index.html"
   status = 200 
+
+# Ottimizzazione SEO per i crawler dei motori di ricerca
+[[plugins]]
+  package = "@netlify/plugin-sitemap"
+
+  [plugins.inputs]
+  baseUrl = "https://tenoris360.com"
+  buildDir = "dist"
+
+# Questa configurazione aiuta Netlify a rilevare crawler e bot per servire versioni prerendered
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Robots-Tag = "index, follow"
+
+# Questa opzione attiva il rilevamento automatico di bot per prerendering
+[context.production]
+  environment = { NETLIFY_EXPERIMENTAL_DETECT_BOTS_AND_DISABLE_CACHE = "true" } 
