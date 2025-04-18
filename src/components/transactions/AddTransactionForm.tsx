@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { Receipt } from "lucide-react";
 import { toast } from "sonner";
 import { createTransaction, getProperties, getTenantsByProperty, Transaction, updateTransaction } from "@/services/api";
+import { useTranslation } from "react-i18next";
 
 import {
   Form,
@@ -32,6 +33,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 // Interfaccia per le opzioni di unità
 interface UnitOption {
@@ -92,6 +94,7 @@ export function AddTransactionForm({
   onOpenChange: (open: boolean) => void;
   transaction?: any;
 }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [properties, setProperties] = useState([]);
@@ -115,47 +118,26 @@ export function AddTransactionForm({
     async function loadProperties() {
       try {
         const data = await getProperties();
-        console.log("Proprietà caricate:", data);
         
         if (Array.isArray(data) && data.length > 0) {
           setProperties(data);
           
-          // Creiamo le opzioni per le unità
+          // Prepara le opzioni per le unità immobiliari
           const options: UnitOption[] = [];
           
           data.forEach(property => {
             // Se la proprietà ha più di 1 unità e unit_names è definito
-            if (property.units > 1 && property.unit_names) {
-              try {
-                // Proviamo a parsificare i nomi delle unità
-                const unitNames = Array.isArray(property.unit_names) 
-                  ? property.unit_names 
-                  : JSON.parse(property.unit_names as string);
-                
-                // Aggiungiamo un'opzione per ogni unità
-                unitNames.forEach((unitName: string, index: number) => {
-                  options.push({
-                    id: `${property.id}-${index}`,
-                    propertyId: property.id,
-                    unitIndex: index.toString(),
-                    name: unitName || `Unità ${index + 1}`,
-                    displayName: `${property.name} - ${unitName || `Unità ${index + 1}`}`
-                  });
+            if (property.units > 1 && property.unit_names && Array.isArray(property.unit_names)) {
+              // Aggiungi ogni unità come opzione separata
+              property.unit_names.forEach((unitName, index) => {
+                options.push({
+                  id: `${property.id}-${index}`,
+                  propertyId: property.id,
+                  unitIndex: index.toString(),
+                  name: unitName,
+                  displayName: `${property.name} - ${unitName}`
                 });
-              } catch (e) {
-                console.error("Errore nel parsing dei nomi delle unità:", e);
-                
-                // Fallback: creiamo unità numerate
-                for (let i = 0; i < property.units; i++) {
-                  options.push({
-                    id: `${property.id}-${i}`,
-                    propertyId: property.id,
-                    unitIndex: i.toString(),
-                    name: `Unità ${i + 1}`,
-                    displayName: `${property.name} - Unità ${i + 1}`
-                  });
-                }
-              }
+              });
             } else {
               // Se la proprietà ha solo 1 unità, aggiungiamo solo la proprietà
               options.push({
@@ -172,17 +154,17 @@ export function AddTransactionForm({
           
         } else {
           console.warn("Nessuna proprietà trovata o risposta non valida");
-          toast.warning("Nessuna proprietà disponibile", {
-            description: "Aggiungi prima una proprietà per poter registrare transazioni"
+          toast.warning(t("transactions.form.noProperties"), {
+            description: t("transactions.form.addPropertyFirst")
           });
         }
       } catch (error) {
         console.error("Errore durante il caricamento delle proprietà:", error);
-        toast.error("Errore nel caricamento delle proprietà");
+        toast.error(t("errors.network"));
       }
     }
     loadProperties();
-  }, []);
+  }, [t]);
 
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionFormSchema),
@@ -324,14 +306,14 @@ export function AddTransactionForm({
       if (isEditMode && transaction) {
         // Aggiorna una transazione esistente
         const updatedTransaction = await updateTransaction(transaction.id, transactionData);
-        toast.success("Transazione aggiornata con successo", {
-          description: `${data.type === 'income' ? 'Entrata' : 'Uscita'} di €${data.amount} aggiornata.`,
+        toast.success(t("transactions.form.updateSuccess"), {
+          description: `${data.type === 'income' ? t("transactions.types.income") : t("transactions.types.expense")} ${t("common.status.success")}`,
         });
       } else {
         // Crea una nuova transazione
         await createTransaction(transactionData);
-        toast.success("Transazione aggiunta con successo", {
-          description: `${data.type === 'income' ? 'Entrata' : 'Uscita'} di €${data.amount} registrata.`,
+        toast.success(t("transactions.form.createSuccess"), {
+          description: `${data.type === 'income' ? t("transactions.types.income") : t("transactions.types.expense")} ${t("common.status.success")}`,
         });
       }
       
@@ -340,8 +322,8 @@ export function AddTransactionForm({
       navigate("/transactions");
     } catch (apiError: any) {
       console.error("Errore API:", apiError);
-      const errorMessage = apiError.message || "Errore sconosciuto";
-      toast.error(isEditMode ? "Errore durante l'aggiornamento della transazione" : "Errore durante l'aggiunta della transazione", {
+      const errorMessage = apiError.message || t("errors.general");
+      toast.error(isEditMode ? t("transactions.form.updateError") : t("transactions.form.createError"), {
         description: errorMessage
       });
     } finally {
@@ -351,41 +333,42 @@ export function AddTransactionForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Receipt className="h-5 w-5" />
-            {isEditMode ? "Modifica Transazione" : "Aggiungi Nuova Transazione"}
+          <DialogTitle>
+            {isEditMode ? t("transactions.menu.edit") : t("transactions.addTransaction")}
           </DialogTitle>
           <DialogDescription>
-            {isEditMode ? "Modifica i dettagli della transazione." : "Inserisci i dettagli per registrare una nuova transazione."}
+            {isEditMode 
+              ? t("transactions.form.updateTransaction") 
+              : t("transactions.form.addTransactionDesc")}
           </DialogDescription>
         </DialogHeader>
-
+        
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
               name="unit_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Unità Immobiliare</FormLabel>
+                  <FormLabel>{t("contracts.form.unit")}</FormLabel>
                   <Select 
+                    value={field.value} 
                     onValueChange={(value) => {
                       field.onChange(value);
                       loadTenants(value);
                     }}
-                    defaultValue={field.value || ""}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Seleziona un'unità immobiliare" />
+                        <SelectValue placeholder={t("transactions.form.selectUnit")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {unitOptions.map((unit) => (
-                        <SelectItem key={unit.id} value={unit.id}>
-                          {unit.displayName}
+                      {unitOptions.map((option) => (
+                        <SelectItem key={option.id} value={option.id}>
+                          {option.displayName}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -394,43 +377,47 @@ export function AddTransactionForm({
                 </FormItem>
               )}
             />
-
+            
             <FormField
               control={form.control}
               name="tenant_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Inquilino (opzionale)</FormLabel>
+                  <FormLabel>{t("transactions.transactionDetails.tenant")}</FormLabel>
                   <Select 
+                    value={field.value || "none"} 
                     onValueChange={field.onChange}
-                    defaultValue={field.value || "none"}
+                    disabled={!propertyId}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Seleziona un inquilino (opzionale)" />
+                        <SelectValue placeholder={t("transactions.form.selectTenant")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="none">Nessun inquilino</SelectItem>
-                      {tenants.map((tenant) => (
-                        <SelectItem key={tenant.id} value={tenant.id.toString()}>
-                          {tenant.name}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="none">{t("transactions.form.noTenant")}</SelectItem>
+                      {tenants
+                        .filter(tenant => tenant.property_id === propertyId)
+                        .map((tenant) => (
+                          <SelectItem key={tenant.id} value={tenant.id?.toString()}>
+                            {tenant.name}
+                          </SelectItem>
+                        ))
+                      }
                     </SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
+            
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Data</FormLabel>
+                    <FormLabel>{t("transactions.transactionDetails.date")}</FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
                     </FormControl>
@@ -444,13 +431,13 @@ export function AddTransactionForm({
                 name="amount"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Importo (€)</FormLabel>
+                    <FormLabel>{t("transactions.transactionDetails.amount")} (€)</FormLabel>
                     <FormControl>
                       <Input 
                         type="number" 
                         min="0" 
                         step="0.01"
-                        placeholder="es. 1000.00" 
+                        placeholder={t("transactions.form.enterAmount")} 
                         {...field}
                       />
                     </FormControl>
@@ -466,23 +453,16 @@ export function AddTransactionForm({
                 name="type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tipo</FormLabel>
-                    <Select 
-                      onValueChange={(value) => {
-                        field.onChange(value);
-                        setSelectedType(value as "income" | "expense");
-                        form.setValue("category", "");
-                      }} 
-                      defaultValue={field.value}
-                    >
+                    <FormLabel>{t("transactions.transactionDetails.type")}</FormLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Seleziona il tipo" />
+                          <SelectValue placeholder={t("transactions.form.selectType")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="income">Entrata</SelectItem>
-                        <SelectItem value="expense">Uscita</SelectItem>
+                        <SelectItem value="income">{t("transactions.types.income")}</SelectItem>
+                        <SelectItem value="expense">{t("transactions.types.expense")}</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -495,19 +475,31 @@ export function AddTransactionForm({
                 name="category"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Categoria</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormLabel>{t("transactions.transactionDetails.category")}</FormLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Seleziona la categoria" />
+                          <SelectValue placeholder={t("transactions.form.selectCategory")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {transactionCategories[selectedType].map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category}
-                          </SelectItem>
-                        ))}
+                        {form.watch("type") === "income" ? (
+                          <>
+                            <SelectItem value="Rent">{t("transactions.categories.income.rent")}</SelectItem>
+                            <SelectItem value="Deposit">{t("transactions.categories.income.deposit")}</SelectItem>
+                            <SelectItem value="Late Payment">{t("transactions.categories.income.latePayment")}</SelectItem>
+                            <SelectItem value="Other">{t("transactions.categories.income.other")}</SelectItem>
+                          </>
+                        ) : (
+                          <>
+                            <SelectItem value="Maintenance">{t("transactions.categories.expense.maintenance")}</SelectItem>
+                            <SelectItem value="Utilities">{t("transactions.categories.expense.utilities")}</SelectItem>
+                            <SelectItem value="Tax">{t("transactions.categories.expense.tax")}</SelectItem>
+                            <SelectItem value="Insurance">{t("transactions.categories.expense.insurance")}</SelectItem>
+                            <SelectItem value="Mortgage">{t("transactions.categories.expense.mortgage")}</SelectItem>
+                            <SelectItem value="Other">{t("transactions.categories.expense.other")}</SelectItem>
+                          </>
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -521,9 +513,12 @@ export function AddTransactionForm({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Descrizione (opzionale)</FormLabel>
+                  <FormLabel>{t("transactions.transactionDetails.description")}</FormLabel>
                   <FormControl>
-                    <Input placeholder="es. Affitto mese di Gennaio" {...field} />
+                    <Textarea 
+                      placeholder={t("transactions.form.enterDescription")}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -531,11 +526,11 @@ export function AddTransactionForm({
             />
 
             <DialogFooter>
-              <Button 
-                type="submit" 
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (isEditMode ? "Salvataggio in corso..." : "Aggiunta in corso...") : (isEditMode ? "Salva Modifiche" : "Aggiungi Transazione")}
+              <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>
+                {t("transactions.form.cancel")}
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? t("common.status.processing") : t("transactions.form.submit")}
               </Button>
             </DialogFooter>
           </form>

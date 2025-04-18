@@ -1,15 +1,30 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, CheckCircle, HelpCircle, Mail, MessageSquare, Phone } from "lucide-react";
+import emailjs from '@emailjs/browser';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { LandingNav } from "@/components/layout/LandingNav";
+import { PageBreadcrumb } from "@/components/layout/PageBreadcrumb";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { useToast } from "@/components/ui/use-toast";
 
 const SupportoPage = () => {
   const [formSubmitted, setFormSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const { toast } = useToast();
+  
+  const [formData, setFormData] = useState({
+    firstname: "",
+    lastname: "",
+    email: "",
+    subject: "",
+    message: ""
+  });
   
   const faqs = [
     {
@@ -38,11 +53,74 @@ const SupportoPage = () => {
     }
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [id]: value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate form submission
-    setFormSubmitted(true);
-    // Reset form after submission in a real application
+    
+    if (!formRef.current) return;
+    
+    setIsLoading(true);
+    
+    try {
+      // Nota: Per far funzionare EmailJS, è necessario creare un account su emailjs.com
+      // e sostituire questi valori con quelli del tuo account
+      // In un'applicazione reale, questi valori dovrebbero essere in variabili d'ambiente
+      const serviceId = 'YOUR_SERVICE_ID'; // sostituire con il tuo service ID
+      const templateId = 'YOUR_TEMPLATE_ID'; // sostituire con il tuo template ID
+      const publicKey = 'YOUR_PUBLIC_KEY'; // sostituire con la tua public key
+      
+      const templateParams = {
+        from_name: `${formData.firstname} ${formData.lastname}`,
+        from_email: formData.email,
+        subject: formData.subject,
+        message: formData.message,
+        to_email: 'tenoris360help@gmail.com'
+      };
+      
+      // Per ora solo simuliamo l'invio
+      // In produzione, decommentare questa riga:
+      // await emailjs.send(serviceId, templateId, templateParams, publicKey);
+      
+      console.log("Invio email a tenoris360help@gmail.com");
+      console.log("Dati del form:", templateParams);
+      
+      // Simuliamo un ritardo di invio
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast({
+        title: "Messaggio inviato con successo",
+        description: "Ti risponderemo al più presto.",
+        variant: "default"
+      });
+      
+      setFormSubmitted(true);
+      
+      // Reset del form
+      setFormData({
+        firstname: "",
+        lastname: "",
+        email: "",
+        subject: "",
+        message: ""
+      });
+    } catch (error) {
+      console.error("Errore nell'invio del messaggio:", error);
+      
+      toast({
+        title: "Errore nell'invio del messaggio",
+        description: "Si è verificato un errore. Riprova più tardi o contattaci direttamente via email.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -52,6 +130,8 @@ const SupportoPage = () => {
       <main className="flex-1">
         <section className="py-12 md:py-16 bg-muted/30">
           <div className="container px-4 md:px-6">
+            <PageBreadcrumb items={[{ label: "Supporto" }]} />
+            
             <div className="flex flex-col gap-2 mb-12">
               <Link to="/" className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors mb-4">
                 <ArrowLeft className="h-4 w-4" />
@@ -89,42 +169,82 @@ const SupportoPage = () => {
                     </CardContent>
                   </Card>
                 ) : (
-                  <form onSubmit={handleSubmit} className="space-y-4">
+                  <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <label htmlFor="firstname" className="text-sm font-medium">
                           Nome
                         </label>
-                        <Input id="firstname" placeholder="Il tuo nome" required />
+                        <Input 
+                          id="firstname" 
+                          name="firstname"
+                          placeholder="Il tuo nome" 
+                          required 
+                          value={formData.firstname}
+                          onChange={handleInputChange}
+                        />
                       </div>
                       <div className="space-y-2">
                         <label htmlFor="lastname" className="text-sm font-medium">
                           Cognome
                         </label>
-                        <Input id="lastname" placeholder="Il tuo cognome" required />
+                        <Input 
+                          id="lastname" 
+                          name="lastname"
+                          placeholder="Il tuo cognome" 
+                          required 
+                          value={formData.lastname}
+                          onChange={handleInputChange}
+                        />
                       </div>
                     </div>
                     <div className="space-y-2">
                       <label htmlFor="email" className="text-sm font-medium">
                         Email
                       </label>
-                      <Input id="email" type="email" placeholder="La tua email" required />
+                      <Input 
+                        id="email" 
+                        name="email"
+                        type="email" 
+                        placeholder="La tua email" 
+                        required 
+                        value={formData.email}
+                        onChange={handleInputChange}
+                      />
                     </div>
                     <div className="space-y-2">
                       <label htmlFor="subject" className="text-sm font-medium">
                         Oggetto
                       </label>
-                      <Input id="subject" placeholder="Oggetto della richiesta" required />
+                      <Input 
+                        id="subject" 
+                        name="subject"
+                        placeholder="Oggetto della richiesta" 
+                        required 
+                        value={formData.subject}
+                        onChange={handleInputChange}
+                      />
                     </div>
                     <div className="space-y-2">
                       <label htmlFor="message" className="text-sm font-medium">
                         Messaggio
                       </label>
-                      <Textarea id="message" rows={5} placeholder="Descrivi la tua richiesta..." required />
+                      <Textarea 
+                        id="message" 
+                        name="message"
+                        rows={5} 
+                        placeholder="Descrivi la tua richiesta..." 
+                        required 
+                        value={formData.message}
+                        onChange={handleInputChange}
+                      />
                     </div>
-                    <Button type="submit" className="w-full">
-                      Invia Messaggio
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                      {isLoading ? "Invio in corso..." : "Invia Messaggio"}
                     </Button>
+                    <p className="text-xs text-muted-foreground text-center">
+                      Il tuo messaggio sarà inviato a tenoris360help@gmail.com
+                    </p>
                   </form>
                 )}
 
@@ -135,7 +255,7 @@ const SupportoPage = () => {
                   </div>
                   <div className="flex items-center gap-3">
                     <Mail className="h-5 w-5 text-primary" />
-                    <span>tenoris360@gmail.com</span>
+                    <span>tenoris360help@gmail.com</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <MessageSquare className="h-5 w-5 text-primary" />
@@ -146,21 +266,23 @@ const SupportoPage = () => {
 
               <div>
                 <h2 className="text-2xl font-semibold mb-6">Domande Frequenti</h2>
-                <div className="space-y-4">
+                <Accordion type="single" collapsible className="space-y-4">
                   {faqs.map((faq, index) => (
-                    <Card key={index}>
-                      <CardContent className="p-6">
-                        <div className="flex gap-3">
-                          <HelpCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                          <div>
-                            <h3 className="font-medium mb-2">{faq.question}</h3>
-                            <p className="text-muted-foreground text-sm">{faq.answer}</p>
-                          </div>
+                    <AccordionItem key={index} value={`faq-${index}`} className="border rounded-lg overflow-hidden">
+                      <AccordionTrigger className="p-4 hover:bg-muted/50">
+                        <div className="flex items-center gap-3 text-left">
+                          <HelpCircle className="h-5 w-5 text-primary shrink-0" />
+                          <span className="font-medium">{faq.question}</span>
                         </div>
-                      </CardContent>
-                    </Card>
+                      </AccordionTrigger>
+                      <AccordionContent className="px-4 pb-4 pt-0">
+                        <div className="pl-8">
+                          <p className="text-muted-foreground">{faq.answer}</p>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
                   ))}
-                </div>
+                </Accordion>
                 <div className="mt-6 text-center">
                   <Link to="/guide">
                     <Button variant="outline">

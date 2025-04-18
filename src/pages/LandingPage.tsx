@@ -114,7 +114,7 @@ const LandingPage = () => {
         </header>
 
         {/* Hero Section */}
-        <section className="relative py-24 lg:py-36 overflow-hidden bg-gradient-to-b from-background to-muted/30">
+        <section className="relative py-10 lg:py-36 overflow-hidden bg-gradient-to-b from-background to-muted/30">
           <div className="container px-4 md:px-6">
             <div className="grid gap-8 lg:grid-cols-2 lg:gap-16 items-center">
               <div className="flex flex-col gap-4">

@@ -21,9 +21,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useTranslation } from "react-i18next";
 
 const ActivitiesPage = () => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [properties, setProperties] = useState<{ id: number; name: string }[]>([]);
@@ -50,8 +52,8 @@ const ActivitiesPage = () => {
       console.error('Errore nel caricamento delle attività:', error);
       toast({
         variant: 'destructive',
-        title: 'Errore',
-        description: 'Impossibile caricare le attività',
+        title: t("activities.errors.loading"),
+        description: t("activities.errors.loading"),
       });
     } finally {
       setLoading(false);
@@ -80,14 +82,14 @@ const ActivitiesPage = () => {
         console.error('Errore nel caricamento dei dati:', error);
         toast({
           variant: 'destructive',
-          title: 'Errore',
-          description: 'Impossibile caricare i dati necessari',
+          title: t("errors.general"),
+          description: t("activities.errors.loadingData"),
         });
       }
     };
     
     loadData();
-  }, []);
+  }, [toast, t]);
 
   // Gestione form
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -136,15 +138,15 @@ const ActivitiesPage = () => {
       loadActivities();
       
       toast({
-        title: 'Successo',
-        description: 'Attività creata con successo',
+        title: t("common.status.success"),
+        description: t("activities.success.activityAdded"),
       });
     } catch (error) {
       console.error('Errore nella creazione dell\'attività:', error);
       toast({
         variant: 'destructive',
-        title: 'Errore',
-        description: 'Impossibile creare l\'attività',
+        title: t("errors.general"),
+        description: t("errors.general"),
       });
     }
   };
@@ -162,15 +164,15 @@ const ActivitiesPage = () => {
       );
       
       toast({
-        title: 'Successo',
-        description: 'Stato attività aggiornato',
+        title: t("common.status.success"),
+        description: t("activities.success.statusUpdate"),
       });
     } catch (error) {
       console.error('Errore nell\'aggiornamento dello stato:', error);
       toast({
         variant: 'destructive',
-        title: 'Errore',
-        description: 'Impossibile aggiornare lo stato dell\'attività',
+        title: t("errors.general"),
+        description: t("activities.errors.statusUpdate"),
       });
     }
   };
@@ -372,19 +374,19 @@ const ActivitiesPage = () => {
                   {pastPending.length > 0 && (
                     <div>
                       <SectionHeader 
-                        title="Attività passate in attesa" 
-                        description="Attività non completate con data di scadenza passata"
+                        title={t("activities.pastPending.title")}
+                        description={t("activities.pastPending.description")}
                       />
                       <div className="overflow-x-auto">
                         <Table>
                           <TableHeader>
                             <TableRow>
-                              <TableHead>Descrizione</TableHead>
-                              <TableHead>Proprietà</TableHead>
-                              <TableHead>Data</TableHead>
-                              <TableHead>Priorità</TableHead>
-                              <TableHead>Stato</TableHead>
-                              <TableHead>Azioni</TableHead>
+                              <TableHead>{t("activities.fields.description")}</TableHead>
+                              <TableHead>{t("activities.fields.property")}</TableHead>
+                              <TableHead>{t("activities.fields.date")}</TableHead>
+                              <TableHead>{t("activities.fields.priority")}</TableHead>
+                              <TableHead>{t("activities.fields.status")}</TableHead>
+                              <TableHead>{t("activities.fields.actions")}</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -395,14 +397,14 @@ const ActivitiesPage = () => {
                                 <TableCell>{new Date(activity.date).toLocaleDateString('it-IT')}</TableCell>
                                 <TableCell>
                                   <Badge className={getPriorityColor(activity.priority)}>
-                                    {activity.priority === 'high' ? 'Alta' : 
-                                     activity.priority === 'medium' ? 'Media' : 'Bassa'}
+                                    {activity.priority === 'high' ? t("activities.priority.high") : 
+                                     activity.priority === 'medium' ? t("activities.priority.medium") : t("activities.priority.low")}
                                   </Badge>
                                 </TableCell>
                                 <TableCell>
                                   <Badge className={`${getStatusColor(activity.status)} whitespace-nowrap`}>
-                                    {activity.status === 'pending' ? 'In attesa' : 
-                                     activity.status === 'completed' ? 'Completata' : 'Ignorata'}
+                                    {activity.status === 'pending' ? t("activities.status.pending") : 
+                                     activity.status === 'completed' ? t("activities.status.completed") : t("activities.status.dismissed")}
                                   </Badge>
                                 </TableCell>
                                 <TableCell>
@@ -420,7 +422,7 @@ const ActivitiesPage = () => {
                                           </Button>
                                         </TooltipTrigger>
                                         <TooltipContent>
-                                          <p>Completa attività</p>
+                                          <p>{t("activities.actions.markCompleted")}</p>
                                         </TooltipContent>
                                       </Tooltip>
                                     </TooltipProvider>
@@ -438,7 +440,7 @@ const ActivitiesPage = () => {
                                           </Button>
                                         </TooltipTrigger>
                                         <TooltipContent>
-                                          <p>Ignora attività</p>
+                                          <p>{t("activities.actions.markDismissed")}</p>
                                         </TooltipContent>
                                       </Tooltip>
                                     </TooltipProvider>
@@ -456,19 +458,19 @@ const ActivitiesPage = () => {
                   {future.length > 0 && (
                     <div>
                       <SectionHeader 
-                        title="Attività future" 
-                        description="Attività pianificate con data futura"
+                        title={t("activities.future.title")}
+                        description={t("activities.future.description")}
                       />
                       <div className="overflow-x-auto">
                         <Table>
                           <TableHeader>
                             <TableRow>
-                              <TableHead>Descrizione</TableHead>
-                              <TableHead>Proprietà</TableHead>
-                              <TableHead>Data</TableHead>
-                              <TableHead>Priorità</TableHead>
-                              <TableHead>Stato</TableHead>
-                              <TableHead>Azioni</TableHead>
+                              <TableHead>{t("activities.fields.description")}</TableHead>
+                              <TableHead>{t("activities.fields.property")}</TableHead>
+                              <TableHead>{t("activities.fields.date")}</TableHead>
+                              <TableHead>{t("activities.fields.priority")}</TableHead>
+                              <TableHead>{t("activities.fields.status")}</TableHead>
+                              <TableHead>{t("activities.fields.actions")}</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -479,14 +481,14 @@ const ActivitiesPage = () => {
                                 <TableCell>{new Date(activity.date).toLocaleDateString('it-IT')}</TableCell>
                                 <TableCell>
                                   <Badge className={getPriorityColor(activity.priority)}>
-                                    {activity.priority === 'high' ? 'Alta' : 
-                                     activity.priority === 'medium' ? 'Media' : 'Bassa'}
+                                    {activity.priority === 'high' ? t("activities.priority.high") : 
+                                     activity.priority === 'medium' ? t("activities.priority.medium") : t("activities.priority.low")}
                                   </Badge>
                                 </TableCell>
                                 <TableCell>
                                   <Badge className={`${getStatusColor(activity.status)} whitespace-nowrap`}>
-                                    {activity.status === 'pending' ? 'In attesa' : 
-                                     activity.status === 'completed' ? 'Completata' : 'Ignorata'}
+                                    {activity.status === 'pending' ? t("activities.status.pending") : 
+                                     activity.status === 'completed' ? t("activities.status.completed") : t("activities.status.dismissed")}
                                   </Badge>
                                 </TableCell>
                                 <TableCell>
@@ -506,7 +508,7 @@ const ActivitiesPage = () => {
                                               </Button>
                                             </TooltipTrigger>
                                             <TooltipContent>
-                                              <p>Completa attività</p>
+                                              <p>{t("activities.actions.markCompleted")}</p>
                                             </TooltipContent>
                                           </Tooltip>
                                         </TooltipProvider>
@@ -524,7 +526,7 @@ const ActivitiesPage = () => {
                                               </Button>
                                             </TooltipTrigger>
                                             <TooltipContent>
-                                              <p>Ignora attività</p>
+                                              <p>{t("activities.actions.markDismissed")}</p>
                                             </TooltipContent>
                                           </Tooltip>
                                         </TooltipProvider>
@@ -544,7 +546,7 @@ const ActivitiesPage = () => {
                                             </Button>
                                           </TooltipTrigger>
                                           <TooltipContent>
-                                            <p>Riapri attività</p>
+                                            <p>{t("activities.actions.reopen")}</p>
                                           </TooltipContent>
                                         </Tooltip>
                                       </TooltipProvider>
@@ -563,58 +565,60 @@ const ActivitiesPage = () => {
                   {pastCompleted.length > 0 && (
                     <div>
                       <SectionHeader 
-                        title="Attività completate" 
-                        description="Attività completate o ignorate (sia passate che future)"
+                        title={t("activities.completed.title")}
+                        description={t("activities.completed.description")}
                       />
                       <div className="overflow-x-auto">
                         <Table>
                           <TableHeader>
                             <TableRow>
-                              <TableHead>Descrizione</TableHead>
-                              <TableHead>Proprietà</TableHead>
-                              <TableHead>Data</TableHead>
-                              <TableHead>Priorità</TableHead>
-                              <TableHead>Stato</TableHead>
-                              <TableHead>Azioni</TableHead>
+                              <TableHead>{t("activities.fields.description")}</TableHead>
+                              <TableHead>{t("activities.fields.property")}</TableHead>
+                              <TableHead>{t("activities.fields.date")}</TableHead>
+                              <TableHead>{t("activities.fields.priority")}</TableHead>
+                              <TableHead>{t("activities.fields.status")}</TableHead>
+                              <TableHead>{t("activities.fields.actions")}</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
                             {pastCompleted.map((activity) => (
-                              <TableRow key={activity.id} className={activity.status === 'completed' ? 'bg-green-50/50' : 'bg-gray-50/50'}>
+                              <TableRow key={activity.id} className="text-muted-foreground">
                                 <TableCell className="font-medium">{activity.description}</TableCell>
                                 <TableCell>{activity.property_name || "N/A"}</TableCell>
                                 <TableCell>{new Date(activity.date).toLocaleDateString('it-IT')}</TableCell>
                                 <TableCell>
-                                  <Badge className={getPriorityColor(activity.priority)}>
-                                    {activity.priority === 'high' ? 'Alta' : 
-                                     activity.priority === 'medium' ? 'Media' : 'Bassa'}
+                                  <Badge className={`${getPriorityColor(activity.priority)} opacity-50`}>
+                                    {activity.priority === 'high' ? t("activities.priority.high") : 
+                                     activity.priority === 'medium' ? t("activities.priority.medium") : t("activities.priority.low")}
                                   </Badge>
                                 </TableCell>
                                 <TableCell>
-                                  <Badge className={`${getStatusColor(activity.status)} whitespace-nowrap`}>
-                                    {activity.status === 'pending' ? 'In attesa' : 
-                                     activity.status === 'completed' ? 'Completata' : 'Ignorata'}
+                                  <Badge className={`${getStatusColor(activity.status)} whitespace-nowrap opacity-50`}>
+                                    {activity.status === 'pending' ? t("activities.status.pending") : 
+                                     activity.status === 'completed' ? t("activities.status.completed") : t("activities.status.dismissed")}
                                   </Badge>
                                 </TableCell>
                                 <TableCell>
-                                  <div className="flex space-x-2">
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => handleUpdateStatus(activity.id, 'pending')}
-                                            className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                                          >
-                                            <RotateCcw className="h-4 w-4" />
-                                          </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          <p>Riapri attività</p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
+                                  <div className="flex space-x-1">
+                                    {activity.status !== 'pending' && (
+                                      <TooltipProvider>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <Button
+                                              variant="ghost"
+                                              size="icon"
+                                              onClick={() => handleUpdateStatus(activity.id, 'pending')}
+                                              className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                            >
+                                              <RotateCcw className="h-4 w-4" />
+                                            </Button>
+                                          </TooltipTrigger>
+                                          <TooltipContent>
+                                            <p>{t("activities.actions.reopen")}</p>
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    )}
                                   </div>
                                 </TableCell>
                               </TableRow>

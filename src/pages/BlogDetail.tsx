@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { LandingNav } from "@/components/layout/LandingNav";
 import { blogPosts, BlogPost } from "@/data/blogPosts";
+import { PageBreadcrumb } from "@/components/layout/PageBreadcrumb";
 
 const BlogDetail = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -54,6 +55,13 @@ const BlogDetail = () => {
           {/* Header dell'articolo */}
           <div className="bg-muted/30 py-12 md:py-16">
             <div className="container px-4 md:px-6">
+              <PageBreadcrumb 
+                items={[
+                  { label: "Blog", href: "/blog" },
+                  { label: post.title }
+                ]} 
+              />
+
               <Link to="/blog" className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors mb-6">
                 <ArrowLeft className="h-4 w-4" />
                 <span>Torna agli articoli</span>

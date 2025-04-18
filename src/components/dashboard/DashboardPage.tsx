@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { usePageTutorial } from '@/hooks';
+import { useTranslation } from "react-i18next";
 
 import { 
   AreaChart, 
@@ -18,7 +19,7 @@ import {
   Legend,
   ComposedChart
 } from "recharts";
-import { ArrowUpRight, ArrowDownRight, Building2, Users, DollarSign, ChevronRight, Receipt, Calendar, RefreshCcw, FilePieChart, Percent } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Building2, Users, DollarSign, ChevronRight, Receipt, Calendar, RefreshCcw, FilePieChart, Percent, AlertTriangle } from "lucide-react";
 import { 
   AppLayout, 
   PageHeader, 
@@ -130,6 +131,7 @@ function StatCard({
 
 
 function IncomeChart() {
+  const { t } = useTranslation();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showNet, setShowNet] = useState(false);
@@ -436,91 +438,73 @@ function IncomeChart() {
   }
   
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <div className="flex flex-col space-y-1">
-          <CardTitle className="text-sm md:text-base font-normal">
-            {showNet ? 'Reddito Netto Mensile' : 'Reddito Lordo Mensile'} - {timeFilterTitle}
-          </CardTitle>
-          <CardDescription className="text-xs md:text-sm">
-            {showNet 
-              ? 'Visualizzazione del reddito netto (entrate - uscite)' 
-              : 'Visualizzazione dettagliata di entrate e uscite'}
-          </CardDescription>
-        </div>
-        <div className="flex flex-col md:flex-row gap-2">
-          {/* Aggiungiamo i filtri temporali */}
-          <div className="flex rounded-md overflow-hidden border">
+    <CardContainer>
+      <SectionHeader title={t("dashboard.charts.income")} />
+      <div className="flex flex-col md:flex-row gap-2">
+        {/* Aggiungiamo i filtri temporali */}
+        <div className="flex rounded-md overflow-hidden border">
+          <Button 
+            variant={timeFilter === "3months" ? "default" : "outline"} 
+            className={`text-xs px-2 md:px-2 h-7 md:h-8 rounded-none border-0 ${
+              timeFilter === "3months" ? 'bg-primary' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+            onClick={() => setTimeFilter("3months")}
+          >
+            3 Mesi
+          </Button>
+          <Button 
+            variant={timeFilter === "6months" ? "default" : "outline"} 
+            className={`text-xs px-2 md:px-2 h-7 md:h-8 rounded-none border-0 ${
+              timeFilter === "6months" ? 'bg-primary' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+            onClick={() => setTimeFilter("6months")}
+          >
+            6 Mesi
+          </Button>
+          <Button 
+            variant={timeFilter === "year" ? "default" : "outline"} 
+            className={`text-xs px-2 md:px-2 h-7 md:h-8 rounded-none border-0 ${
+              timeFilter === "year" ? 'bg-primary' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+            onClick={() => setTimeFilter("year")}
+          >
+            1 Anno
+          </Button>
+          <div className="relative">
             <Button 
-              variant={timeFilter === "3months" ? "default" : "outline"} 
+              variant={timeFilter === "specific-year" ? "default" : "outline"} 
               className={`text-xs px-2 md:px-2 h-7 md:h-8 rounded-none border-0 ${
-                timeFilter === "3months" ? 'bg-primary' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                timeFilter === "specific-year" ? 'bg-primary' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
-              onClick={() => setTimeFilter("3months")}
+              onClick={() => setTimeFilter("specific-year")}
             >
-              3 Mesi
+              {selectedYear}
             </Button>
-            <Button 
-              variant={timeFilter === "6months" ? "default" : "outline"} 
-              className={`text-xs px-2 md:px-2 h-7 md:h-8 rounded-none border-0 ${
-                timeFilter === "6months" ? 'bg-primary' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-              onClick={() => setTimeFilter("6months")}
-            >
-              6 Mesi
-            </Button>
-            <Button 
-              variant={timeFilter === "year" ? "default" : "outline"} 
-              className={`text-xs px-2 md:px-2 h-7 md:h-8 rounded-none border-0 ${
-                timeFilter === "year" ? 'bg-primary' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-              onClick={() => setTimeFilter("year")}
-            >
-              1 Anno
-            </Button>
-            <div className="relative">
-              <Button 
-                variant={timeFilter === "specific-year" ? "default" : "outline"} 
-                className={`text-xs px-2 md:px-2 h-7 md:h-8 rounded-none border-0 ${
-                  timeFilter === "specific-year" ? 'bg-primary' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-                onClick={() => setTimeFilter("specific-year")}
+            {timeFilter === "specific-year" && availableYears.length > 1 && (
+              <select 
+                className="absolute inset-0 opacity-0 cursor-pointer"
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(Number(e.target.value))}
               >
-                {selectedYear}
-              </Button>
-              {timeFilter === "specific-year" && availableYears.length > 1 && (
-                <select 
-                  className="absolute inset-0 opacity-0 cursor-pointer"
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(Number(e.target.value))}
-                >
-                  {availableYears.map(year => (
-                    <option key={year} value={year}>{year}</option>
-                  ))}
-                </select>
-              )}
-            </div>
-          </div>
-
-          {/* Toggle lordo/netto */}
-          <div className="flex rounded-md overflow-hidden border">
-            <Button 
-              variant={showNet ? "outline" : "default"} 
-              className={`text-xs md:text-sm px-2 md:px-3 h-7 md:h-8 rounded-none border-0 ${!showNet ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-              onClick={() => setShowNet(false)}
-            >
-              Lordo
-            </Button>
-            <Button 
-              variant={showNet ? "default" : "outline"} 
-              className={`text-xs md:text-sm px-2 md:px-3 h-7 md:h-8 rounded-none border-0 ${showNet ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-              onClick={() => setShowNet(true)}
-            >
-              Netto
-            </Button>
+                {availableYears.map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+            )}
           </div>
         </div>
-      </CardHeader>
+
+        {/* Toggle lordo/netto */}
+        <Toggle
+          variant="outline"
+          aria-label="Toggle net income"
+          pressed={showNet}
+          onPressedChange={setShowNet}
+        >
+          <DollarSign className="h-4 w-4 mr-1" />
+          {showNet ? "Netto" : "Lordo"}
+        </Toggle>
+      </div>
       <CardContent>
         <div className="h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
@@ -618,11 +602,12 @@ function IncomeChart() {
           </ResponsiveContainer>
         </div>
       </CardContent>
-    </Card>
+    </CardContainer>
   );
 }
 
 function OccupancyChart() {
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [occupancyData, setOccupancyData] = useState<{ name: string, value: number }[]>([]);
@@ -670,8 +655,8 @@ function OccupancyChart() {
   }
   
   return (
-    <CardContainer className="h-[250px] md:h-[280px]">
-      <SectionHeader title="Tasso di occupazione" />
+    <CardContainer>
+      <SectionHeader title={t("dashboard.charts.occupancy")} />
       <ResponsiveContainer width="100%" height="90%">
         <PieChart>
           <Pie
@@ -696,6 +681,7 @@ function OccupancyChart() {
 }
 
 function PropertyTypeChart() {
+  const { t } = useTranslation();
   const [data, setData] = useState<{ name: string, value: number }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -720,8 +706,8 @@ function PropertyTypeChart() {
   
   if (isLoading) {
     return (
-      <CardContainer className="h-[250px] md:h-[280px]">
-        <SectionHeader title="Tipologie di proprietà" />
+      <CardContainer>
+        <SectionHeader title={t("dashboard.charts.propertyTypes")} />
         <div className="h-full flex items-center justify-center">
           <Skeleton className="h-[200px] w-[200px] rounded-full" />
         </div>
@@ -731,19 +717,12 @@ function PropertyTypeChart() {
   
   if (error) {
     return (
-      <CardContainer className="h-[250px] md:h-[280px]">
-        <SectionHeader title="Tipologie di proprietà" />
+      <CardContainer>
+        <SectionHeader title={t("dashboard.charts.propertyTypes")} />
         <div className="h-full flex items-center justify-center">
           <div className="text-center text-muted-foreground">
-            <p>{error}</p>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="mt-4"
-              onClick={() => window.location.reload()}
-            >
-              Riprova
-            </Button>
+            <AlertTriangle className="h-8 w-8 mx-auto mb-2" />
+            <p>Impossibile caricare i dati</p>
           </div>
         </div>
       </CardContainer>
@@ -752,8 +731,8 @@ function PropertyTypeChart() {
   
   if (!data || data.length === 0) {
     return (
-      <CardContainer className="h-[250px] md:h-[280px]">
-        <SectionHeader title="Tipologie di proprietà" />
+      <CardContainer>
+        <SectionHeader title={t("dashboard.charts.propertyTypes")} />
         <div className="h-full flex items-center justify-center">
           <p className="text-muted-foreground">Nessuna proprietà disponibile</p>
         </div>
@@ -762,8 +741,8 @@ function PropertyTypeChart() {
   }
   
   return (
-    <CardContainer className="h-[250px] md:h-[280px]">
-      <SectionHeader title="Tipologie di proprietà" />
+    <CardContainer>
+      <SectionHeader title={t("dashboard.charts.propertyTypes")} />
       <ResponsiveContainer width="100%" height="90%">
         <PieChart>
           <Pie
@@ -791,12 +770,13 @@ function PropertyTypeChart() {
 }
 
 function RentCollectionChart() {
+  const { t } = useTranslation();
   const data = getRentCollectionStatus();
   const COLORS = ["#10b981", "#f97316", "#ef4444"];
   
   return (
-    <CardContainer className="h-[300px] md:h-[350px]">
-      <SectionHeader title="Stato Riscossione Affitti" />
+    <CardContainer>
+      <SectionHeader title={t("dashboard.charts.rentCollection")} />
       <ResponsiveContainer width="100%" height="90%">
         <BarChart
           data={data}
@@ -819,6 +799,7 @@ function RentCollectionChart() {
 }
 
 function RecentActivities() {
+  const { t } = useTranslation();
   const [activities, setActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
@@ -857,16 +838,14 @@ function RecentActivities() {
   return (
     <CardContainer>
       <div className="flex justify-between items-center">
-        <SectionHeader title="Attività recenti" />
+        <SectionHeader title={t("dashboard.recentActivities")} />
         <Button 
           variant="outline" 
-          size="sm" 
+          size="sm"
           onClick={handleGenerateActivities}
-          disabled={generating}
-          className="flex items-center gap-1 text-xs"
         >
-          <RefreshCcw className="h-3 w-3" />
-          {generating ? "Generazione..." : "Genera attività"}
+          <RefreshCcw className="h-4 w-4 mr-1" />
+          Rigenera
         </Button>
       </div>
       {loading ? (
@@ -910,6 +889,7 @@ function RecentActivities() {
 }
 
 export default function DashboardPage() {
+  const { t } = useTranslation();
   const [summary, setSummary] = useState<DashboardSummaryResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1396,23 +1376,23 @@ export default function DashboardPage() {
   return (
     <AppLayout>
       <PageHeader
-        title="Pannello di controllo"
-        description="Panoramica delle prestazioni dei tuoi immobili in affitto"
+        title={t("dashboard.title")}
+        description={t("dashboard.description")}
       />
       
       <div className="container mx-auto p-2 sm:p-6">
         <div className="flex justify-between items-center mb-4 sm:mb-6" data-tutorial="dashboard-overview">
-          <h1 className="text-2xl sm:text-3xl font-bold">Dashboard</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">{t("dashboard.overview")}</h1>
           <Button onClick={generateReport}>
             <FilePieChart className="mr-2 h-4 w-4" />
-            Genera Report
+            {t("dashboard.generateReport")}
           </Button>
         </div>
         
         {/* Statistiche */}
         <div className="grid gap-3 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 mb-4 sm:mb-8" data-tutorial="dashboard-stats">
           <StatCard
-            title="Proprietà"
+            title={t("dashboard.stats.properties")}
             value={summary.totalProperties}
             icon={Building2}
             trend={trends.properties.trend}
@@ -1421,7 +1401,7 @@ export default function DashboardPage() {
             className="h-[120px] md:h-auto"
           />
           <StatCard
-            title="Inquilini"
+            title={t("dashboard.stats.tenants")}
             value={summary.totalTenants}
             icon={Users}
             trend={trends.tenants.trend}
@@ -1430,7 +1410,7 @@ export default function DashboardPage() {
             className="h-[120px] md:h-auto"
           />
           <StatCard
-            title="Ricavo mensile"
+            title={t("dashboard.stats.monthlyIncome")}
             value={`€${summary.rentIncome.toLocaleString()}`}
             icon={Receipt}
             trend={trends.income.trend}
@@ -1439,7 +1419,7 @@ export default function DashboardPage() {
             className="h-[120px] md:h-auto"
           />
           <StatCard
-            title="Tasso occupazione"
+            title={t("dashboard.stats.occupancyRate")}
             value={formatOccupancyRate(summary.occupancyRate)}
             icon={Users}
             trend={trends.occupancy.trend}

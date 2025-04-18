@@ -1,0 +1,1614 @@
+{
+  "settings": {
+    "title": "Settings",
+    "description": "Customize the application based on your preferences",
+    "tabs": {
+      "general": "General",
+      "notifications": "Notifications",
+      "appearance": "Appearance"
+    },
+    "general": {
+      "title": "General Settings",
+      "description": "Configure basic application settings",
+      "language": {
+        "title": "Language",
+        "description": "Select the user interface language"
+      },
+      "behavior": {
+        "title": "Application Behavior"
+      },
+      "autoSave": {
+        "title": "Auto Save",
+        "label": "Enable Auto Save",
+        "description": "Automatically save changes without confirmation"
+      },
+      "confirmDialogs": {
+        "title": "Confirmation Dialogs",
+        "label": "Show Confirmation Dialogs",
+        "description": "Display confirmation dialogs before performing important actions"
+      },
+      "saveButton": "Save Settings"
+    },
+    "notifications": {
+      "title": "Notification Settings",
+      "description": "Configure how and when to receive notifications",
+      "notificationsEnabled": {
+        "title": "Enable Notifications",
+        "description": "Turn all notifications on or off"
+      },
+      "channels": {
+        "title": "Notification Channels"
+      },
+      "emailNotifications": {
+        "label": "Email Notifications",
+        "description": "Receive notifications via email"
+      },
+      "pushNotifications": {
+        "label": "Push Notifications",
+        "description": "Receive push notifications in the browser"
+      },
+      "categories": {
+        "title": "Notification Categories"
+      },
+      "contractNotifications": {
+        "label": "Contract Notifications",
+        "description": "Notifications about contract expiration or renewal"
+      },
+      "tenantNotifications": {
+        "label": "Tenant Notifications",
+        "description": "Messages and communications from tenants"
+      },
+      "systemNotifications": {
+        "label": "System Notifications",
+        "description": "System updates and maintenance"
+      },
+      "saveButton": "Save Settings"
+    },
+    "appearance": {
+      "title": "Appearance Settings",
+      "description": "Customize the visual appearance of the application",
+      "theme": {
+        "title": "Theme",
+        "options": {
+          "light": "Light",
+          "dark": "Dark",
+          "system": "System"
+        }
+      },
+      "fontSize": {
+        "title": "Font Size",
+        "options": {
+          "small": "Small",
+          "medium": "Medium",
+          "large": "Large"
+        }
+      },
+      "animations": {
+        "title": "Animations",
+        "label": "Interface Animations",
+        "description": "Enable or disable interface animations"
+      },
+      "saveButton": "Save Settings"
+    },
+    "toasts": {
+      "generalSaved": "General settings saved successfully",
+      "notificationsSaved": "Notification settings saved successfully",
+      "appearanceSaved": "Appearance settings saved successfully",
+      "settingsReset": "Settings reset to default values"
+    }
+  },
+  "common": {
+    "actions": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "edit": "Edit",
+      "add": "Add",
+      "confirm": "Confirm",
+      "back": "Back",
+      "next": "Next",
+      "search": "Search",
+      "filter": "Filter",
+      "upload": "Upload",
+      "download": "Download",
+      "import": "Import",
+      "export": "Export",
+      "refresh": "Refresh"
+    },
+    "status": {
+      "loading": "Loading...",
+      "success": "Operation completed",
+      "error": "An error occurred",
+      "empty": "No items found",
+      "saving": "Saving...",
+      "processing": "Processing..."
+    },
+    "navigation": {
+      "dashboard": "Dashboard",
+      "properties": "Properties",
+      "tenants": "Tenants",
+      "contracts": "Contracts",
+      "payments": "Payments",
+      "documents": "Documents",
+      "reports": "Reports",
+      "settings": "Settings",
+      "profile": "Profile",
+      "logout": "Logout",
+      "home": "Home",
+      "pricing": "Free Service",
+      "blog": "Blog",
+      "guides": "Guides",
+      "support": "Support",
+      "login": "Login",
+      "register": "Register",
+      "features": "Features",
+      "activities": "Activities",
+      "tourism": "Tourism Rentals",
+      "tourismProperties": "Tourism Properties",
+      "bookings": "Bookings",
+      "import": "Import",
+      "info": "Information",
+      "appSettings": "App Settings",
+      "notifications": "Notifications"
+    },
+    "dateTime": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "tomorrow": "Tomorrow",
+      "days": "Days",
+      "weeks": "Weeks",
+      "months": "Months",
+      "years": "Years"
+    }
+  },
+  "cookies": {
+    "title": "Cookie Settings",
+    "privacyMessage": "Your privacy is important",
+    "description": "Manage your cookie preferences. Essential cookies are necessary for the site to function.",
+    "usageMessage": "We use cookies to improve your browsing experience, personalize content and ads, provide social media features and analyze our traffic.",
+    "readMore": "Read our",
+    "cookiePolicy": "Cookie Policy",
+    "privacyPolicy": "Privacy Policy",
+    "forMoreInfo": "for more details",
+    "and": "and the",
+    "categories": {
+      "essential": {
+        "title": "Essential Cookies",
+        "description": "These cookies are necessary for the site to function and cannot be disabled."
+      },
+      "analytics": {
+        "title": "Analytics Cookies",
+        "description": "They help us understand how you use the site, to improve the experience."
+      },
+      "marketing": {
+        "title": "Marketing Cookies",
+        "description": "Used to show you relevant ads based on your interests."
+      }
+    },
+    "buttons": {
+      "acceptAll": "Accept all",
+      "acceptEssential": "Essential only",
+      "save": "Save preferences",
+      "reset": "Reset",
+      "close": "Close"
+    }
+  },
+  "footer": {
+    "quickLinks": "Quick Links",
+    "resources": "Resources",
+    "legal": "Legal",
+    "cookieSettings": "Cookie Settings",
+    "termsOfService": "Terms of Service",
+    "companyDescription": "The complete solution for rental and property management.",
+    "allRightsReserved": "All rights reserved."
+  },
+  "search": {
+    "placeholder": "Search guides..."
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "description": "Overview of your rental property performance",
+    "overview": "Dashboard",
+    "generateReport": "Generate Report",
+    "stats": {
+      "properties": "Properties",
+      "tenants": "Tenants",
+      "monthlyIncome": "Monthly Income",
+      "occupancyRate": "Occupancy Rate"
+    },
+    "charts": {
+      "income": "Income Trend",
+      "occupancy": "Occupancy Rate",
+      "propertyTypes": "Property Types",
+      "rentCollection": "Rent Collection Status"
+    },
+    "recentActivities": "Recent Activities",
+    "noTrend": "no change",
+    "thisMonth": "this month"
+  },
+  "properties": {
+    "title": "Properties",
+    "description": "Manage your rental properties",
+    "addProperty": "Add Property",
+    "propertyList": "Property List",
+    "noProperties": "No properties found",
+    "searchProperties": "Search properties...",
+    "filters": {
+      "all": "All",
+      "available": "Available",
+      "occupied": "Occupied",
+      "maintenance": "In Maintenance"
+    },
+    "propertyCard": {
+      "address": "Address",
+      "type": "Type",
+      "status": "Status",
+      "rent": "Rent",
+      "size": "Size",
+      "rooms": "Rooms",
+      "bath": "Bathrooms",
+      "viewDetails": "View Details"
+    },
+    "status": {
+      "available": "Available",
+      "occupied": "Occupied",
+      "maintenance": "In Maintenance",
+      "reserved": "Reserved"
+    }
+  },
+  "tenants": {
+    "title": "Tenants",
+    "description": "Manage your tenants",
+    "addTenant": "Add Tenant",
+    "tenantList": "Tenant List",
+    "noTenants": "No tenants found",
+    "searchTenants": "Search tenants...",
+    "filters": {
+      "all": "All",
+      "active": "Active",
+      "former": "Former",
+      "late": "Late"
+    },
+    "tenantDetails": {
+      "contactInfo": "Contact Information",
+      "leaseInfo": "Lease Information",
+      "paymentHistory": "Payment History",
+      "documents": "Documents",
+      "notes": "Notes"
+    },
+    "status": {
+      "active": "Active",
+      "former": "Former",
+      "late": "Late",
+      "onNotice": "On Notice"
+    }
+  },
+  "contracts": {
+    "title": "Contracts",
+    "description": "Manage your rental contracts",
+    "yourContracts": "Your contracts",
+    "totalContracts": "{count} total contracts",
+    "addContract": "Add Contract",
+    "newContract": "New Contract",
+    "addFirstContract": "Add first contract",
+    "contractList": "Contract List",
+    "noContracts": "No contracts found",
+    "noContractsYet": "You haven't added any contracts yet.",
+    "searchContracts": "Search contracts...",
+    "loading": "Loading...",
+    "filters": {
+      "all": "All",
+      "active": "Active",
+      "expired": "Expired",
+      "upcoming": "Upcoming"
+    },
+    "contractDetails": {
+      "propertyInfo": "Property Information",
+      "tenantInfo": "Tenant Information",
+      "contractTerms": "Contract Terms",
+      "paymentSchedule": "Payment Schedule",
+      "documents": "Documents",
+      "notes": "Notes"
+    },
+    "fields": {
+      "id": "ID",
+      "property": "Property",
+      "tenant": "Tenant",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "rentAmount": "Monthly Rent",
+      "deposit": "Deposit",
+      "status": "Status"
+    },
+    "status": {
+      "active": "Active",
+      "expired": "Expired",
+      "upcoming": "Upcoming",
+      "terminated": "Terminated"
+    },
+    "noPropertyId": "None",
+    "propertyIdNotFound": "Property ID not found",
+    "noTenantId": "None",
+    "tenantIdNotFound": "Tenant ID not found",
+    "form": {
+      "tenant": "Tenant",
+      "property": "Property",
+      "unit": "Unit",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "rentAmount": "Rent Amount",
+      "depositAmount": "Deposit Amount",
+      "paymentFrequency": "Payment Frequency",
+      "paymentDueDay": "Payment Due Day",
+      "autoRenewal": "Auto Renewal",
+      "specialTerms": "Special Terms",
+      "submit": "Save Contract",
+      "cancel": "Cancel"
+    },
+    "errors": {
+      "loadingData": "Unable to load data",
+      "loading": "Unable to load contracts",
+      "adding": "Unable to add contract",
+      "updating": "Unable to update contract",
+      "deleting": "Unable to delete contract",
+      "renewing": "Unable to renew contract",
+      "terminating": "Unable to terminate contract"
+    },
+    "filters": {
+      "all": "All",
+      "active": "Active",
+      "expired": "Expired",
+      "expiringSoon": "Expiring soon",
+      "property": "Property",
+      "tenant": "Tenant",
+      "applyFilters": "Apply filters",
+      "resetFilters": "Reset filters"
+    },
+    "fields": {
+      "contractCode": "Contract code",
+      "property": "Property",
+      "tenant": "Tenant",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "rentAmount": "Rent amount",
+      "depositAmount": "Deposit amount",
+      "paymentFrequency": "Payment frequency",
+      "status": "Status",
+      "type": "Contract type",
+      "renewalType": "Renewal type",
+      "noticePeriod": "Notice period",
+      "documents": "Documents",
+      "notes": "Notes",
+      "actions": "Actions"
+    },
+    "form": {
+      "title": "Contract details",
+      "basicInfo": "Basic information",
+      "financialDetails": "Financial details",
+      "termsAndConditions": "Terms and conditions",
+      "additionalInfo": "Additional information",
+      "contractCode": "Contract code",
+      "generateCode": "Generate code",
+      "property": "Property",
+      "selectProperty": "Select a property",
+      "tenant": "Tenant",
+      "selectTenant": "Select a tenant",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "rentAmount": "Rent amount",
+      "depositAmount": "Deposit amount",
+      "paymentFrequency": "Payment frequency",
+      "selectPaymentFrequency": "Select payment frequency",
+      "paymentDay": "Payment day",
+      "type": "Contract type",
+      "selectType": "Select contract type",
+      "renewalType": "Renewal type",
+      "selectRenewalType": "Select renewal type",
+      "noticePeriod": "Notice period (days)",
+      "lateFeesApplicable": "Late fees applicable",
+      "lateFeeAmount": "Late fee amount",
+      "lateFeeType": "Late fee type",
+      "fixed": "Fixed",
+      "percentage": "Percentage",
+      "gracePeriod": "Grace period (days)",
+      "utilities": "Utilities",
+      "includedUtilities": "Included utilities",
+      "selectUtilities": "Select utilities",
+      "noUtilities": "No utilities selected",
+      "specialTerms": "Special terms",
+      "specialTermsPlaceholder": "Enter any special terms",
+      "documents": "Documents",
+      "uploadDocuments": "Upload documents",
+      "noDocuments": "No documents uploaded",
+      "notes": "Notes",
+      "notesPlaceholder": "Enter any notes",
+      "submit": "Save contract",
+      "reset": "Reset",
+      "cancel": "Cancel"
+    },
+    "statuses": {
+      "active": "Active",
+      "expired": "Expired",
+      "terminated": "Terminated",
+      "pending": "Pending"
+    },
+    "types": {
+      "fixed_term": "Fixed term contract",
+      "periodic": "Periodic contract",
+      "indefinite": "Indefinite contract",
+      "sublease": "Sublease",
+      "other": "Other"
+    },
+    "renewalTypes": {
+      "automatic": "Automatic",
+      "manual": "Manual",
+      "conditional": "Conditional",
+      "none": "No renewal"
+    },
+    "paymentFrequencies": {
+      "monthly": "Monthly",
+      "quarterly": "Quarterly",
+      "biannual": "Biannual",
+      "annual": "Annual",
+      "weekly": "Weekly",
+      "biweekly": "Biweekly"
+    },
+    "utilities": {
+      "water": "Water",
+      "electricity": "Electricity",
+      "gas": "Gas",
+      "internet": "Internet",
+      "heating": "Heating",
+      "cooling": "Cooling",
+      "waste": "Waste",
+      "maintenance": "Maintenance",
+      "other": "Other"
+    },
+    "details": {
+      "title": "Contract details",
+      "basicInfo": "Basic information",
+      "financialDetails": "Financial details",
+      "termsAndConditions": "Terms and conditions",
+      "documents": "Documents",
+      "history": "History"
+    },
+    "actions": {
+      "view": "View",
+      "edit": "Edit",
+      "delete": "Delete",
+      "renew": "Renew",
+      "terminate": "Terminate",
+      "print": "Print",
+      "download": "Download PDF",
+      "sendToTenant": "Send to tenant"
+    },
+    "history": {
+      "title": "Contract history",
+      "date": "Date",
+      "event": "Event",
+      "user": "User",
+      "notes": "Notes",
+      "created": "Contract created",
+      "updated": "Contract updated",
+      "renewed": "Contract renewed",
+      "terminated": "Contract terminated"
+    },
+    "renewal": {
+      "title": "Contract renewal",
+      "currentEndDate": "Current end date",
+      "newStartDate": "New start date",
+      "newEndDate": "New end date",
+      "currentRent": "Current rent",
+      "newRent": "New rent",
+      "rentIncrease": "Rent increase",
+      "keepCurrentTerms": "Keep current terms",
+      "specialTerms": "Special terms",
+      "notes": "Notes",
+      "submit": "Confirm renewal",
+      "cancel": "Cancel"
+    },
+    "termination": {
+      "title": "Terminate contract",
+      "terminationDate": "Termination date",
+      "reason": "Reason",
+      "reasonPlaceholder": "Enter the reason for termination",
+      "depositReturn": "Deposit return",
+      "depositReturnAmount": "Deposit amount to return",
+      "conditions": "Conditions",
+      "conditionsPlaceholder": "Enter any conditions",
+      "notes": "Notes",
+      "notesPlaceholder": "Enter any notes",
+      "submit": "Confirm termination",
+      "cancel": "Cancel"
+    }
+  },
+  "transactions": {
+    "title": "Transactions",
+    "description": "Manage all financial transactions",
+    "loading": "Loading transactions...",
+    "addTransaction": "Add transaction",
+    "searchTransactions": "Search transactions...",
+    "noTransactions": "No transactions found",
+    "filters": {
+      "all": "All",
+      "income": "Income",
+      "expense": "Expenses",
+      "pending": "Pending",
+      "completed": "Completed",
+      "property": "Property",
+      "category": "Category",
+      "dateRange": "Date range",
+      "applyFilters": "Apply filters",
+      "resetFilters": "Reset filters"
+    },
+    "fields": {
+      "id": "ID",
+      "date": "Date",
+      "amount": "Amount",
+      "type": "Type",
+      "category": "Category",
+      "property": "Property",
+      "tenant": "Tenant",
+      "description": "Description",
+      "status": "Status",
+      "paymentMethod": "Payment method",
+      "reference": "Reference",
+      "notes": "Notes",
+      "attachments": "Attachments",
+      "actions": "Actions"
+    },
+    "types": {
+      "income": "Income",
+      "expense": "Expense",
+      "transfer": "Transfer",
+      "deposit": "Deposit",
+      "refund": "Refund"
+    },
+    "status": {
+      "pending": "Pending",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "failed": "Failed",
+      "refunded": "Refunded"
+    },
+    "categories": {
+      "rent": "Rent",
+      "deposit": "Deposit",
+      "maintenance": "Maintenance",
+      "utilities": "Utilities",
+      "taxes": "Taxes",
+      "insurance": "Insurance",
+      "management": "Management",
+      "other": "Other"
+    },
+    "paymentMethods": {
+      "cash": "Cash",
+      "bankTransfer": "Bank Transfer",
+      "creditCard": "Credit Card",
+      "check": "Check",
+      "other": "Other"
+    },
+    "form": {
+      "title": "Transaction details",
+      "date": "Date",
+      "amount": "Amount",
+      "type": "Type",
+      "category": "Category",
+      "property": "Property",
+      "selectProperty": "Select property",
+      "tenant": "Tenant",
+      "selectTenant": "Select tenant",
+      "description": "Description",
+      "descriptionPlaceholder": "Describe the transaction",
+      "status": "Status",
+      "paymentMethod": "Payment method",
+      "reference": "Reference",
+      "referencePlaceholder": "Invoice number, check number, etc.",
+      "notes": "Notes",
+      "notesPlaceholder": "Add any notes",
+      "attachments": "Attachments",
+      "uploadAttachments": "Upload attachments",
+      "submit": "Save transaction",
+      "cancel": "Cancel"
+    },
+    "confirmation": {
+      "deleteTitle": "Delete transaction",
+      "deleteMessage": "Are you sure you want to delete this transaction? This action cannot be undone.",
+      "cancelTitle": "Cancel transaction",
+      "cancelMessage": "Are you sure you want to cancel this transaction?",
+      "cancel": "Cancel",
+      "confirm": "Confirm"
+    },
+    "details": {
+      "title": "Transaction details",
+      "basicInfo": "Basic information",
+      "financialDetails": "Financial details",
+      "documents": "Documents",
+      "history": "History"
+    }
+  },
+  "activities": {
+    "title": "Activities",
+    "description": "Manage and monitor all activities",
+    "loading": "Loading activities...",
+    "addActivity": "Add activity",
+    "addYourFirst": "No activities present. Add your first activity.",
+    "noActivities": "No activities found",
+    "upcomingActivities": "Upcoming activities",
+    "today": "Today",
+    "thisWeek": "This week",
+    "later": "Later",
+    "completed": {
+      "title": "Completed activities",
+      "description": "Activities that have been completed"
+    },
+    "future": {
+      "title": "Future activities",
+      "description": "Activities scheduled for future dates"
+    },
+    "pastPending": {
+      "title": "Past Pending Activities",
+      "description": "Activities you haven't completed yet"
+    },
+    "dismissed": "Dismissed",
+    "addNew": {
+      "title": "Add new activity",
+      "description": "Describe the activity...",
+      "property": "Property",
+      "selectProperty": "Select property",
+      "tenant": "Tenant (optional)",
+      "selectTenant": "Select tenant",
+      "noTenant": "No tenant",
+      "date": "Date",
+      "type": "Type",
+      "selectType": "Select type",
+      "priority": "Priority",
+      "selectPriority": "Select priority",
+      "addButton": "Add activity"
+    },
+    "types": {
+      "contract_expiration": "Contract expiration",
+      "rent_payment": "Rent payment",
+      "maintenance": "Maintenance",
+      "other": "Other"
+    },
+    "success": {
+      "activityAdded": "Activity added successfully",
+      "activityUpdated": "Activity updated successfully",
+      "activityDeleted": "Activity deleted successfully",
+      "activityCompleted": "Activity completed successfully",
+      "activityDismissed": "Activity dismissed successfully",
+      "statusUpdate": "Activity status updated successfully"
+    },
+    "errors": {
+      "loading": "Unable to load activities",
+      "adding": "Unable to add activity",
+      "updating": "Unable to update activity",
+      "deleting": "Unable to delete activity",
+      "completing": "Unable to complete activity",
+      "dismissing": "Unable to dismiss activity",
+      "loadingData": "Unable to load data",
+      "statusUpdate": "Unable to update activity status"
+    },
+    "filters": {
+      "all": "All",
+      "pending": "Pending",
+      "completed": "Completed",
+      "dismissed": "Dismissed",
+      "highPriority": "High priority",
+      "mediumPriority": "Medium priority",
+      "lowPriority": "Low priority",
+      "property": "Property",
+      "tenant": "Tenant",
+      "type": "Type",
+      "applyFilters": "Apply filters",
+      "resetFilters": "Reset filters"
+    },
+    "fields": {
+      "title": "Title",
+      "description": "Description",
+      "date": "Date",
+      "dueDate": "Due date",
+      "property": "Property",
+      "tenant": "Tenant",
+      "priority": "Priority",
+      "status": "Status",
+      "type": "Type",
+      "assignedTo": "Assigned to",
+      "notes": "Notes",
+      "attachments": "Attachments",
+      "actions": "Actions",
+      "createdAt": "Creation date",
+      "updatedAt": "Update date",
+      "completedAt": "Completion date",
+      "dismissedAt": "Dismissal date"
+    },
+    "priority": {
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "status": {
+      "pending": "Pending",
+      "completed": "Completed",
+      "dismissed": "Dismissed",
+      "overdue": "Overdue"
+    },
+    "confirmation": {
+      "completeTitle": "Complete activity",
+      "completeMessage": "Are you sure you want to complete this activity?",
+      "dismissTitle": "Dismiss activity",
+      "dismissMessage": "Are you sure you want to dismiss this activity?",
+      "deleteTitle": "Delete activity",
+      "deleteMessage": "Are you sure you want to delete this activity? This action cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Confirm"
+    },
+    "actionResults": {
+      "activityTitle": "Activity: {title}",
+      "completed": "Activity completed on {date}",
+      "dismissed": "Activity dismissed on {date}",
+      "deleted": "Activity deleted on {date}",
+      "added": "Activity added on {date}",
+      "updated": "Activity updated on {date}"
+    }
+  },
+  "tourism": {
+    "title": "Tourist Rentals",
+    "description": "Manage properties and bookings for tourist rentals",
+    "properties": {
+      "title": "Tourist Properties",
+      "description": "Manage your tourist properties",
+      "addProperty": "Add Property",
+      "propertyList": "Property List",
+      "noProperties": "No tourist properties found",
+      "searchProperties": "Search properties...",
+      "propertyDetails": {
+        "amenities": "Amenities",
+        "availability": "Availability",
+        "pricing": "Pricing",
+        "location": "Location",
+        "photos": "Photos",
+        "reviews": "Reviews",
+        "rules": "Rules"
+      },
+      "amenities": {
+        "wifi": "Wi-Fi",
+        "airConditioning": "Air Conditioning",
+        "heating": "Heating",
+        "kitchen": "Kitchen",
+        "tv": "TV",
+        "washer": "Washer",
+        "dryer": "Dryer",
+        "parking": "Parking",
+        "elevator": "Elevator",
+        "pool": "Pool",
+        "gym": "Gym"
+      }
+    },
+    "bookings": {
+      "title": "Bookings",
+      "description": "Manage bookings for your tourist properties",
+      "addBooking": "Add Booking",
+      "bookingList": "Booking List",
+      "noBookings": "No bookings found",
+      "searchBookings": "Search bookings...",
+      "filters": {
+        "all": "All",
+        "upcoming": "Upcoming",
+        "current": "Current",
+        "past": "Past",
+        "cancelled": "Cancelled"
+      },
+      "bookingDetails": {
+        "property": "Property",
+        "guest": "Guest",
+        "dates": "Dates",
+        "checkIn": "Check-in",
+        "checkOut": "Check-out",
+        "nights": "Nights",
+        "guests": "Guests",
+        "totalAmount": "Total Amount",
+        "status": "Status",
+        "paymentStatus": "Payment Status",
+        "notes": "Notes"
+      },
+      "status": {
+        "confirmed": "Confirmed",
+        "pending": "Pending",
+        "cancelled": "Cancelled",
+        "completed": "Completed"
+      },
+      "form": {
+        "property": "Property",
+        "guestName": "Guest Name",
+        "guestEmail": "Guest Email",
+        "guestPhone": "Guest Phone",
+        "checkIn": "Check-in Date",
+        "checkOut": "Check-out Date",
+        "adults": "Adults",
+        "children": "Children",
+        "amount": "Amount",
+        "deposit": "Deposit",
+        "paymentMethod": "Payment Method",
+        "notes": "Notes",
+        "submit": "Save Booking",
+        "cancel": "Cancel"
+      }
+    },
+    "calendar": {
+      "title": "Availability Calendar",
+      "monthView": "Month View",
+      "weekView": "Week View",
+      "dayView": "Day View",
+      "listView": "List View",
+      "today": "Today",
+      "bookings": "Bookings",
+      "available": "Available",
+      "unavailable": "Unavailable",
+      "blocked": "Blocked"
+    }
+  },
+  "reports": {
+    "title": "Reports",
+    "description": "View and generate detailed reports",
+    "generateReport": "Generate Report",
+    "reportTypes": {
+      "financial": "Financial Report",
+      "occupancy": "Occupancy Report",
+      "propertyPerformance": "Property Performance",
+      "tenantHistory": "Tenant History",
+      "maintenanceHistory": "Maintenance History",
+      "taxReport": "Tax Report"
+    },
+    "filters": {
+      "dateRange": "Date Range",
+      "property": "Property",
+      "tenant": "Tenant",
+      "categories": "Categories",
+      "applyFilters": "Apply Filters",
+      "resetFilters": "Reset Filters"
+    },
+    "timeframes": {
+      "thisMonth": "This Month",
+      "lastMonth": "Last Month",
+      "thisQuarter": "This Quarter",
+      "lastQuarter": "Last Quarter",
+      "thisYear": "This Year",
+      "lastYear": "Last Year",
+      "custom": "Custom"
+    },
+    "export": {
+      "pdf": "Export as PDF",
+      "excel": "Export as Excel",
+      "csv": "Export as CSV",
+      "print": "Print"
+    }
+  },
+  "import": {
+    "title": "Import",
+    "description": "Import data from external files",
+    "selectFile": "Select File",
+    "dragAndDrop": "Drag and drop file here or click to select",
+    "supportedFormats": "Supported formats",
+    "maxFileSize": "Maximum file size",
+    "steps": {
+      "uploadFile": "Upload File",
+      "mapFields": "Map Fields",
+      "preview": "Preview",
+      "import": "Import"
+    },
+    "fieldMapping": {
+      "title": "Field Mapping",
+      "description": "Map file fields to application fields",
+      "sourceField": "Source Field",
+      "targetField": "Target Field",
+      "required": "Required",
+      "preview": "Preview",
+      "unmappedFields": "Unmapped Fields",
+      "autoMap": "Auto Map"
+    },
+    "preview": {
+      "title": "Data Preview",
+      "description": "Verify data before importing",
+      "records": "Records",
+      "errors": "Errors"
+    },
+    "results": {
+      "title": "Import Results",
+      "description": "Summary of import results",
+      "totalRecords": "Total Records",
+      "importedRecords": "Imported Records",
+      "failedRecords": "Failed Records",
+      "skipReason": "Skip Reason",
+      "errorDetails": "Error Details",
+      "duration": "Duration",
+      "downloadErrors": "Download Errors"
+    }
+  },
+  "documents": {
+    "title": "Documents",
+    "description": "Manage and view documents",
+    "upload": "Upload Document",
+    "noDocuments": "No documents found",
+    "searchDocuments": "Search documents...",
+    "filters": {
+      "all": "All",
+      "contracts": "Contracts",
+      "invoices": "Invoices",
+      "receipts": "Receipts",
+      "other": "Other"
+    },
+    "documentDetails": {
+      "name": "Name",
+      "type": "Type",
+      "size": "Size",
+      "uploadedOn": "Uploaded On",
+      "property": "Property",
+      "tenant": "Tenant",
+      "category": "Category",
+      "tags": "Tags",
+      "download": "Download",
+      "delete": "Delete",
+      "preview": "Preview"
+    },
+    "categories": {
+      "contract": "Contract",
+      "invoice": "Invoice",
+      "receipt": "Receipt",
+      "maintenance": "Maintenance",
+      "legal": "Legal Document",
+      "other": "Other"
+    }
+  },
+  "ui": {
+    "dialog": {
+      "close": "Close",
+      "confirm": "Confirm",
+      "cancel": "Cancel"
+    },
+    "table": {
+      "rowsPerPage": "Rows per page:",
+      "of": "of",
+      "loading": "Loading...",
+      "noData": "No data available"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page"
+    },
+    "notification": {
+      "success": "Success",
+      "error": "Error",
+      "warning": "Warning",
+      "info": "Information"
+    },
+    "validation": {
+      "required": "Field is required",
+      "email": "Invalid email",
+      "minLength": "Minimum {{min}} characters",
+      "maxLength": "Maximum {{max}} characters",
+      "pattern": "Invalid format",
+      "match": "Fields do not match"
+    },
+    "forms": {
+      "submitting": "Submitting...",
+      "submitted": "Successfully submitted",
+      "error": "An error occurred"
+    }
+  },
+  "errors": {
+    "general": "An error occurred. Please try again later.",
+    "network": "Connection error. Check your internet connection.",
+    "notFound": "The requested resource was not found.",
+    "unauthorized": "You are not authorized to access this resource.",
+    "forbidden": "You do not have permission to access this resource.",
+    "validation": "Validation errors occurred.",
+    "server": "A server error occurred. Please try again later.",
+    "properties": {
+      "loading": "Error loading properties",
+      "description": "Unable to retrieve properties. Please try again later."
+    }
+  },
+  "auth": {
+    "loading": "Loading...",
+    "accessDenied": "Access denied",
+    "loginRequired": "You must log in to access this page"
+  },
+  "app": {
+    "greeting": "Hello, {name}"
+  },
+  "mobileNav": {
+    "home": "Home",
+    "info": "Info",
+    "support": "Support"
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "questions": {
+      "start": {
+        "question": "How do I start using Tenoris360?",
+        "answer": "To get started, register for free on our website. After registration, you can begin adding your properties and configuring your account. Check our getting started guide for more details."
+      },
+      "trial": {
+        "question": "Can I try Tenoris360 before subscribing?",
+        "answer": "Yes, we offer a free 14-day trial with all the features of the Premium version. No credit card is required to register for the trial."
+      },
+      "cancel": {
+        "question": "How can I cancel my subscription?",
+        "answer": "You can cancel your subscription at any time from the 'Subscription' section in your profile. The cancellation will be effective at the end of the current billing cycle."
+      },
+      "international": {
+        "question": "Can Tenoris360 be used to manage properties in different countries?",
+        "answer": "Yes, Tenoris360 can be used to manage properties in any country. The system supports different currencies and tax formats."
+      },
+      "import": {
+        "question": "Can I import data from my previous management system?",
+        "answer": "Yes, we offer import tools to easily transfer your data from other systems. Contact our support for personalized assistance in the migration process."
+      }
+    }
+  },
+  "onboarding": {
+    "interactiveGuide": "Interactive guide"
+  },
+  "notFound": {
+    "title": "404",
+    "message": "Oops! Page not found",
+    "backToHome": "Back to Home"
+  },
+  "profile": {
+    "title": "Profile",
+    "subtitle": "Manage your personal information",
+    "profileDetails": "Profile Details",
+    "profileDescription": "Edit your personal and contact information",
+    "memberSince": "Member since {date}",
+    "plan": "Plan: {plan}",
+    "tabs": {
+      "info": "Information",
+      "security": "Security",
+      "billing": "Billing"
+    },
+    "security": {
+      "title": "Account Security",
+      "description": "Manage your password and security settings",
+      "currentPassword": "Current Password",
+      "currentPasswordPlaceholder": "Enter your current password",
+      "newPassword": "New Password"
+    },
+    "form": {
+      "fullName": "Full Name",
+      "fullNamePlaceholder": "Your name",
+      "email": "Email",
+      "emailPlaceholder": "Your email",
+      "phone": "Phone",
+      "phonePlaceholder": "Your phone number",
+      "company": "Company",
+      "companyPlaceholder": "Company name",
+      "address": "Address",
+      "addressPlaceholder": "Your address",
+      "city": "City",
+      "cityPlaceholder": "City",
+      "postalCode": "ZIP Code",
+      "postalCodePlaceholder": "Postal Code",
+      "country": "Country",
+      "countryPlaceholder": "Country",
+      "saveChanges": "Save Changes",
+      "cancel": "Cancel"
+    }
+  },
+  "tourism": {
+    "title": "Tourism Rentals",
+    "description": "Manage properties and bookings for tourism rentals",
+    "properties": {
+      "title": "Tourism Properties",
+      "description": "Manage your tourism properties",
+      "addProperty": "Add Property",
+      "propertyList": "Property List",
+      "noProperties": "No tourism properties found",
+      "searchProperties": "Search properties...",
+      "propertyDetails": {
+        "amenities": "Amenities",
+        "availability": "Availability",
+        "pricing": "Pricing",
+        "location": "Location",
+        "photos": "Photos",
+        "reviews": "Reviews",
+        "rules": "Rules"
+      },
+      "amenities": {
+        "wifi": "Wi-Fi",
+        "airConditioning": "Air Conditioning",
+        "heating": "Heating",
+        "kitchen": "Kitchen",
+        "tv": "TV",
+        "washer": "Washer",
+        "dryer": "Dryer",
+        "parking": "Parking",
+        "elevator": "Elevator",
+        "pool": "Pool",
+        "gym": "Gym"
+      }
+    },
+    "bookings": {
+      "title": "Bookings",
+      "description": "Manage tourism bookings",
+      "loading": "Loading bookings...",
+      "addBooking": "Add booking",
+      "searchBookings": "Search bookings...",
+      "noBookings": "No bookings found",
+      "filters": {
+        "all": "All",
+        "upcoming": "Upcoming",
+        "current": "Current",
+        "completed": "Completed",
+        "cancelled": "Cancelled",
+        "property": "Property",
+        "dateRange": "Date range",
+        "applyFilters": "Apply filters",
+        "resetFilters": "Reset filters"
+      },
+      "fields": {
+        "id": "ID",
+        "guest": "Guest",
+        "property": "Property",
+        "checkIn": "Check-in",
+        "checkOut": "Check-out",
+        "nights": "Nights",
+        "guests": "Guests",
+        "status": "Status",
+        "totalAmount": "Total amount",
+        "payment": "Payment",
+        "actions": "Actions"
+      },
+      "status": {
+        "pending": "Pending",
+        "confirmed": "Confirmed",
+        "checkedIn": "Checked in",
+        "checkedOut": "Checked out",
+        "cancelled": "Cancelled",
+        "noShow": "No show"
+      },
+      "form": {
+        "title": "Booking details",
+        "guestInfo": "Guest information",
+        "guestName": "Name",
+        "guestEmail": "Email",
+        "guestPhone": "Phone",
+        "guestCountry": "Country",
+        "selectCountry": "Select country",
+        "bookingDetails": "Booking details",
+        "property": "Property",
+        "selectProperty": "Select property",
+        "checkIn": "Check-in date",
+        "checkOut": "Check-out date",
+        "adults": "Adults",
+        "children": "Children",
+        "infants": "Infants",
+        "notes": "Notes",
+        "notesPlaceholder": "Add any notes or special requests",
+        "pricing": "Pricing",
+        "baseRate": "Base rate",
+        "cleaningFee": "Cleaning fee",
+        "serviceFee": "Service fee",
+        "taxAmount": "Taxes",
+        "totalAmount": "Total",
+        "deposit": "Deposit",
+        "payment": "Payment",
+        "paymentMethod": "Payment method",
+        "paymentStatus": "Payment status",
+        "submit": "Save booking",
+        "cancel": "Cancel"
+      },
+      "confirmation": {
+        "deleteTitle": "Delete booking",
+        "deleteMessage": "Are you sure you want to delete this booking? This action cannot be undone.",
+        "cancelTitle": "Cancel booking",
+        "cancelMessage": "Are you sure you want to cancel this booking?",
+        "cancel": "Cancel",
+        "confirm": "Confirm"
+      },
+      "details": {
+        "title": "Booking details",
+        "guestInfo": "Guest information",
+        "bookingInfo": "Booking information",
+        "paymentInfo": "Payment information",
+        "createChecklist": "Create checklist",
+        "addNote": "Add note",
+        "sendMessage": "Send message",
+        "actions": "Actions",
+        "checkInGuest": "Check in guest",
+        "checkOutGuest": "Check out guest",
+        "cancelBooking": "Cancel booking",
+        "editBooking": "Edit booking"
+      },
+      "calendar": {
+        "title": "Booking calendar",
+        "today": "Today",
+        "month": "Month",
+        "week": "Week",
+        "day": "Day",
+        "list": "List",
+        "viewAll": "View all",
+        "availability": "Availability",
+        "booked": "Booked",
+        "blocked": "Blocked",
+        "available": "Available"
+      }
+    },
+    "calendar": {
+      "title": "Availability Calendar",
+      "monthView": "Month View",
+      "weekView": "Week View",
+      "dayView": "Day View",
+      "listView": "List View",
+      "today": "Today",
+      "bookings": "Bookings",
+      "available": "Available",
+      "unavailable": "Unavailable",
+      "blocked": "Blocked"
+    },
+    "activities": {
+      "title": "Activities",
+      "description": "Manage tourism activities",
+      "loading": "Loading activities...",
+      "addActivity": "Add activity",
+      "searchActivities": "Search activities...",
+      "noActivities": "No activities found",
+      "filters": {
+        "all": "All",
+        "active": "Active",
+        "inactive": "Inactive",
+        "category": "Category",
+        "location": "Location",
+        "applyFilters": "Apply filters",
+        "resetFilters": "Reset filters"
+      },
+      "fields": {
+        "id": "ID",
+        "name": "Name",
+        "description": "Description",
+        "category": "Category",
+        "location": "Location",
+        "duration": "Duration",
+        "price": "Price",
+        "capacity": "Capacity",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "categories": {
+        "tour": "Tour",
+        "excursion": "Excursion",
+        "adventure": "Adventure",
+        "cultural": "Cultural",
+        "food": "Food & Dining",
+        "sport": "Sports",
+        "wellness": "Wellness",
+        "workshop": "Workshop",
+        "other": "Other"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "seasonal": "Seasonal"
+      },
+      "form": {
+        "title": "Activity details",
+        "basicInfo": "Basic information",
+        "name": "Name",
+        "description": "Description",
+        "shortDescription": "Short description",
+        "category": "Category",
+        "selectCategory": "Select category",
+        "locationDetails": "Location details",
+        "location": "Location",
+        "address": "Address",
+        "meetingPoint": "Meeting point",
+        "schedulingDetails": "Scheduling details",
+        "duration": "Duration (hours)",
+        "startTime": "Start time",
+        "endTime": "End time",
+        "availability": "Availability",
+        "monday": "Monday",
+        "tuesday": "Tuesday",
+        "wednesday": "Wednesday",
+        "thursday": "Thursday",
+        "friday": "Friday",
+        "saturday": "Saturday",
+        "sunday": "Sunday",
+        "capacityAndPricing": "Capacity and pricing",
+        "capacity": "Capacity (people)",
+        "minCapacity": "Minimum capacity",
+        "maxCapacity": "Maximum capacity",
+        "price": "Price per adult",
+        "childPrice": "Price per child",
+        "additionalDetails": "Additional details",
+        "included": "Included",
+        "notIncluded": "Not included",
+        "requirements": "Requirements",
+        "notes": "Notes",
+        "images": "Images",
+        "addImage": "Add image",
+        "submit": "Save activity",
+        "cancel": "Cancel"
+      },
+      "confirmation": {
+        "deleteTitle": "Delete activity",
+        "deleteMessage": "Are you sure you want to delete this activity? This action cannot be undone.",
+        "cancel": "Cancel",
+        "confirm": "Confirm"
+      },
+      "details": {
+        "title": "Activity details",
+        "basicInfo": "Basic information",
+        "locationDetails": "Location details",
+        "schedulingDetails": "Scheduling details",
+        "capacityAndPricing": "Capacity and pricing",
+        "additionalDetails": "Additional details",
+        "bookings": "Bookings",
+        "editActivity": "Edit activity",
+        "deleteActivity": "Delete activity",
+        "viewBookings": "View bookings"
+      }
+    }
+  },
+  "booking": {
+    "confirmation": {
+      "deleteTitle": "Delete booking",
+      "deleteMessage": "Are you sure you want to delete this booking?",
+      "successDelete": "Booking deleted successfully",
+      "errorDelete": "Unable to delete booking",
+      "successUpdate": "Booking updated successfully",
+      "successCreate": "Booking created successfully",
+      "error": "An error occurred. Please try again later."
+    }
+  },
+  "tourGuide": {
+    "skipButton": "Skip",
+    "nextButton": "Next",
+    "backButton": "Back"
+  },
+  "reports": {
+    "title": "Reports",
+    "description": "View and generate detailed reports",
+    "generateReport": "Generate Report",
+    "reportTypes": {
+      "financial": "Financial Report",
+      "occupancy": "Occupancy Report",
+      "propertyPerformance": "Property Performance",
+      "tenantHistory": "Tenant History",
+      "maintenanceHistory": "Maintenance History",
+      "taxReport": "Tax Report"
+    },
+    "filters": {
+      "dateRange": "Date Range",
+      "property": "Property",
+      "tenant": "Tenant",
+      "categories": "Categories",
+      "applyFilters": "Apply Filters",
+      "resetFilters": "Reset Filters"
+    },
+    "timeframes": {
+      "thisMonth": "This Month",
+      "lastMonth": "Last Month",
+      "thisQuarter": "This Quarter",
+      "lastQuarter": "Last Quarter",
+      "thisYear": "This Year",
+      "lastYear": "Last Year",
+      "custom": "Custom"
+    },
+    "export": {
+      "pdf": "Export as PDF",
+      "excel": "Export as Excel",
+      "csv": "Export as CSV",
+      "print": "Print"
+    }
+  },
+  "import": {
+    "title": "Import",
+    "description": "Import data from external files",
+    "selectFile": "Select File",
+    "dragAndDrop": "Drag and drop file here or click to select",
+    "supportedFormats": "Supported formats",
+    "maxFileSize": "Maximum file size",
+    "steps": {
+      "uploadFile": "Upload File",
+      "mapFields": "Map Fields",
+      "preview": "Preview",
+      "import": "Import"
+    },
+    "fieldMapping": {
+      "title": "Field Mapping",
+      "description": "Map the file fields to application fields",
+      "sourceField": "Source Field",
+      "targetField": "Target Field",
+      "required": "Required",
+      "preview": "Preview",
+      "unmappedFields": "Unmapped Fields",
+      "autoMap": "Auto Map"
+    },
+    "preview": {
+      "title": "Data Preview",
+      "description": "Verify data before import",
+      "records": "Records",
+      "errors": "Errors"
+    },
+    "results": {
+      "title": "Import Results",
+      "description": "Summary of import results",
+      "totalRecords": "Total Records",
+      "importedRecords": "Imported Records",
+      "failedRecords": "Failed Records",
+      "skipReason": "Skip Reason",
+      "errorDetails": "Error Details",
+      "duration": "Duration",
+      "downloadErrors": "Download Errors"
+    }
+  },
+  "documents": {
+    "title": "Documents",
+    "description": "Manage and view documents",
+    "upload": "Upload Document",
+    "noDocuments": "No documents found",
+    "searchDocuments": "Search documents...",
+    "filters": {
+      "all": "All",
+      "contracts": "Contracts",
+      "invoices": "Invoices",
+      "receipts": "Receipts",
+      "other": "Other"
+    },
+    "documentDetails": {
+      "name": "Name",
+      "type": "Type",
+      "size": "Size",
+      "uploadedOn": "Uploaded on",
+      "property": "Property",
+      "tenant": "Tenant",
+      "category": "Category",
+      "tags": "Tags",
+      "download": "Download",
+      "delete": "Delete",
+      "preview": "Preview"
+    },
+    "categories": {
+      "contract": "Contract",
+      "invoice": "Invoice",
+      "receipt": "Receipt",
+      "maintenance": "Maintenance",
+      "legal": "Legal Document",
+      "other": "Other"
+    }
+  },
+  "ui": {
+    "dialog": {
+      "close": "Close",
+      "confirm": "Confirm",
+      "cancel": "Cancel"
+    },
+    "table": {
+      "rowsPerPage": "Rows per page:",
+      "of": "of",
+      "loading": "Loading...",
+      "noData": "No data available"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page"
+    },
+    "notification": {
+      "success": "Success",
+      "error": "Error",
+      "warning": "Warning",
+      "info": "Information"
+    },
+    "validation": {
+      "required": "Required field",
+      "email": "Invalid email",
+      "minLength": "Minimum {{min}} characters",
+      "maxLength": "Maximum {{max}} characters",
+      "pattern": "Invalid format",
+      "match": "Fields do not match"
+    },
+    "forms": {
+      "submitting": "Submitting...",
+      "submitted": "Successfully submitted",
+      "error": "An error occurred"
+    }
+  },
+  "addContract": {
+    "title": "Add new contract",
+    "description": "Create a new rental contract",
+    "steps": {
+      "propertyTenant": "Property and tenant",
+      "details": "Contract details",
+      "terms": "Terms and conditions",
+      "documents": "Documents",
+      "review": "Review",
+      "next": "Next",
+      "back": "Back",
+      "finalize": "Finalize contract"
+    },
+    "propertyTenant": {
+      "title": "Property and tenant",
+      "selectProperty": "Select a property",
+      "propertyRequired": "Select a property to continue",
+      "noProperties": "No properties available. Add a property first.",
+      "selectTenant": "Select a tenant",
+      "tenantRequired": "Select a tenant to continue",
+      "noTenants": "No tenants available. Add a tenant first.",
+      "addNewTenant": "Add new tenant",
+      "propertyDetails": "Property details",
+      "tenantDetails": "Tenant details"
+    },
+    "details": {
+      "title": "Contract details",
+      "contractCode": "Contract code",
+      "generateCode": "Generate code",
+      "startDate": "Start date",
+      "startDateRequired": "Start date is required",
+      "endDate": "End date",
+      "endDateRequired": "End date is required",
+      "contractType": "Contract type",
+      "contractTypeRequired": "Contract type is required",
+      "renewalType": "Renewal type",
+      "rentAmount": "Rent amount",
+      "rentAmountRequired": "Rent amount is required",
+      "depositAmount": "Deposit amount",
+      "depositAmountRequired": "Deposit amount is required",
+      "paymentFrequency": "Payment frequency",
+      "paymentDay": "Payment day"
+    },
+    "terms": {
+      "title": "Terms and conditions",
+      "noticePeriod": "Notice period (days)",
+      "lateFeesApplicable": "Late fees applicable",
+      "lateFeeAmount": "Late fee amount",
+      "lateFeeType": "Late fee type",
+      "fixed": "Fixed",
+      "percentage": "Percentage",
+      "gracePeriod": "Grace period (days)",
+      "utilities": "Utilities",
+      "includedUtilities": "Included utilities",
+      "specialTerms": "Special terms",
+      "specialTermsPlaceholder": "Add any special terms or clauses"
+    },
+    "documents": {
+      "title": "Documents",
+      "contractDocument": "Contract document",
+      "uploadContract": "Upload contract",
+      "additionalDocuments": "Additional documents",
+      "uploadAdditionalDocs": "Upload additional documents",
+      "dragDropFiles": "Drag files here or click to upload",
+      "maxFileSize": "Maximum file size: 10MB",
+      "noDocumentsUploaded": "No documents uploaded"
+    },
+    "review": {
+      "title": "Contract review",
+      "propertyInfo": "Property information",
+      "tenantInfo": "Tenant information",
+      "contractInfo": "Contract information",
+      "termsInfo": "Terms and conditions",
+      "documentsUploaded": "Documents uploaded",
+      "edit": "Edit",
+      "contractPreview": "Contract preview",
+      "downloadDraft": "Download draft"
+    },
+    "success": {
+      "title": "Contract created successfully",
+      "message": "The contract has been created successfully.",
+      "contractCode": "Contract code: {code}",
+      "downloadContract": "Download contract",
+      "viewContract": "View contract",
+      "addAnother": "Add another contract",
+      "backToContracts": "Back to contract list"
+    },
+    "error": {
+      "title": "Error creating contract",
+      "message": "An error occurred while creating the contract. Please try again later.",
+      "tryAgain": "Try again",
+      "backToContracts": "Back to contract list"
+    }
+  }
+} 

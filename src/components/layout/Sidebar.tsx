@@ -16,7 +16,10 @@ import {
   ChevronDown,
   ChevronRight,
   HelpCircle,
-  Upload
+  Upload,
+  Settings,
+  Info,
+  FileQuestion
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -24,6 +27,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { useTutorial } from '@/context/TutorialContext';
 import { DEFAULT_TUTORIAL_STEPS } from '@/context/TutorialContext';
+import { useTranslation } from "react-i18next";
 
 interface SidebarProps {
   forceOpen?: boolean;
@@ -31,6 +35,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ forceOpen, onClose }: SidebarProps = {}) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({});
   const location = useLocation();
@@ -96,23 +101,47 @@ export function Sidebar({ forceOpen, onClose }: SidebarProps = {}) {
   }, [forceOpen]);
   
   const routes = [
-    { path: "/dashboard", label: "Dashboard", icon: BarChart3 },
-    { path: "/properties", label: "Proprietà", icon: Building2 },
-    { path: "/tenants", label: "Inquilini", icon: Users },
-    { path: "/transactions", label: "Transazioni", icon: Receipt },
-    { path: "/contracts", label: "Contratti", icon: FileText },
-    { path: "/activities", label: "Attività", icon: CalendarClock },
+    { path: "/dashboard", label: t("common.navigation.dashboard"), icon: BarChart3 },
+    { path: "/properties", label: t("common.navigation.properties"), icon: Building2 },
+    { path: "/tenants", label: t("common.navigation.tenants"), icon: Users },
+    { path: "/transactions", label: t("common.navigation.payments"), icon: Receipt },
+    { path: "/contracts", label: t("common.navigation.contracts"), icon: FileText },
+    { path: "/activities", label: t("common.navigation.activities"), icon: CalendarClock },
     { 
       path: "/tourism", 
-      label: "Locazioni Turistiche", 
+      label: t("common.navigation.tourism"), 
       icon: Palmtree,
       submenu: [
-        { path: "/tourism/properties", label: "Proprietà" },
-        { path: "/tourism/bookings", label: "Prenotazioni" }
+        { path: "/tourism/properties", label: t("common.navigation.tourismProperties") },
+        { path: "/tourism/bookings", label: t("common.navigation.bookings") }
       ]
     },
-    { path: "/reports", label: "Report & Analytics", icon: LineChart },
-    { path: "/import", label: "Importazione", icon: Upload },
+    { path: "/reports", label: t("common.navigation.reports"), icon: LineChart },
+    { path: "/import", label: t("common.navigation.import"), icon: Upload },
+    { 
+      path: "/info", 
+      label: t("common.navigation.info"), 
+      icon: Info,
+      submenu: [
+        { path: "/blog", label: t("common.navigation.blog") },
+        { path: "/guide", label: t("common.navigation.guides") }
+      ]
+    },
+    { 
+      path: "/supporto", 
+      label: t("common.navigation.support"), 
+      icon: HelpCircle
+    },
+    { 
+      path: "/settings", 
+      label: t("common.navigation.settings"), 
+      icon: Settings,
+      submenu: [
+        { path: "/profile", label: t("common.navigation.profile") },
+        { path: "/settings", label: t("common.navigation.appSettings") },
+        { path: "/notifications", label: t("common.navigation.notifications") }
+      ]
+    },
   ];
   
   const handleTutorialClick = () => {

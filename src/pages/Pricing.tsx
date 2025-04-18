@@ -3,11 +3,37 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Check, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { PageBreadcrumb } from '@/components/layout/PageBreadcrumb';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 const Pricing: React.FC = () => {
+  const faqs = [
+    {
+      question: "È davvero gratuito?",
+      answer: "Sì, il servizio è completamente gratuito per tutti gli utenti. Nessun costo nascosto."
+    },
+    {
+      question: "Ci sono limitazioni nella versione gratuita?",
+      answer: "No, avrai accesso a tutte le funzionalità del sistema senza alcuna limitazione."
+    },
+    {
+      question: "Perché avete reso il servizio gratuito?",
+      answer: "Vogliamo che tutti possano beneficiare di uno strumento professionale per la gestione degli affitti, indipendentemente dal budget."
+    },
+    {
+      question: "Per quanto tempo rimarrà gratuito?",
+      answer: "Il servizio rimarrà gratuito per sempre. Ci impegniamo a mantenere questa promessa ai nostri utenti."
+    }
+  ];
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-sky-50 to-white flex flex-col items-center justify-start pt-12 md:pt-20 pb-12">
       <div className="text-center px-4 w-full max-w-4xl mx-auto space-y-8">
+        {/* Breadcrumb */}
+        <div className="text-left max-w-4xl w-full mx-auto">
+          <PageBreadcrumb items={[{ label: "Prezzi" }]} />
+        </div>
+        
         {/* Intestazione */}
         <header className="space-y-4">
           <h1 className="text-5xl font-bold text-sky-700">SERVIZIO GRATUITO</h1>
@@ -62,29 +88,23 @@ const Pricing: React.FC = () => {
           </Card>
         </section>
 
-        {/* FAQ o informazioni aggiuntive */}
+        {/* FAQ con accordion */}
         <section className="mt-12">
           <Card className="bg-white/50 shadow-sm">
             <CardContent className="p-6">
               <h2 className="text-xl font-semibold mb-4">Domande Frequenti</h2>
-              <div className="space-y-4 text-left">
-                <div>
-                  <h3 className="font-medium">È davvero gratuito?</h3>
-                  <p className="text-muted-foreground">Sì, il servizio è completamente gratuito per tutti gli utenti. Nessun costo nascosto.</p>
-                </div>
-                <div>
-                  <h3 className="font-medium">Ci sono limitazioni nella versione gratuita?</h3>
-                  <p className="text-muted-foreground">No, avrai accesso a tutte le funzionalità del sistema senza alcuna limitazione.</p>
-                </div>
-                <div>
-                  <h3 className="font-medium">Perché avete reso il servizio gratuito?</h3>
-                  <p className="text-muted-foreground">Vogliamo che tutti possano beneficiare di uno strumento professionale per la gestione degli affitti, indipendentemente dal budget.</p>
-                </div>
-                <div>
-                  <h3 className="font-medium">Per quanto tempo rimarrà gratuito?</h3>
-                  <p className="text-muted-foreground">Il servizio rimarrà gratuito per sempre. Ci impegniamo a mantenere questa promessa ai nostri utenti.</p>
-                </div>
-              </div>
+              <Accordion type="single" collapsible className="w-full">
+                {faqs.map((faq, index) => (
+                  <AccordionItem key={index} value={`faq-${index}`}>
+                    <AccordionTrigger className="text-left font-medium">
+                      {faq.question}
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <p className="text-muted-foreground">{faq.answer}</p>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
             </CardContent>
           </Card>
         </section>

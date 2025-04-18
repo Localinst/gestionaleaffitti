@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Search, Plus, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { Contract, Property, Tenant, api } from "@/services/api";
+import { useTranslation } from "react-i18next";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { AddContractForm } from "./AddContractForm";
 
 export default function ContractsPage() {
+  const { t } = useTranslation();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
   const [tenants, setTenants] = useState<Tenant[]>([]);
@@ -39,7 +41,7 @@ export default function ContractsPage() {
       setTenants(tenantsData);
     } catch (error) {
       console.error("Errore nel caricamento dei dati:", error);
-      toast.error("Impossibile caricare i dati");
+      toast.error(t("contracts.errors.loadingData"));
     } finally {
       setIsLoading(false);
     }
@@ -49,22 +51,22 @@ export default function ContractsPage() {
   const getPropertyName = (propertyId: string | number | null | undefined): string => {
     // Gestisci il caso in cui propertyId sia null o undefined
     if (!propertyId) {
-      return "Nessuna"; 
+      return t("contracts.noPropertyId"); 
     }
     // Procedi con la ricerca solo se propertyId è valido
     const property = properties.find(p => p.id.toString() === propertyId.toString());
-    return property ? property.name : "ID Proprietà non trovato"; // Cambiato messaggio per chiarezza
+    return property ? property.name : t("contracts.propertyIdNotFound");
   };
 
   // Funzione per ottenere il nome dell'inquilino
   const getTenantName = (tenantId: string | number | null | undefined): string => {
     // Gestisci il caso in cui tenantId sia null o undefined
     if (!tenantId) {
-      return "Nessuno";
+      return t("contracts.noTenantId");
     }
     // Procedi con la ricerca solo se tenantId è valido
     const tenant = tenants.find(t => t.id.toString() === tenantId.toString());
-    return tenant ? tenant.name : "ID Inquilino non trovato"; // Cambiato messaggio per chiarezza
+    return tenant ? tenant.name : t("contracts.tenantIdNotFound");
   };
 
   const filteredContracts = contracts.filter(contract => {
@@ -85,11 +87,11 @@ export default function ContractsPage() {
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'active':
-        return 'Attivo';
+        return t("contracts.status.active");
       case 'expired':
-        return 'Scaduto';
+        return t("contracts.status.expired");
       case 'terminated':
-        return 'Terminato';
+        return t("contracts.status.terminated");
       default:
         return status;
     }
@@ -113,13 +115,18 @@ export default function ContractsPage() {
       <div className="container mx-auto py-4">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Contratti</h1>
+            <h1 className="text-3xl font-bold tracking-tight">{t("contracts.title")}</h1>
             <p className="text-muted-foreground">
-              Gestisci tutti i contratti di locazione
+              {t("contracts.description")}
             </p>
           </div>
-          <Button onClick={() => setShowAddForm(true)}>
-            <Plus className="mr-2 h-4 w-4" /> Nuovo Contratto
+          <Button 
+            variant="default" 
+            className="flex items-center gap-2"
+            onClick={() => setShowAddForm(true)}
+          >
+            <Plus className="h-4 w-4" />
+            <span>{t("contracts.newContract")}</span>
           </Button>
         </div>
 
@@ -131,14 +138,14 @@ export default function ContractsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>I tuoi contratti</CardTitle>
+            <CardTitle>{t("contracts.yourContracts")}</CardTitle>
             <CardDescription>
-              {contracts.length} contratti totali
+              {t("contracts.totalContracts", { count: contracts.length })}
             </CardDescription>
             <div className="flex items-center py-2">
               <Search className="mr-2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Cerca contratti..."
+                placeholder={t("contracts.searchContracts")}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="max-w-sm"
@@ -153,16 +160,16 @@ export default function ContractsPage() {
             ) : contracts.length === 0 ? (
               <div className="text-center py-8">
                 <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
-                <h3 className="mt-4 text-lg font-semibold">Nessun contratto</h3>
+                <h3 className="mt-4 text-lg font-semibold">{t("contracts.noContracts")}</h3>
                 <p className="text-muted-foreground">
-                  Non hai ancora aggiunto nessun contratto.
+                  {t("contracts.noContractsYet")}
                 </p>
                 <Button 
                   variant="outline" 
                   className="mt-4"
                   onClick={() => setShowAddForm(true)}
                 >
-                  Aggiungi il primo contratto
+                  {t("contracts.addFirstContract")}
                 </Button>
               </div>
             ) : (
@@ -170,20 +177,20 @@ export default function ContractsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>Proprietà</TableHead>
-                      <TableHead>Inquilino</TableHead>
-                      <TableHead>Data Inizio</TableHead>
-                      <TableHead>Data Fine</TableHead>
-                      <TableHead>Canone Mensile</TableHead>
-                      <TableHead>Cauzione</TableHead>
-                      <TableHead>Stato</TableHead>
+                      <TableHead>{t("contracts.fields.id")}</TableHead>
+                      <TableHead>{t("contracts.fields.property")}</TableHead>
+                      <TableHead>{t("contracts.fields.tenant")}</TableHead>
+                      <TableHead>{t("contracts.fields.startDate")}</TableHead>
+                      <TableHead>{t("contracts.fields.endDate")}</TableHead>
+                      <TableHead>{t("contracts.fields.rentAmount")}</TableHead>
+                      <TableHead>{t("contracts.fields.deposit")}</TableHead>
+                      <TableHead>{t("contracts.fields.status")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredContracts.map((contract) => (
-                      <TableRow key={contract.id}>
-                        <TableCell>{contract.id}</TableCell>
+                      <TableRow key={contract.id} className="cursor-pointer hover:bg-muted/50" onClick={() => {}}>
+                        <TableCell className="font-medium">{contract.id}</TableCell>
                         <TableCell>{getPropertyName(contract.property_id)}</TableCell>
                         <TableCell>{getTenantName(contract.tenant_id)}</TableCell>
                         <TableCell>{new Date(contract.start_date).toLocaleDateString()}</TableCell>

@@ -60,8 +60,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { api } from "@/services/api";
+import { useTranslation } from "react-i18next";
 
 export default function TransactionsPage() {
+  const { t } = useTranslation();
   const [transactions, setTransactions] = useState([]);
   const [properties, setProperties] = useState<Property[]>([]);
   const [tenants, setTenants] = useState<Tenant[]>([]);
@@ -210,12 +212,12 @@ export default function TransactionsPage() {
       // Aggiorna la lista delle transazioni
       loadData();
       
-      toast.success("Transazione eliminata con successo");
+      toast.success(t("transactions.confirmDelete.success"));
       setDeleteDialogOpen(false);
       setSelectedTransaction(null);
     } catch (err: any) {
       console.error("Errore durante l'eliminazione della transazione:", err);
-      toast.error("Errore durante l'eliminazione della transazione");
+      toast.error(t("transactions.confirmDelete.error"));
     } finally {
       setDeleteLoading(false);
     }
@@ -225,15 +227,15 @@ export default function TransactionsPage() {
     <AppLayout>
       <div className="flex justify-between items-center">
         <PageHeader
-          title="Transazioni"
-          description="Gestisci le tue entrate e uscite"
+          title={t("transactions.title")}
+          description={t("transactions.description")}
         />
         <Button 
           className="flex items-center gap-2"
           onClick={() => setIsAddTransactionOpen(true)}
         >
           <Plus className="h-4 w-4" />
-          <span>Aggiungi Transazione</span>
+          <span>{t("transactions.addTransaction")}</span>
         </Button>
       </div>
       
@@ -241,7 +243,7 @@ export default function TransactionsPage() {
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Cerca transazioni..."
+            placeholder={t("transactions.searchTransactions")}
             className="pl-10"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -250,22 +252,22 @@ export default function TransactionsPage() {
         <div className="w-full md:w-[180px]">
           <Select value={typeFilter} onValueChange={setTypeFilter}>
             <SelectTrigger>
-              <SelectValue placeholder="Filtra per tipo" />
+              <SelectValue placeholder={t("transactions.filterByType")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tutti i tipi</SelectItem>
-              <SelectItem value="income">Entrate</SelectItem>
-              <SelectItem value="expense">Uscite</SelectItem>
+              <SelectItem value="all">{t("transactions.allTypes")}</SelectItem>
+              <SelectItem value="income">{t("transactions.incomes")}</SelectItem>
+              <SelectItem value="expense">{t("transactions.expenses")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div className="w-full md:w-[220px]">
           <Select value={propertyFilter} onValueChange={setPropertyFilter}>
             <SelectTrigger>
-              <SelectValue placeholder="Filtra per proprietà" />
+              <SelectValue placeholder={t("transactions.filterByProperty")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tutte le proprietà</SelectItem>
+              <SelectItem value="all">{t("transactions.allProperties")}</SelectItem>
               {properties.map((property) => (
                 <SelectItem key={property.id} value={property.id?.toString()}>
                   {property.name}
@@ -281,13 +283,13 @@ export default function TransactionsPage() {
           <div className="animate-spin mr-2">
             <RefreshCw className="h-6 w-6 text-primary" />
           </div>
-          <p>Caricamento dei dati in corso...</p>
+          <p>{t("common.status.loading")}</p>
         </div>
       ) : error ? (
         <CardContainer className="py-12">
           <div className="flex flex-col items-center justify-center text-center">
             <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
-            <h3 className="text-lg font-medium">Errore di connessione</h3>
+            <h3 className="text-lg font-medium">{t("transactions.connectionError")}</h3>
             <p className="text-muted-foreground mt-1 mb-4 max-w-md">
               {error}
             </p>
@@ -296,7 +298,7 @@ export default function TransactionsPage() {
               className="mt-2"
             >
               <RefreshCw className="h-4 w-4 mr-2" />
-              Riprova
+              {t("transactions.tryAgain")}
             </Button>
           </div>
         </CardContainer>
@@ -304,16 +306,16 @@ export default function TransactionsPage() {
         <CardContainer className="py-12">
           <div className="flex flex-col items-center justify-center text-center">
             <Receipt className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-medium">Nessuna transazione trovata</h3>
+            <h3 className="text-lg font-medium">{t("transactions.noTransactionsFound")}</h3>
             <p className="text-muted-foreground mt-1">
-              Prova a modificare la ricerca o aggiungi una nuova transazione.
+              {t("transactions.modifySearchOrAdd")}
             </p>
             <Button 
               className="mt-4"
               onClick={() => setIsAddTransactionOpen(true)}
             >
               <Plus className="h-4 w-4 mr-2" />
-              Aggiungi Transazione
+              {t("transactions.addTransaction")}
             </Button>
           </div>
         </CardContainer>
@@ -322,13 +324,13 @@ export default function TransactionsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Data</TableHead>
-                <TableHead>Proprietà</TableHead>
-                <TableHead>Inquilino</TableHead>
-                <TableHead>Categoria</TableHead>
-                <TableHead>Descrizione</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Importo</TableHead>
+                <TableHead>{t("transactions.transactionDetails.date")}</TableHead>
+                <TableHead>{t("transactions.transactionDetails.property")}</TableHead>
+                <TableHead>{t("transactions.transactionDetails.tenant")}</TableHead>
+                <TableHead>{t("transactions.transactionDetails.category")}</TableHead>
+                <TableHead>{t("transactions.transactionDetails.description")}</TableHead>
+                <TableHead>{t("transactions.transactionDetails.type")}</TableHead>
+                <TableHead>{t("transactions.transactionDetails.amount")}</TableHead>
                 <TableHead className="w-[50px]"></TableHead>
               </TableRow>
             </TableHeader>
@@ -342,7 +344,7 @@ export default function TransactionsPage() {
                   <TableCell>{transaction.description}</TableCell>
                   <TableCell>
                     <span className={transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}>
-                      {transaction.type === 'income' ? 'Entrata' : 'Uscita'}
+                      {transaction.type === 'income' ? t("transactions.types.income") : t("transactions.types.expense")}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -355,20 +357,20 @@ export default function TransactionsPage() {
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-8 w-8">
                           <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Apri menu</span>
+                          <span className="sr-only">{t("transactions.menu.open")}</span>
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => handleEdit(transaction)}>
                           <Edit className="mr-2 h-4 w-4" />
-                          <span>Modifica</span>
+                          <span>{t("transactions.menu.edit")}</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem 
                           className="text-destructive"
                           onClick={() => handleDelete(transaction)}
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
-                          <span>Elimina</span>
+                          <span>{t("transactions.menu.delete")}</span>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -397,19 +399,19 @@ export default function TransactionsPage() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Sei sicuro di voler eliminare questa transazione?</AlertDialogTitle>
+            <AlertDialogTitle>{t("transactions.confirmDelete.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Questa azione non può essere annullata. La transazione verrà rimossa permanentemente dal sistema.
+              {t("transactions.confirmDelete.message")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annulla</AlertDialogCancel>
+            <AlertDialogCancel>{t("transactions.confirmDelete.cancel")}</AlertDialogCancel>
             <AlertDialogAction 
               onClick={confirmDelete} 
               disabled={deleteLoading}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {deleteLoading ? "Eliminazione..." : "Elimina"}
+              {deleteLoading ? `${t("common.status.processing")}...` : t("transactions.confirmDelete.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

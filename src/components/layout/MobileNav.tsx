@@ -12,11 +12,13 @@ import {
   HelpCircle,
   Bell,
   UserCircle,
-  CalendarClock
+  CalendarClock,
+  Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sidebar } from "./Sidebar";
+import { useTranslation } from "react-i18next";
 
 interface NavItemProps {
   to: string;
@@ -58,6 +60,7 @@ function TopNavItem({ to, icon, label, onClick }: { to: string, icon: React.Reac
 }
 
 export function MobileNav() {
+  const { t } = useTranslation();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
@@ -112,7 +115,7 @@ export function MobileNav() {
               label="Home" 
             />
             <TopNavItem 
-              to="/guide" 
+              to="/info" 
               icon={<Info size={16} />} 
               label="Info" 
             />
@@ -131,7 +134,7 @@ export function MobileNav() {
               className="h-9 w-9"
               asChild
             >
-              <Link to="/activities">
+              <Link to="/notifications">
                 <Bell size={18} />
               </Link>
             </Button>
@@ -172,31 +175,31 @@ export function MobileNav() {
           <NavItem 
             to="/dashboard" 
             icon={<Home size={20} />} 
-            label="Home" 
+            label={t("common.navigation.dashboard")} 
             active={isActive("/dashboard")}
           />
           <NavItem 
             to="/properties" 
             icon={<Building2 size={20} />} 
-            label="Proprietà" 
+            label={t("common.navigation.properties")} 
             active={isActive("/properties")}
           />
           <NavItem 
             to="/tenants" 
             icon={<Users size={20} />} 
-            label="Inquilini" 
+            label={t("common.navigation.tenants")} 
             active={isActive("/tenants")}
           />
           <NavItem 
             to="/contracts" 
             icon={<FileText size={20} />} 
-            label="Contratti" 
+            label={t("common.navigation.contracts")} 
             active={isActive("/contracts")}
           />
           <NavItem 
             to="/transactions" 
             icon={<Receipt size={20} />} 
-            label="Finanze" 
+            label={t("common.navigation.payments")} 
             active={isActive("/transactions")}
           />
         </div>

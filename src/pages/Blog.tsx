@@ -4,6 +4,7 @@ import { ArrowLeft, Calendar, Clock, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { LandingNav } from "@/components/layout/LandingNav";
+import { PageBreadcrumb } from "@/components/layout/PageBreadcrumb";
 
 const BlogPage = () => {
   const blogPosts = [
@@ -48,6 +49,8 @@ const BlogPage = () => {
       <main className="flex-1">
         <section className="py-12 md:py-16 bg-muted/30">
           <div className="container px-4 md:px-6">
+            <PageBreadcrumb items={[{ label: "Blog" }]} />
+            
             <div className="flex flex-col gap-2 mb-12">
               <Link to="/" className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors mb-4">
                 <ArrowLeft className="h-4 w-4" />

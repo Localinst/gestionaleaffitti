@@ -1,0 +1,12 @@
+{
+  "settings": {
+    "title": "Configuración",
+    "description": "Personaliza la aplicación según tus preferencias",
+    "tabs": {
+      "general": "General",
+      "notifications": "Notificaciones",
+      "appearance": "Apariencia",
+      "advanced": "Avanzado"
+    }
+  }
+} 

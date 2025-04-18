@@ -26,8 +26,10 @@ import { AddTenantForm } from "./AddTenantForm";
 import { Tenant, Property } from "@/services/api";
 import { useNavigate } from 'react-router-dom';
 import { usePageTutorial } from '@/hooks';
+import { useTranslation } from "react-i18next";
 
 export default function TenantsPage() {
+  const { t } = useTranslation();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
@@ -95,15 +97,15 @@ export default function TenantsPage() {
     <AppLayout>
       <div className="flex justify-between items-center px-2">
         <PageHeader
-          title="Inquilini"
-          description="Gestisci i tuoi inquilini"
+          title={t("tenants.title")}
+          description={t("tenants.description")}
         />
         <Button 
           className="flex items-center gap-2"
           onClick={() => setIsAddTenantOpen(true)}
         >
           <Plus className="h-4 w-4" />
-          <span>Aggiungi Inquilino</span>
+          <span>{t("tenants.addTenant")}</span>
         </Button>
       </div>
 
@@ -111,7 +113,7 @@ export default function TenantsPage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Cerca inquilini..."
+            placeholder={t("tenants.searchTenants")}
             className="pl-10"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -120,14 +122,14 @@ export default function TenantsPage() {
       </div>
 
       {loading ? (
-        <div>Caricamento...</div>
+        <div>{t("common.status.loading")}</div>
       ) : error ? (
         <div>{error}</div>
       ) : filteredTenants.length === 0 ? (
         <CardContainer className="py-12">
           <div className="flex flex-col items-center justify-center text-center">
             <Users className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-medium">Nessun inquilino trovato</h3>
+            <h3 className="text-lg font-medium">{t("tenants.noTenants")}</h3>
             <p className="text-muted-foreground mt-1">
               Prova a modificare la ricerca o aggiungi un nuovo inquilino.
             </p>
@@ -136,7 +138,7 @@ export default function TenantsPage() {
               onClick={() => setIsAddTenantOpen(true)}
             >
               <Plus className="h-4 w-4 mr-2" />
-              Aggiungi Inquilino
+              {t("tenants.addTenant")}
             </Button>
           </div>
         </CardContainer>
@@ -162,25 +164,25 @@ export default function TenantsPage() {
                   <TableCell>{tenant.email}</TableCell>
                   <TableCell>{tenant.phone}</TableCell>
                   <TableCell>{getPropertyName(tenant.property_id)}</TableCell>
-                  <TableCell>{tenant.lease_start ? new Date(tenant.lease_start).toLocaleDateString() : '-'}</TableCell>
-                  <TableCell>{tenant.lease_end ? new Date(tenant.lease_end).toLocaleDateString() : '-'}</TableCell>
-                  <TableCell>€{(tenant.rent || 0).toLocaleString()}</TableCell>
+                  <TableCell>-</TableCell>
+                  <TableCell>-</TableCell>
+                  <TableCell>-</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-8 w-8">
                           <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Apri menu</span>
+                          <span className="sr-only">{t("common.actions.edit")}</span>
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem>
                           <Edit className="mr-2 h-4 w-4" />
-                          <span>Modifica</span>
+                          <span>{t("common.actions.edit")}</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive">
                           <Trash2 className="mr-2 h-4 w-4" />
-                          <span>Elimina</span>
+                          <span>{t("common.actions.delete")}</span>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

@@ -30,7 +30,9 @@ export function AppLayout({ children }: AppLayoutProps) {
       <MobileNav />
       
       {/* Visibile solo su desktop */}
-      
+      <div className="hidden h-16 md:block">
+        <Sidebar />
+      </div>
       
       <main className="flex-1 pl-0 md:pl-64 transition-all">
         <div className="container pt-0 md:pt-1 pb-20 md:pb-8 px-0 sm:px-4 md:px-8 mx-auto max-w-7xl">

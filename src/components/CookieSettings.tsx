@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +20,7 @@ type CookieSettingsProps = {
 };
 
 const CookieSettings = ({ children, className }: CookieSettingsProps) => {
+  const { t } = useTranslation();
   const { consent, updateConsent } = useCookieConsent();
   const [isOpen, setIsOpen] = useState(false);
   
@@ -63,9 +65,9 @@ const CookieSettings = ({ children, className }: CookieSettingsProps) => {
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Impostazioni Cookie</DialogTitle>
+          <DialogTitle>{t("cookies.title")}</DialogTitle>
           <DialogDescription>
-            Gestisci le tue preferenze sui cookie. I cookie essenziali sono necessari per il funzionamento del sito.
+            {t("cookies.description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -81,10 +83,10 @@ const CookieSettings = ({ children, className }: CookieSettingsProps) => {
                 htmlFor="essential"
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
-                Cookie Essenziali
+                {t("cookies.categories.essential.title")}
               </label>
               <p className="text-sm text-muted-foreground">
-                Questi cookie sono necessari per il funzionamento del sito e non possono essere disattivati.
+                {t("cookies.categories.essential.description")}
               </p>
             </div>
           </div>
@@ -102,10 +104,10 @@ const CookieSettings = ({ children, className }: CookieSettingsProps) => {
                 htmlFor="analytics"
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
-                Cookie Analitici
+                {t("cookies.categories.analytics.title")}
               </label>
               <p className="text-sm text-muted-foreground">
-                Ci aiutano a capire come utilizzi il sito, per migliorare l'esperienza.
+                {t("cookies.categories.analytics.description")}
               </p>
             </div>
           </div>
@@ -123,33 +125,33 @@ const CookieSettings = ({ children, className }: CookieSettingsProps) => {
                 htmlFor="marketing"
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
-                Cookie di Marketing
+                {t("cookies.categories.marketing.title")}
               </label>
               <p className="text-sm text-muted-foreground">
-                Utilizzati per mostrarti annunci pertinenti in base ai tuoi interessi.
+                {t("cookies.categories.marketing.description")}
               </p>
             </div>
           </div>
         </div>
 
         <div className="text-sm text-muted-foreground mb-4">
-          Per maggiori informazioni, consulta la nostra{" "}
+          {t("cookies.readMore")}{" "}
           <Link to="/cookie" className="text-primary hover:underline" onClick={() => setIsOpen(false)}>
-            Cookie Policy
+            {t("cookies.cookiePolicy")}
           </Link>{" "}
-          e la{" "}
+          {t("cookies.and")}{" "}
           <Link to="/privacy" className="text-primary hover:underline" onClick={() => setIsOpen(false)}>
-            Privacy Policy
+            {t("cookies.privacyPolicy")}
           </Link>
           .
         </div>
 
         <DialogFooter className="flex flex-col sm:flex-row gap-2">
           <Button variant="outline" onClick={handleReset}>
-            Ripristina
+            {t("cookies.buttons.reset")}
           </Button>
           <Button onClick={handleSave}>
-            Salva preferenze
+            {t("cookies.buttons.save")}
           </Button>
         </DialogFooter>
       </DialogContent>

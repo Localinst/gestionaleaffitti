@@ -9,7 +9,6 @@ import { AddPropertyForm } from "./AddPropertyForm";
 import { PropertyDetailDialog } from "./PropertyDetailDialog";
 import { Badge } from "@/components/ui/badge";
 import {AppLayout, PageHeader}  from "@/components/layout/AppLayout";
-
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useProperties } from "@/hooks/use-query-hooks";
@@ -24,6 +23,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { usePageTutorial } from '@/hooks';
+import { useTranslation } from "react-i18next";
 
 // Componente ActionButton
 interface ActionButtonProps {
@@ -59,6 +59,7 @@ function ActionButton({
 }
 
 export default function PropertiesPage() {
+  const { t } = useTranslation();
   const [openAddForm, setOpenAddForm] = useState(false);
   const [openEditForm, setOpenEditForm] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
@@ -124,9 +125,8 @@ export default function PropertiesPage() {
       <div className="flex-1 pl-0 md:pl-64 md:pt-0 transition-all">
         <div className="container mx-auto p-4">
         <PageHeader
-         title="Le Tue Proprietà"
-         description="Gestisci il tuo portfolio immobiliare"
-        
+         title={t("properties.title")}
+         description={t("properties.description")}
         />
             <Button 
               onClick={() => {
@@ -138,7 +138,7 @@ export default function PropertiesPage() {
               data-tutorial="properties-add"
             >
               <Plus className="mr-2 h-4 w-4" />
-              Aggiungi Proprietà
+              {t("properties.addProperty")}
             </Button>
         
 
@@ -149,7 +149,7 @@ export default function PropertiesPage() {
           ) : properties.length === 0 ? (
             <div className="text-center p-12 border border-dashed rounded-lg mt-4">
               <Home className="h-12 w-12 mx-auto text-gray-400" />
-              <h3 className="mt-4 text-lg font-medium">Nessuna proprietà trovata</h3>
+              <h3 className="mt-4 text-lg font-medium">{t("properties.noProperties")}</h3>
               <p className="mt-2 text-sm text-gray-500">
                 Inizia aggiungendo la tua prima proprietà al portfolio.
               </p>
@@ -158,7 +158,7 @@ export default function PropertiesPage() {
                 setOpenAddForm(true);
               }} className="mt-4">
                 <Plus className="mr-2 h-4 w-4" />
-                Aggiungi Proprietà
+                {t("properties.addProperty")}
               </Button>
             </div>
           ) : (
@@ -239,18 +239,13 @@ export default function PropertiesPage() {
               <AlertDialogHeader>
                 <AlertDialogTitle>Sei sicuro di voler eliminare questa proprietà?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Questa azione non può essere annullata. Verranno eliminati tutti i dati associati a questa proprietà,
-                  inclusi inquilini e transazioni.
+                  Questa azione non può essere annullata. La proprietà verrà eliminata permanentemente.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Annulla</AlertDialogCancel>
-                <AlertDialogAction 
-                  onClick={confirmDelete} 
-                  disabled={deleteMutation.isPending}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  {deleteMutation.isPending ? "Eliminazione..." : "Elimina"}
+                <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90">
+                  Elimina
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

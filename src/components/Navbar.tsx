@@ -1,11 +1,13 @@
 import { Link } from "react-router-dom";
 import { Menu, X, Search } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 const Navbar = () => {
+  const { t } = useTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
@@ -25,31 +27,31 @@ const Navbar = () => {
             to="/"
             className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
-            Home
+            {t("common.navigation.home")}
           </Link>
           <Link
             to="/pricing"
             className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
-            Servizio Gratuito
+            {t("common.navigation.pricing")}
           </Link>
           <Link
             to="/blog"
             className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
-            Blog
+            {t("common.navigation.blog")}
           </Link>
           <Link
             to="/guide"
             className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
-            Guide
+            {t("common.navigation.guides")}
           </Link>
           <Link
             to="/supporto"
             className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
-            Supporto
+            {t("common.navigation.support")}
           </Link>
         </nav>
 
@@ -66,11 +68,11 @@ const Navbar = () => {
           <div className="hidden md:flex items-center gap-2">
             <Link to="/login">
               <Button variant="ghost" size="sm">
-                Accedi
+                {t("common.navigation.login")}
               </Button>
             </Link>
             <Link to="/register">
-              <Button size="sm">Registrati</Button>
+              <Button size="sm">{t("common.navigation.register")}</Button>
             </Link>
           </div>
 
@@ -92,7 +94,7 @@ const Navbar = () => {
               <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="search"
-                placeholder="Cerca nelle guide..."
+                placeholder={t("search.placeholder")}
                 className="w-full pl-8 bg-background"
                 autoFocus
               />
@@ -110,45 +112,45 @@ const Navbar = () => {
               className="text-base font-medium text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
-              Home
+              {t("common.navigation.home")}
             </Link>
             <Link
               to="/pricing"
               className="text-base font-medium text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
-              Servizio Gratuito
+              {t("common.navigation.pricing")}
             </Link>
             <Link
               to="/blog"
               className="text-base font-medium text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
-              Blog
+              {t("common.navigation.blog")}
             </Link>
             <Link
               to="/guide"
               className="text-base font-medium text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
-              Guide
+              {t("common.navigation.guides")}
             </Link>
             <Link
               to="/supporto"
               className="text-base font-medium text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
-              Supporto
+              {t("common.navigation.support")}
             </Link>
 
             <div className="flex items-center gap-2 pt-4 border-t">
               <Link to="/login" className="w-full" onClick={() => setIsMenuOpen(false)}>
                 <Button variant="outline" className="w-full">
-                  Accedi
+                  {t("common.navigation.login")}
                 </Button>
               </Link>
               <Link to="/register" className="w-full" onClick={() => setIsMenuOpen(false)}>
-                <Button className="w-full">Registrati</Button>
+                <Button className="w-full">{t("common.navigation.register")}</Button>
               </Link>
             </div>
           </nav>

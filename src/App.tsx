@@ -7,6 +7,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { TutorialProvider } from "@/context/TutorialContext";
 import { CookieConsentProvider } from "@/context/CookieConsentContext";
 import { SubscriptionProvider } from './context/SubscriptionContext';
+import { SettingsProvider } from './context/SettingsContext';
 import { TourGuide } from "@/components/tour/TourGuide";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import CookieConsent from "@/components/CookieConsent";
@@ -34,6 +35,10 @@ import GuideDetail from './pages/GuideDetail';
 import SupportoPage from './pages/Supporto';
 import { PrivacyPolicy, TerminiServizio, CookiePolicy } from './pages/Legali';
 import ImportPage from './pages/ImportPage';
+import NotificationsPage from "./pages/NotificationsPage";
+import ProfilePage from "./pages/ProfilePage";
+import SettingsPage from "./pages/SettingsPage";
+import InfoPage from "./pages/InfoPage";
 
 // Configurazione avanzata di QueryClient con gestione della cache
 const queryClient = new QueryClient({
@@ -65,96 +70,130 @@ const App = () => {
         <Sonner />
         <Router>
           <AuthProvider>
-            <TutorialProvider>
-              <CookieConsentProvider>
-                <SubscriptionProvider>
-                  <AnalyticsWrapper>
-                    <TourGuide />
-                    <CookieConsent />
-                    <Routes>
-                      {/* Rotte pubbliche */}
-                      <Route path="/" element={<LandingPage />} />
-                      <Route path="/login" element={<LoginPage />} />
-                      <Route path="/register" element={<RegisterPage />} />
-                      <Route path="/pricing" element={<Pricing />} />
-                      <Route path="/abbonamento-confermato" element={<AbbonamentoConfermato />} />
-                      
-                      {/* Nuove pagine landing */}
-                      <Route path="/blog" element={<BlogPage />} />
-                      <Route path="/blog/:slug" element={<BlogDetail />} />
-                      <Route path="/guide" element={<Guides />} />
-                      <Route path="/guide/:slug" element={<GuideDetail />} />
-                      <Route path="/supporto" element={<SupportoPage />} />
-                      <Route path="/privacy" element={<PrivacyPolicy />} />
-                      <Route path="/termini" element={<TerminiServizio />} />
-                      <Route path="/cookie" element={<CookiePolicy />} />
-                      <Route path="/features" element={<LandingPage />} />
-                      <Route path="/testimonials" element={<LandingPage />} />
-                      
-                      {/* Rotte protette */}
-                      <Route path="/dashboard" element={
-                        <ProtectedRoute>
-                          <DashboardPage />
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/properties" element={
-                        <ProtectedRoute>
-                          <PropertiesPage />
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/tenants" element={
-                        <ProtectedRoute>
-                          <TenantsPage />
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/transactions" element={
-                        <ProtectedRoute>
-                          <TransactionsPage />
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/contracts" element={
-                        <ProtectedRoute>
-                          <ContractsPage />
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/reports" element={
-                        <ProtectedRoute>
-                          <ReportPage />
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/activities" element={
-                        <ProtectedRoute>
-                          <ActivitiesPage />
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/tourism/bookings" element={
-                        <ProtectedRoute>
-                          <BookingsPage />
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/tourism/property/:propertyId" element={
-                        <ProtectedRoute>
-                          <PropertyDetails />
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/tourism/properties" element={
-                        <ProtectedRoute>
-                          <TourismPropertiesPage />
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/import" element={
-                        <ProtectedRoute>
-                          <ImportPage />
-                        </ProtectedRoute>
-                      } />
-                      
-                      {/* Pagina non trovata */}
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </AnalyticsWrapper>
-                </SubscriptionProvider>
-              </CookieConsentProvider>
-            </TutorialProvider>
+            <SettingsProvider>
+              <TutorialProvider>
+                <CookieConsentProvider>
+                  <SubscriptionProvider>
+                    <AnalyticsWrapper>
+                      <TourGuide />
+                      <CookieConsent />
+                      <Routes>
+                        {/* Rotte pubbliche */}
+                        <Route path="/" element={<LandingPage />} />
+                        <Route path="/login" element={<LoginPage />} />
+                        <Route path="/register" element={<RegisterPage />} />
+                        <Route path="/pricing" element={<Pricing />} />
+                        <Route path="/abbonamento-confermato" element={<AbbonamentoConfermato />} />
+                        
+                        {/* Nuove pagine landing */}
+                        <Route path="/blog" element={<BlogPage />} />
+                        <Route path="/blog/:slug" element={<BlogDetail />} />
+                        <Route path="/guide" element={<Guides />} />
+                        <Route path="/guide/:slug" element={<GuideDetail />} />
+                        <Route path="/supporto" element={<SupportoPage />} />
+                        <Route path="/privacy" element={<PrivacyPolicy />} />
+                        <Route path="/termini" element={<TerminiServizio />} />
+                        <Route path="/cookie" element={<CookiePolicy />} />
+                        <Route path="/features" element={<LandingPage />} />
+                        <Route path="/testimonials" element={<LandingPage />} />
+                        
+                        {/* Rotte protette */}
+                        <Route path="/dashboard" element={
+                          <ProtectedRoute>
+                            <DashboardPage />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/properties" element={
+                          <ProtectedRoute>
+                            <PropertiesPage />
+                          </ProtectedRoute>
+                        } />
+                        {/* 
+                         * TODO: Implementare le pagine di dettaglio mancanti:
+                         * - Dettaglio proprietà (/properties/:id)
+                         * - Dettaglio inquilino (/tenants/:id)
+                         * - Dettaglio transazione (/transactions/:id)
+                         * - Dettaglio contratto (/contracts/:id)
+                         *
+                         * Le rotte sono state temporaneamente rimosse per evitare errori
+                         * fino a quando i componenti corrispondenti non saranno creati.
+                         */}
+                        <Route path="/tenants" element={
+                          <ProtectedRoute>
+                            <TenantsPage />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/transactions" element={
+                          <ProtectedRoute>
+                            <TransactionsPage />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/contracts" element={
+                          <ProtectedRoute>
+                            <ContractsPage />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/reports" element={
+                          <ProtectedRoute>
+                            <ReportPage />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/activities" element={
+                          <ProtectedRoute>
+                            <ActivitiesPage />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/tourism/bookings" element={
+                          <ProtectedRoute>
+                            <BookingsPage />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/tourism/properties" element={
+                          <ProtectedRoute>
+                            <TourismPropertiesPage />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/tourism/property/:propertyId" element={
+                          <ProtectedRoute>
+                            <PropertyDetails />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/import" element={
+                          <ProtectedRoute>
+                            <ImportPage />
+                          </ProtectedRoute>
+                        } />
+                        
+                        {/* Nuove pagine */}
+                        <Route path="/notifications" element={
+                          <ProtectedRoute>
+                            <NotificationsPage />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/profile" element={
+                          <ProtectedRoute>
+                            <ProfilePage />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/settings" element={
+                          <ProtectedRoute>
+                            <SettingsPage />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/info" element={
+                          <ProtectedRoute>
+                            <InfoPage />
+                          </ProtectedRoute>
+                        } />
+                        
+                        {/* Pagina non trovata */}
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </AnalyticsWrapper>
+                  </SubscriptionProvider>
+                </CookieConsentProvider>
+              </TutorialProvider>
+            </SettingsProvider>
           </AuthProvider>
         </Router>
       </TooltipProvider>

@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { useCookieConsent } from "@/context/CookieConsentContext";
 
 const CookieConsent = () => {
+  const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(false);
   const { consent, updateConsent } = useCookieConsent();
   
@@ -38,22 +40,21 @@ const CookieConsent = () => {
       <div className="container max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
           <div className="flex-grow">
-            <h3 className="text-lg font-semibold mb-2">La tua privacy è importante</h3>
+            <h3 className="text-lg font-semibold mb-2">{t("cookies.privacyMessage")}</h3>
             <p className="text-sm text-muted-foreground mb-2">
-              Utilizziamo i cookie per migliorare la tua esperienza di navigazione, personalizzare contenuti e 
-              annunci, fornire funzionalità di social media e analizzare il nostro traffico.
+              {t("cookies.usageMessage")}
             </p>
             <div className="text-sm text-muted-foreground">
-              Leggi la nostra <Link to="/cookie" className="text-primary hover:underline">Cookie Policy</Link> e la{" "}
-              <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link> per maggiori dettagli.
+              {t("cookies.readMore")} <Link to="/cookie" className="text-primary hover:underline">{t("cookies.cookiePolicy")}</Link> {t("cookies.and")} 
+              <Link to="/privacy" className="text-primary hover:underline">{t("cookies.privacyPolicy")}</Link> {t("cookies.forMoreInfo")}.
             </div>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 whitespace-nowrap">
             <Button variant="outline" size="sm" onClick={acceptEssential}>
-              Solo essenziali
+              {t("cookies.buttons.acceptEssential")}
             </Button>
             <Button size="sm" onClick={acceptAll}>
-              Accetta tutti
+              {t("cookies.buttons.acceptAll")}
             </Button>
             <Button 
               variant="ghost" 
@@ -62,7 +63,7 @@ const CookieConsent = () => {
               onClick={close}
             >
               <X className="h-4 w-4" />
-              <span className="sr-only">Chiudi</span>
+              <span className="sr-only">{t("cookies.buttons.close")}</span>
             </Button>
           </div>
         </div>
