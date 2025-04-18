@@ -1400,9 +1400,9 @@ export default function DashboardPage() {
         description="Panoramica delle prestazioni dei tuoi immobili in affitto"
       />
       
-      <div className="container mx-auto p-6">
-        <div className="flex justify-between items-center mb-6" data-tutorial="dashboard-overview">
-          <h1 className="text-3xl font-bold">Dashboard</h1>
+      <div className="container mx-auto p-2 sm:p-6">
+        <div className="flex justify-between items-center mb-4 sm:mb-6" data-tutorial="dashboard-overview">
+          <h1 className="text-2xl sm:text-3xl font-bold">Dashboard</h1>
           <Button onClick={generateReport}>
             <FilePieChart className="mr-2 h-4 w-4" />
             Genera Report
@@ -1410,7 +1410,7 @@ export default function DashboardPage() {
         </div>
         
         {/* Statistiche */}
-        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 mb-8" data-tutorial="dashboard-stats">
+        <div className="grid gap-3 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 mb-4 sm:mb-8" data-tutorial="dashboard-stats">
           <StatCard
             title="Proprietà"
             value={summary.totalProperties}

@@ -18,17 +18,17 @@ const LegalPageLayout = ({
       <LandingNav />
 
       <main className="flex-1">
-        <section className="py-12 md:py-16 bg-muted/30">
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col gap-2 mb-8">
-              <Link to="/" className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors mb-4">
+        <section className="py-8 md:py-16 bg-muted/30">
+          <div className="container px-3 md:px-6">
+            <div className="flex flex-col gap-2 mb-6 md:mb-8">
+              <Link to="/" className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors mb-2 md:mb-4">
                 <ArrowLeft className="h-4 w-4" />
                 <span>Torna alla home</span>
               </Link>
-              <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl">
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tighter sm:text-4xl">
                 {title}
               </h1>
-              <p className="text-muted-foreground text-lg max-w-[700px]">
+              <p className="text-muted-foreground text-base md:text-lg max-w-[700px]">
                 {description}
               </p>
             </div>
@@ -41,7 +41,7 @@ const LegalPageLayout = ({
       </main>
 
       <footer className="bg-muted py-8">
-        <div className="container px-4 md:px-6 text-center">
+        <div className="container px-3 md:px-6 text-center">
           <p className="text-sm text-muted-foreground">
             © {new Date().getFullYear()} Tenoris360. Tutti i diritti riservati.
           </p>

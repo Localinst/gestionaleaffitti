@@ -83,10 +83,10 @@ const LandingPage = () => {
       <div className="min-h-screen flex flex-col">
         {/* Header/Navigation */}
         <header className="bg-background border-b border-border sticky top-0 z-10">
-          <div className="container flex items-center justify-between h-16 px-4 md:px-6">
-            <div className="flex items-center gap-2">
-              <img src="/simbolologo.png" alt="Tenoris360 Logo" className="h-8 w-auto" />
-              <span className="text-xl font-bold">Tenoris360 <span className="text-primary">GRATUITO</span></span>
+          <div className="container flex items-center justify-between h-16 px-2 md:px-6">
+            <div className="flex items-center gap-2 min-w-0 max-w-[50%] xs:max-w-none">
+              <img src="/simbolologo.png" alt="Tenoris360 Logo" className="h-7 w-auto" />
+              <span className="text-base md:text-xl font-bold truncate">Tenoris360 <span className="text-primary hidden xs:inline">GRATUITO</span></span>
             </div>
             <nav className="hidden md:flex items-center gap-6">
               <a href="#features" className="text-sm font-medium hover:text-primary transition-colors">
@@ -99,14 +99,14 @@ const LandingPage = () => {
                 Testimonianze
               </a>
             </nav>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1 sm:gap-4">
               <Link to="/login">
-                <Button variant="ghost" size="sm">Accedi</Button>
+                <Button variant="ghost" size="sm" className="px-2 sm:px-4">Accedi</Button>
               </Link>
               <Link to="/register">
-                <Button size="sm">Registrati</Button>
+                <Button size="sm" className="px-2 sm:px-4">Registrati</Button>
               </Link>
-              <Link to="/pricing">
+              <Link to="/pricing" className="hidden sm:block">
                 <Button variant="outline" size="sm">Servizio Gratuito</Button>
               </Link>
             </div>

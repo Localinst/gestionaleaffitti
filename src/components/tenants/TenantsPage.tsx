@@ -93,7 +93,7 @@ export default function TenantsPage() {
 
   return (
     <AppLayout>
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center px-2">
         <PageHeader
           title="Inquilini"
           description="Gestisci i tuoi inquilini"

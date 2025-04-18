@@ -5,11 +5,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { Property, api } from "@/services/api";
-import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { AddPropertyForm } from "./AddPropertyForm";
 import { PropertyDetailDialog } from "./PropertyDetailDialog";
 import { Badge } from "@/components/ui/badge";
-import { Sidebar } from "@/components/layout/Sidebar";
+import {AppLayout, PageHeader}  from "@/components/layout/AppLayout";
+
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useProperties } from "@/hooks/use-query-hooks";
@@ -118,15 +118,16 @@ export default function PropertiesPage() {
   }
 
   return (
+    <AppLayout>
     <div className="min-h-screen flex flex-col md:flex-row">
-      <Sidebar />
-      <div className="flex-1 pl-0 md:pl-64 pt-16 md:pt-0 transition-all">
+      
+      <div className="flex-1 pl-0 md:pl-64 md:pt-0 transition-all">
         <div className="container mx-auto p-4">
-          <DashboardHeader
-            heading="Le Tue Proprietà"
-            text="Gestisci il tuo portfolio immobiliare"
-            icon={<Home className="h-6 w-6" />}
-          >
+        <PageHeader
+         title="Le Tue Proprietà"
+         description="Gestisci il tuo portfolio immobiliare"
+        
+        />
             <Button 
               onClick={() => {
                 setSelectedProperty(null);
@@ -139,7 +140,7 @@ export default function PropertiesPage() {
               <Plus className="mr-2 h-4 w-4" />
               Aggiungi Proprietà
             </Button>
-          </DashboardHeader>
+        
 
           {loading ? (
             <div className="flex items-center justify-center h-64">
@@ -266,5 +267,6 @@ export default function PropertiesPage() {
         </div>
       </div>
     </div>
+    </AppLayout>
   );
 }

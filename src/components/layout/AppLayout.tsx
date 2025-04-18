@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Sidebar } from "./Sidebar";
+import { MobileNav } from "./MobileNav";
 import { cn } from "@/lib/utils";
 
 interface AppLayoutProps {
@@ -25,9 +26,14 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Sidebar />
-      <main className="flex-1 pl-0 md:pl-64 pt-16 md:pt-0 transition-all">
-        <div className="container py-4 md:py-8 px-0 sm:px-4 md:px-8 mx-auto max-w-7xl">
+      {/* MobileNav contiene sia la navbar superiore che la nav bar in basso e il pulsante per la sidebar */}
+      <MobileNav />
+      
+      {/* Visibile solo su desktop */}
+      
+      
+      <main className="flex-1 pl-0 md:pl-64 transition-all">
+        <div className="container pt-0 md:pt-1 pb-20 md:pb-8 px-0 sm:px-4 md:px-8 mx-auto max-w-7xl">
           {children}
         </div>
       </main>
@@ -43,7 +49,7 @@ export function PageHeader({
   description?: string;
 }) {
   return (
-    <div className="mb-8 px-4 sm:px-0">
+    <div className="mb-1 md:mb-8 px-3 sm:px-0 mt-0 md:mt-1">
       <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{title}</h1>
       {description && (
         <p className="text-sm text-muted-foreground mt-1">{description}</p>
@@ -64,7 +70,7 @@ export function CardContainer({
   return (
     <div 
       className={cn(
-        "bg-card border rounded-lg shadow-sm p-5",
+        "bg-card border rounded-lg shadow-sm p-3 sm:p-5",
         className
       )}
       onClick={onClick}
@@ -99,7 +105,7 @@ export function Grid({
   };
 
   return (
-    <div className={cn("grid gap-4", getGridCols(), className)}>
+    <div className={cn("grid gap-2 sm:gap-4", getGridCols(), className)}>
       {children}
     </div>
   );

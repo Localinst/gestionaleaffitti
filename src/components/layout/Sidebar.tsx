@@ -25,7 +25,12 @@ import { useAuth } from "@/context/AuthContext";
 import { useTutorial } from '@/context/TutorialContext';
 import { DEFAULT_TUTORIAL_STEPS } from '@/context/TutorialContext';
 
-export function Sidebar() {
+interface SidebarProps {
+  forceOpen?: boolean;
+  onClose?: () => void;
+}
+
+export function Sidebar({ forceOpen, onClose }: SidebarProps = {}) {
   const [isOpen, setIsOpen] = useState(false);
   const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({});
   const location = useLocation();
@@ -38,6 +43,7 @@ export function Sidebar() {
   const handleLogout = async () => {
     try {
       await logout();
+      if (onClose) onClose();
       // Il reindirizzamento è gestito da AuthContext
     } catch (error) {
       console.error('Errore durante il logout:', error);
@@ -81,6 +87,13 @@ export function Sidebar() {
     
     setOpenSubmenus(newOpenSubmenus);
   }, [location.pathname]);
+
+  // Applica forceOpen se presente
+  useEffect(() => {
+    if (forceOpen !== undefined) {
+      setIsOpen(forceOpen);
+    }
+  }, [forceOpen]);
   
   const routes = [
     { path: "/dashboard", label: "Dashboard", icon: BarChart3 },
@@ -106,43 +119,46 @@ export function Sidebar() {
     console.log('Click su guida interattiva rilevato');
     startTutorial();
     console.log('Tutorial avviato');
+    if (onClose) onClose();
+  };
+
+  const handleNavLinkClick = () => {
+    if (window.innerWidth < 768 && onClose) {
+      onClose();
+    }
   };
   
   return (
-    <>
-      {/* Mobile sidebar toggle */}
-      <div className="md:hidden fixed top-4 left-4 z-30">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          {isOpen ? <X /> : <Menu />}
-        </Button>
-      </div>
-    
-      {/* Sidebar background overlay on mobile */}
-      {isOpen && (
-        <div 
-          className="md:hidden fixed inset-0 bg-background/80 backdrop-blur-sm z-20"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
-      
-      {/* Sidebar */}
+    <>      
+      {/* Sidebar - utilizziamo CSS condizionale per dispositivi mobili o desktop */}
       <aside className={cn(
-        "fixed inset-y-0 left-0 z-20 flex h-full w-64 flex-col border-r bg-card transition-transform duration-300 md:translate-x-0",
-        isOpen ? "translate-x-0" : "-translate-x-full"
+        "flex h-full w-full flex-col transition-transform duration-300",
+        forceOpen !== undefined 
+          ? "" // Non applicare classi di visualizzazione quando forceOpen è definito
+          : "fixed inset-y-0 left-0 z-20 w-64 border-r bg-card md:translate-x-0 hidden md:flex",
+        (isOpen || forceOpen) ? "translate-x-0" : "-translate-x-full"
       )}>
         {/* Sidebar header */}
         <div className="border-b p-4">
-          <div className="flex items-center mb-2">
-            <img 
-              src="/simbolologo.png" 
-              alt="tenoris360 Logo" 
-              className="h-8 mr-2" 
-            />
-            <h2 className="text-xl font-semibold">tenoris360</h2>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center">
+              <img 
+                src="/simbolologo.png" 
+                alt="tenoris360 Logo" 
+                className="h-8 mr-2" 
+              />
+              <h2 className="text-xl font-semibold">tenoris360</h2>
+            </div>
+            {onClose && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onClose}
+                className="md:hidden h-8 w-8"
+              >
+                <X size={16} />
+              </Button>
+            )}
           </div>
           {user && (
             <p className="text-sm text-muted-foreground mt-1">
@@ -204,11 +220,7 @@ export function Sidebar() {
                                     ? "bg-primary/10 font-medium"
                                     : "hover:bg-muted"
                                 )}
-                                onClick={() => {
-                                  if (window.innerWidth < 768) {
-                                    setIsOpen(false);
-                                  }
-                                }}
+                                onClick={handleNavLinkClick}
                                 data-tutorial={`submenu-${submenuItem.path.substring(1)}`}
                               >
                                 <span>{submenuItem.label}</span>
@@ -227,11 +239,7 @@ export function Sidebar() {
                           ? "bg-primary text-primary-foreground" 
                           : "hover:bg-muted"
                       )}
-                      onClick={() => {
-                        if (window.innerWidth < 768) {
-                          setIsOpen(false);
-                        }
-                      }}
+                      onClick={handleNavLinkClick}
                       data-tutorial={`menu-${route.path.substring(1)}`}
                     >
                       <Icon className="h-5 w-5" />
