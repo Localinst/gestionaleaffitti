@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, login, logout, getCurrentUser } from '../controllers/auth';
+import { register, login, logout, getCurrentUser, changePassword } from '../controllers/auth';
 import { authenticate } from '../middleware/auth';
 
 const router = Router();
@@ -31,9 +31,10 @@ router.use((req, res, next) => {
 // Rotte pubbliche
 router.post('/register', register);
 router.post('/login', login);
-router.post('/logout', logout);
 
 // Rotte protette
+router.post('/logout', authenticate, logout);
 router.get('/me', authenticate, getCurrentUser);
+router.put('/password', authenticate, changePassword);
 
 export { router as authRouter }; 

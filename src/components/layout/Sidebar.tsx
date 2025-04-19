@@ -43,6 +43,7 @@ export function Sidebar({ forceOpen, onClose }: SidebarProps = {}) {
   const { toast } = useToast();
   const { logout, user } = useAuth();
   const { startTutorial } = useTutorial();
+  const [adminKeySequence, setAdminKeySequence] = useState<string[]>([]);
   
   // Funzione di logout
   const handleLogout = async () => {
@@ -100,6 +101,47 @@ export function Sidebar({ forceOpen, onClose }: SidebarProps = {}) {
     }
   }, [forceOpen]);
   
+  // Ascoltatore per la combinazione di tasti segreta (Control+Alt+A)
+  useEffect(() => {
+    const secretSequence = ["Control", "Alt", "a"];
+    
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Control" || event.key === "Alt" || event.key.toLowerCase() === "a") {
+        setAdminKeySequence(prev => {
+          // Aggiungi il tasto alla sequenza
+          const newSequence = [...prev, event.key];
+          
+          // Mantieni solo gli ultimi 3 tasti premuti
+          if (newSequence.length > 3) {
+            return newSequence.slice(newSequence.length - 3);
+          }
+          
+          return newSequence;
+        });
+      }
+    };
+
+    const handleKeyUp = () => {
+      // Verifica se la sequenza corrisponde a quella segreta
+      const checkSequence = adminKeySequence.join('');
+      const targetSequence = secretSequence.join('');
+      
+      if (checkSequence.toLowerCase() === targetSequence.toLowerCase()) {
+        console.log("Accesso admin rilevato");
+        navigate("/admin-8b5c127e3f");
+        setAdminKeySequence([]);
+      }
+    };
+    
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, [adminKeySequence, navigate]);
+
   const routes = [
     { path: "/dashboard", label: t("common.navigation.dashboard"), icon: BarChart3 },
     { path: "/properties", label: t("common.navigation.properties"), icon: Building2 },

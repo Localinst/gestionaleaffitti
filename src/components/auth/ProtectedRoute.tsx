@@ -6,9 +6,10 @@ import { toast } from 'sonner';
 
 interface ProtectedRouteProps {
   children: ReactNode;
+  requiredRole?: string;
 }
 
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole }) => {
   const { isAuthenticated, isLoading, user } = useAuth();
   const location = useLocation();
 
@@ -30,6 +31,19 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     
     // Reindirizza al login, salvando la pagina di origine per reindirizzare l'utente dopo il login
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+  }
+
+  // Controllo del ruolo se richiesto
+  if (requiredRole && user?.role !== requiredRole) {
+    // Notifica l'utente che non ha i permessi
+    toast.error("Accesso non autorizzato", {
+      description: `Non hai i permessi necessari (${requiredRole}) per accedere a questa pagina.`,
+      duration: 3000
+    });
+    
+    // Reindirizza alla dashboard o a una pagina di "non autorizzato"
+    // Per ora reindirizziamo alla dashboard
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;

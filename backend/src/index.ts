@@ -17,6 +17,7 @@ import { importRouter } from './routes/import';
 import { authenticate } from './middleware/auth';
 import { startSyncService } from './services/sync-service';
 import paymentsRouter from './routes/payments';
+import adminRouter from './routes/admin';
 
 // Definisci solo requestId, timedout è già definito da connect-timeout
 declare global {
@@ -168,6 +169,12 @@ app.get('/api/cors-test', (req, res) => {
 // Rotte pubbliche
 app.use('/api/auth', authRouter);
 app.use('/api/payments', paymentsRouter);
+
+// Rotte specifiche (mettere prima quelle più specifiche se ci sono overlap)
+// Esempio: app.use('/api/integrations', integrationsRouter);
+
+// ROTTE ADMIN (protette da middleware interni al router)
+app.use('/api/admin', adminRouter);
 
 // Rotte protette
 app.use('/api/properties', authenticate, propertiesRouter);

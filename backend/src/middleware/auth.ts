@@ -108,11 +108,11 @@ export const authorize = (roles: string[]) => {
 /**
  * Genera un token JWT
  */
-export const generateToken = (userId: string, email: string, name: string): string => {
+export const generateToken = (userId: string, email: string, name: string, role: string): string => {
   if (!JWT_SECRET) {
     throw new Error('JWT_SECRET non è definito nelle variabili d\'ambiente');
   }
-  return jwt.sign({ id: userId, email, name }, JWT_SECRET, { expiresIn: '1d' });
+  return jwt.sign({ id: userId, email, name, role }, JWT_SECRET, { expiresIn: '1d' });
 };
 
 /**

@@ -1,8 +1,8 @@
-import React, { useState } from "react";
-import { User, Camera, Mail, Phone, MapPin, Building, Save, Lock, CreditCard } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { User, Camera, Mail, Save, Lock, CreditCard } from "lucide-react";
 import { AppLayout, PageHeader } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,146 +11,245 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
+import { Skeleton } from "@/components/ui/skeleton";
 
-// Dati utente fittizi per esempio
-const mockUserData = {
-  id: "1",
-  name: "Mario Rossi",
-  email: "mario.rossi@example.com",
-  avatar: "", // URL immagine
-  phone: "+39 333 1234567",
-  company: "Immobiliare Rossi",
-  address: "Via Roma 123",
-  city: "Milano",
-  postalCode: "20100",
-  country: "Italia",
-  role: "Proprietario",
-  memberSince: "Gennaio 2023",
-  plan: "Premium",
-  accountType: "Business"
-};
+// Interfaccia per i dati utente (solo campi rilevanti disponibili)
+interface UserProfileData {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  avatar?: string; // Avatar opzionale
+  // Campi aggiuntivi che potrebbero essere in user_metadata
+  phone?: string;
+  company?: string;
+  address?: string;
+  city?: string;
+  postalCode?: string;
+  country?: string;
+}
 
 export default function ProfilePage() {
-  const { user } = useAuth();
-  const [userData, setUserData] = useState(mockUserData);
+  const { user, isLoading: isAuthLoading } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState(userData);
+  const [formData, setFormData] = useState<Partial<UserProfileData>>({});
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Stati per il cambio password
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isPasswordSaving, setIsPasswordSaving] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      });
+    } else {
+      setFormData({});
+    }
+  }, [user]);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
   
-  const handleSave = () => {
-    // Qui andrebbe implementata la logica per salvare i dati sul server
-    setUserData(formData);
+  const handleSave = async () => {
+    setIsSaving(true);
+    console.log("Salvataggio dati (simulato):", formData);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
     setIsEditing(false);
-    toast.success("Profilo aggiornato con successo");
+    setIsSaving(false);
+    toast.success("Profilo aggiornato con successo (simulato)");
   };
   
   const handleCancel = () => {
-    setFormData(userData);
+    if (user) {
+      setFormData({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      });
+    }
     setIsEditing(false);
   };
+
+  // Funzione per gestire il cambio password (con chiamata API reale)
+  const handlePasswordChange = async () => {
+    // Validazione base (invariata)
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      toast.error("Compila tutti i campi password.");
+      return;
+    }
+    if (newPassword.length < 6) {
+       toast.error("La nuova password deve essere lunga almeno 6 caratteri.");
+       return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("La nuova password e la conferma non coincidono.");
+      return;
+    }
+
+    setIsPasswordSaving(true);
+    // Rimosso toast.info qui, mostreremo successo/errore dopo la chiamata
+
+    try {
+      // Recupera il token JWT
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        toast.error("Errore di autenticazione", { description: "Token non trovato. Effettua il login." });
+        setIsPasswordSaving(false); // Interrompi se manca il token
+        return;
+      }
+
+      // Chiama l'endpoint API del backend per cambiare la password
+      const response = await fetch('/api/auth/password', { // Usa il percorso relativo
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          currentPassword: currentPassword, 
+          newPassword: newPassword 
+        })
+      });
+
+      // Gestisci la risposta
+      if (!response.ok) {
+        // Prova a leggere il messaggio di errore dal JSON del backend
+        let errorData = { error: `Errore HTTP ${response.status}` };
+        try {
+          errorData = await response.json();
+        } catch (e) { /* Ignora se non è JSON */ }
+        
+        console.error('Errore API durante il cambio password:', response.status, errorData);
+        // Mostra l'errore specifico dal backend, se disponibile
+        throw new Error(errorData.error || `Errore ${response.status} durante l'aggiornamento`);
+      }
+
+      // Se la risposta è OK (es. 200)
+      const result = await response.json(); // Legge { message: '...' }
+      toast.success("Password aggiornata con successo!", { description: result.message });
+      
+      // Resetta i campi dopo il successo
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+
+    } catch (error: any) {
+      console.error("Errore durante l'aggiornamento della password (fetch):", error);
+      toast.error("Errore durante l'aggiornamento della password", {
+        // Usa il messaggio dall'errore lanciato nel blocco if (!response.ok)
+        description: error.message || "Si è verificato un errore imprevisto.", 
+      });
+    } finally {
+      setIsPasswordSaving(false);
+    }
+  };
+
+  if (isAuthLoading) {
+    return (
+      <AppLayout>
+        <div className="container mx-auto p-4">
+          <Skeleton className="h-10 w-1/3 mb-6" />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+            <Skeleton className="lg:col-span-1 h-[400px]" />
+            <Skeleton className="lg:col-span-2 h-[500px]" />
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (!user) {
+    return (
+      <AppLayout>
+        <div className="container mx-auto p-4">Errore: Utente non trovato.</div>
+      </AppLayout>
+    );
+  }
+  
+  const avatarFallback = formData.name 
+      ? formData.name.split(' ').map(n => n[0]).join('') 
+      : user.email[0].toUpperCase();
   
   return (
     <AppLayout>
       <div className="container mx-auto p-4">
-        <PageHeader
-          title="Profilo Utente"
-          description="Gestisci le tue informazioni personali e preferenze"
-          icon={<User className="h-6 w-6" />}
-        >
-          {!isEditing ? (
-            <Button onClick={() => setIsEditing(true)} size="sm">
-              Modifica Profilo
-            </Button>
-          ) : (
-            <div className="flex space-x-2">
-              <Button onClick={handleSave} size="sm" variant="default">
-                <Save className="h-4 w-4 mr-2" />
-                Salva
+        <div className="flex justify-between items-start mb-6">
+          <PageHeader
+            title="Profilo Utente"
+            description="Gestisci le tue informazioni personali e preferenze"
+          />
+          <div>
+            {!isEditing ? (
+              <Button onClick={() => setIsEditing(true)} size="sm">
+                Modifica Profilo
               </Button>
-              <Button onClick={handleCancel} size="sm" variant="outline">
-                Annulla
-              </Button>
-            </div>
-          )}
-        </PageHeader>
+            ) : (
+              <div className="flex space-x-2">
+                <Button onClick={handleSave} size="sm" variant="default" disabled={isSaving}>
+                  <Save className="h-4 w-4 mr-2" />
+                  {isSaving ? 'Salvataggio...' : 'Salva'}
+                </Button>
+                <Button onClick={handleCancel} size="sm" variant="outline" disabled={isSaving}>
+                  Annulla
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-          {/* Colonna sinistra con informazioni generali */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Card className="lg:col-span-1">
             <CardHeader className="pb-3">
-              <CardTitle>Informazioni Personali</CardTitle>
-              <CardDescription>
-                Il tuo profilo e le informazioni di contatto
-              </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center text-center pb-6">
               <div className="relative mb-4">
                 <Avatar className="h-24 w-24">
-                  <AvatarImage src={userData.avatar} />
+                  <AvatarImage src={formData.avatar} />
                   <AvatarFallback className="text-2xl">
-                    {userData.name.split(' ').map(n => n[0]).join('')}
+                    {avatarFallback}
                   </AvatarFallback>
                 </Avatar>
                 <Button 
                   size="icon" 
                   variant="outline" 
                   className="absolute bottom-0 right-0 rounded-full h-8 w-8"
-                  disabled={!isEditing}
+                  disabled={!isEditing || isSaving}
                 >
                   <Camera className="h-4 w-4" />
                 </Button>
               </div>
               
-              <h3 className="text-xl font-semibold">{userData.name}</h3>
-              <Badge variant="secondary" className="mt-1">{userData.role}</Badge>
+              <h3 className="text-xl font-semibold">{formData.name || user.name}</h3>
+              <Badge variant="secondary" className="mt-1 capitalize">{formData.role || user.role}</Badge>
               
               <Separator className="my-4" />
               
               <div className="w-full space-y-3 text-left">
                 <div className="flex items-center">
                   <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <span className="text-sm">{userData.email}</span>
+                  <span className="text-sm break-all">{formData.email || user.email}</span>
                 </div>
-                <div className="flex items-center">
-                  <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <span className="text-sm">{userData.phone}</span>
-                </div>
-                <div className="flex items-center">
-                  <Building className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <span className="text-sm">{userData.company}</span>
-                </div>
-                <div className="flex items-start">
-                  <MapPin className="h-4 w-4 mr-2 text-muted-foreground mt-0.5" />
-                  <span className="text-sm">
-                    {userData.address}, {userData.city}<br />
-                    {userData.postalCode}, {userData.country}
-                  </span>
-                </div>
-              </div>
-              
-              <Separator className="my-4" />
-              
-              <div className="text-sm text-muted-foreground">
-                <p>Membro dal {userData.memberSince}</p>
-                <p>Piano: {userData.plan}</p>
               </div>
             </CardContent>
           </Card>
           
-          {/* Colonna destra con tabs */}
           <div className="lg:col-span-2">
             <Tabs defaultValue="informazioni">
               <TabsList className="mb-4">
                 <TabsTrigger value="informazioni">Informazioni</TabsTrigger>
                 <TabsTrigger value="sicurezza">Sicurezza</TabsTrigger>
-                <TabsTrigger value="fatturazione">Fatturazione</TabsTrigger>
+                <TabsTrigger value="fatturazione" disabled>Fatturazione (WIP)</TabsTrigger>
               </TabsList>
               
               <TabsContent value="informazioni">
@@ -158,7 +257,7 @@ export default function ProfilePage() {
                   <CardHeader>
                     <CardTitle>Dettagli Profilo</CardTitle>
                     <CardDescription>
-                      Modifica le tue informazioni personali e di contatto
+                      Modifica il tuo nome e altri dettagli (salvataggio simulato).
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -169,9 +268,9 @@ export default function ProfilePage() {
                           id="name" 
                           name="name" 
                           placeholder="Il tuo nome" 
-                          value={formData.name} 
+                          value={formData.name || ''}
                           onChange={handleInputChange} 
-                          disabled={!isEditing} 
+                          disabled={!isEditing || isSaving} 
                         />
                       </div>
                       <div className="space-y-2">
@@ -181,96 +280,14 @@ export default function ProfilePage() {
                           name="email" 
                           type="email" 
                           placeholder="La tua email" 
-                          value={formData.email} 
-                          onChange={handleInputChange} 
-                          disabled={!isEditing} 
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="phone">Telefono</Label>
-                        <Input 
-                          id="phone" 
-                          name="phone" 
-                          placeholder="Il tuo numero di telefono" 
-                          value={formData.phone} 
-                          onChange={handleInputChange} 
-                          disabled={!isEditing} 
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="company">Azienda</Label>
-                        <Input 
-                          id="company" 
-                          name="company" 
-                          placeholder="Nome dell'azienda" 
-                          value={formData.company} 
-                          onChange={handleInputChange} 
-                          disabled={!isEditing} 
-                        />
-                      </div>
-                    </div>
-                    
-                    <Separator />
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="address">Indirizzo</Label>
-                      <Input 
-                        id="address" 
-                        name="address" 
-                        placeholder="Il tuo indirizzo" 
-                        value={formData.address} 
-                        onChange={handleInputChange} 
-                        disabled={!isEditing} 
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="city">Città</Label>
-                        <Input 
-                          id="city" 
-                          name="city" 
-                          placeholder="Città" 
-                          value={formData.city} 
-                          onChange={handleInputChange} 
-                          disabled={!isEditing} 
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="postalCode">CAP</Label>
-                        <Input 
-                          id="postalCode" 
-                          name="postalCode" 
-                          placeholder="Codice Postale" 
-                          value={formData.postalCode} 
-                          onChange={handleInputChange} 
-                          disabled={!isEditing} 
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="country">Paese</Label>
-                        <Input 
-                          id="country" 
-                          name="country" 
-                          placeholder="Paese" 
-                          value={formData.country} 
-                          onChange={handleInputChange} 
-                          disabled={!isEditing} 
+                          value={formData.email || ''} 
+                          readOnly
+                          disabled 
+                          className="text-muted-foreground"
                         />
                       </div>
                     </div>
                   </CardContent>
-                  {isEditing && (
-                    <CardFooter className="flex justify-end space-x-2 pt-0">
-                      <Button onClick={handleSave}>
-                        <Save className="h-4 w-4 mr-2" />
-                        Salva Modifiche
-                      </Button>
-                      <Button variant="outline" onClick={handleCancel}>
-                        Annulla
-                      </Button>
-                    </CardFooter>
-                  )}
                 </Card>
               </TabsContent>
               
@@ -279,7 +296,7 @@ export default function ProfilePage() {
                   <CardHeader>
                     <CardTitle>Sicurezza dell'Account</CardTitle>
                     <CardDescription>
-                      Gestisci la tua password e le impostazioni di sicurezza
+                      Aggiorna la tua password.
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -290,6 +307,9 @@ export default function ProfilePage() {
                         name="currentPassword" 
                         type="password" 
                         placeholder="Inserisci la tua password attuale" 
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        disabled={isPasswordSaving}
                       />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -300,6 +320,9 @@ export default function ProfilePage() {
                           name="newPassword" 
                           type="password" 
                           placeholder="Inserisci una nuova password" 
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          disabled={isPasswordSaving} 
                         />
                       </div>
                       <div className="space-y-2">
@@ -309,36 +332,20 @@ export default function ProfilePage() {
                           name="confirmPassword" 
                           type="password" 
                           placeholder="Conferma la nuova password" 
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          disabled={isPasswordSaving} 
                         />
                       </div>
                     </div>
-                    
                     <div className="pt-2">
-                      <Button>
+                      <Button 
+                        onClick={handlePasswordChange} 
+                        disabled={isPasswordSaving}
+                      >
                         <Lock className="h-4 w-4 mr-2" />
-                        Aggiorna Password
+                        {isPasswordSaving ? 'Aggiornamento...' : 'Aggiorna Password'}
                       </Button>
-                    </div>
-                    
-                    <Separator className="my-6" />
-                    
-                    <div>
-                      <h3 className="text-lg font-medium mb-2">Altre impostazioni di sicurezza</h3>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Gestisci altre impostazioni relative alla sicurezza del tuo account
-                      </p>
-                      
-                      <div className="space-y-4">
-                        <Button variant="outline" className="w-full justify-start">
-                          Impostazioni di notifica di sicurezza
-                        </Button>
-                        <Button variant="outline" className="w-full justify-start">
-                          Dispositivi connessi
-                        </Button>
-                        <Button variant="outline" className="w-full justify-start">
-                          Storico attività account
-                        </Button>
-                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -349,61 +356,18 @@ export default function ProfilePage() {
                   <CardHeader>
                     <CardTitle>Informazioni di Fatturazione</CardTitle>
                     <CardDescription>
-                      Gestisci il tuo piano di abbonamento e i metodi di pagamento
+                      Gestisci il tuo piano e pagamenti (funzionalità da implementare).
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-6">
+                  <CardContent className="space-y-6 opacity-50 cursor-not-allowed">
                     <div className="bg-muted p-4 rounded-lg">
                       <div className="flex justify-between items-center">
-                        <div>
-                          <h3 className="font-medium">Piano Attuale: {userData.plan}</h3>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Il tuo abbonamento si rinnova il 15 Giugno 2024
-                          </p>
-                        </div>
-                        <Button variant="outline">Cambia Piano</Button>
+                        <div><h3 className="font-medium">Piano Attuale: ...</h3></div>
+                        <Button variant="outline" disabled>Cambia Piano</Button>
                       </div>
                     </div>
-                    
-                    <div>
-                      <h3 className="text-lg font-medium mb-2">Metodo di Pagamento</h3>
-                      <div className="flex items-center p-4 border rounded-lg">
-                        <CreditCard className="h-10 w-10 text-muted-foreground mr-4" />
-                        <div>
-                          <p className="font-medium">Carta di Credito</p>
-                          <p className="text-sm text-muted-foreground">**** **** **** 4567</p>
-                          <p className="text-sm text-muted-foreground">Scadenza: 12/24</p>
-                        </div>
-                        <Button variant="ghost" className="ml-auto">Modifica</Button>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <h3 className="text-lg font-medium mb-2">Fatture</h3>
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center p-3 border rounded-lg">
-                          <div>
-                            <p className="font-medium">Maggio 2024</p>
-                            <p className="text-sm text-muted-foreground">Piano Premium - €29.99</p>
-                          </div>
-                          <Button variant="ghost" size="sm">Scarica</Button>
-                        </div>
-                        <div className="flex justify-between items-center p-3 border rounded-lg">
-                          <div>
-                            <p className="font-medium">Aprile 2024</p>
-                            <p className="text-sm text-muted-foreground">Piano Premium - €29.99</p>
-                          </div>
-                          <Button variant="ghost" size="sm">Scarica</Button>
-                        </div>
-                        <div className="flex justify-between items-center p-3 border rounded-lg">
-                          <div>
-                            <p className="font-medium">Marzo 2024</p>
-                            <p className="text-sm text-muted-foreground">Piano Premium - €29.99</p>
-                          </div>
-                          <Button variant="ghost" size="sm">Scarica</Button>
-                        </div>
-                      </div>
-                    </div>
+                    <div><h3 className="text-lg font-medium mb-2">Metodo di Pagamento</h3>...</div>
+                    <div><h3 className="text-lg font-medium mb-2">Fatture</h3>...</div>
                   </CardContent>
                 </Card>
               </TabsContent>

@@ -36,6 +36,17 @@ export default defineConfig(() => ({
   server: {
     host: "::",
     port: 8080,
+    // Aggiunta configurazione proxy per inoltrare le richieste API al backend
+    proxy: {
+      // Qualsiasi richiesta che inizi con /api (es. /api/auth/login, /api/admin/users)
+      '/api': {
+        target: 'http://localhost:3000', // L'indirizzo del tuo server backend
+        changeOrigin: true, // Necessario per i virtual host
+        secure: false,      // Se il backend usa HTTPS (con certificato valido), impostalo a true
+        // Opzionale: riscrivi il percorso se necessario (non sembra servire qui)
+        // rewrite: (path) => path.replace(/^\/api/, '') 
+      }
+    }
   },
   plugins: [
     react(),

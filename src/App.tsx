@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { HashRouter as Router, Routes, Route } from "react-router-dom";
+import { HashRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import { TutorialProvider } from "@/context/TutorialContext";
 import { CookieConsentProvider } from "@/context/CookieConsentContext";
@@ -39,6 +39,9 @@ import NotificationsPage from "./pages/NotificationsPage";
 import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import InfoPage from "./pages/InfoPage";
+import AdminUsers from './pages/AdminUsers';
+import UpdatePasswordPage from "./pages/UpdatePasswordPage";
+import { useEffect } from "react";
 
 // Configurazione avanzata di QueryClient con gestione della cache
 const queryClient = new QueryClient({
@@ -62,7 +65,46 @@ const queryClient = new QueryClient({
   },
 });
 
+// Imposta una Content Security Policy (CSP) per proteggere l'applicazione
+const setupCSP = () => {
+  if (typeof document !== 'undefined') {
+    // Creiamo un meta tag per CSP
+    const meta = document.createElement('meta');
+    meta.httpEquiv = 'Content-Security-Policy';
+    
+    // Definisci una policy CSP restrittiva
+    meta.content = [
+      // Limita fonti di scripts al proprio dominio
+      "script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://fonts.googleapis.com 'unsafe-inline' 'unsafe-eval'",
+      // Limita fonti di stili
+      "style-src 'self' https://fonts.googleapis.com 'unsafe-inline'",
+      // Limita fonti di immagini
+      "img-src 'self' data: https://images.unsplash.com",
+      // Limita fonti di font
+      "font-src 'self' https://fonts.gstatic.com",
+      // Limita connessioni a websocket e XHR - aggiunto localhost:3000, onrender e Supabase URL
+      "connect-src 'self' https://www.google-analytics.com http://localhost:3000 https://localhost:3000 https://gestionaleaffitti.onrender.com https://fdufcrgckojbaghdvhgj.supabase.co",
+      // Limita form al proprio dominio
+      "form-action 'self'",
+      // Limita integrazione frame
+      "frame-src 'self'",
+      // Applica protezione XSS
+      "base-uri 'self'",
+      // Previeni MIME type sniffing
+      "object-src 'none'"
+    ].join('; ');
+    
+    // Aggiungi il meta tag all'head
+    document.head.appendChild(meta);
+  }
+};
+
 const App = () => {
+  // Esegui setup CSP al caricamento dell'app
+  useEffect(() => {
+    setupCSP();
+  }, []);
+  
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -84,6 +126,17 @@ const App = () => {
                         <Route path="/register" element={<RegisterPage />} />
                         <Route path="/pricing" element={<Pricing />} />
                         <Route path="/abbonamento-confermato" element={<AbbonamentoConfermato />} />
+                        <Route path="/update-password" element={<UpdatePasswordPage />} />
+                        
+                        {/* Rotta admin segreta protetta */}
+                        <Route 
+                          path="/admin-8b5c127e3f" 
+                          element={
+                            <ProtectedRoute requiredRole="admin">
+                              <AdminUsers />
+                            </ProtectedRoute>
+                          } 
+                        />
                         
                         {/* Nuove pagine landing */}
                         <Route path="/blog" element={<BlogPage />} />
