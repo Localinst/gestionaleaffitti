@@ -44,7 +44,7 @@ router.get('/users', async (req: AuthenticatedRequest, res: Response) => {
       email: user.email ?? 'N/A',
       createdAt: user.created_at,
       lastLogin: user.last_sign_in_at,
-      status: user.banned_until ? 'inactive' : (user.email_confirmed_at ? 'active' : 'pending')
+      status: (user as any).banned_until ? 'inactive' : (user.email_confirmed_at ? 'active' : 'pending')
     }));
 
     console.log(`[ADMIN API] Restituiti ${formattedUsers.length} utenti.`);
