@@ -122,7 +122,7 @@ export default function PropertiesPage() {
     <AppLayout>
     <div className="min-h-screen flex flex-col md:flex-row">
       
-      <div className="flex-1 pl-0 md:pl-64 md:pt-0 transition-all">
+      <div className="flex-1 pl-0 md:pl-0 md:pt-0 transition-all">
         <div className="container mx-auto p-4">
         <PageHeader
          title={t("properties.title")}

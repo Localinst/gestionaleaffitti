@@ -77,7 +77,7 @@ export function ExcelImportWizard() {
 
          // Leggi anteprima da ExcelJS
          let rowCount = 0;
-         worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+         worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => { 
            if (rowNumber > 1 && rowCount < 5) { 
              const rowData: Record<string, any> = {};
              columnHeaders.forEach((header, index) => {
@@ -267,6 +267,8 @@ export function ExcelImportWizard() {
     if (!file || !validateMapping()) return;
     setIsImporting(true);
     console.log(`[Import Step 4/5] Inizio importazione per tipo: ${entityType}`); 
+    // ---> Log dello stato mappings all'inizio <--- 
+    console.log("[Import Step 4/5] Mappings allo start di importData:", mappings);
 
     const fileExtension = file.name.split('.').pop()?.toLowerCase();
     let dataToImport: any[] = [];
@@ -337,15 +339,6 @@ export function ExcelImportWizard() {
       // ---> APPLICA MAPPATURA E TRASFORMAZIONE <---
       console.log("[Import Step 4/5] Applicazione mappatura e trasformazione...");
 
-      // Ottieni la mappatura inversa: { systemField: fileHeader }
-      const reverseMapping: Record<string, string> = {};
-      Object.entries(mappings).forEach(([fileHeader, systemField]) => {
-          if (systemField && systemField !== 'none') {
-              reverseMapping[systemField] = fileHeader;
-          }
-      });
-      console.log("[Import Step 4/5] Mappatura Inversa:", reverseMapping);
-
       const expectedSchema = entitySchemas[entityType];
       let processedRowCount = 0;
       let skippedRowCount = 0;
@@ -353,40 +346,59 @@ export function ExcelImportWizard() {
       allRows.forEach((rawRowData, index) => {
            processedRowCount++;
            const rowNumber = index + 2; // +2 perché index è 0-based e saltiamo header
-           // console.log(`\n[Import Step 4/5] Processo Riga ${rowNumber}`); // Log troppo verboso
-           // console.log(`[Import Step 4/5]   Dati Grezzi Riga ${rowNumber}:`, JSON.stringify(rawRowData)); // Log troppo verboso
+           // console.log(`\n[Import Step 4/5] Processo Riga ${rowNumber}`); 
+           // console.log(`[Import Step 4/5]   Dati Grezzi Riga ${rowNumber}:`, JSON.stringify(rawRowData)); 
 
            const mappedData: Record<string, any> = {};
            expectedSchema.forEach(systemField => {
-               const fileHeaderMapped = reverseMapping[systemField];
+               // Usa direttamente 'mappings' per trovare l'header del file corrispondente al campo di sistema
+               const fileHeaderMapped = mappings[systemField]; // Es: mappings['name'] restituisce 'Nome Inquilino'
                if (fileHeaderMapped && rawRowData.hasOwnProperty(fileHeaderMapped)) {
+                   // Prendi il valore dalla colonna corretta usando l'header del file
                    mappedData[systemField] = rawRowData[fileHeaderMapped];
                } else {
-                   mappedData[systemField] = null;
+                   mappedData[systemField] = null; // Campo non mappato o colonna non trovata nei dati grezzi
                }
            });
-           // console.log(`[Import Step 4/5]   Dati Mappati Riga ${rowNumber}:`, JSON.stringify(mappedData)); // Log troppo verboso
+           // console.log(`[Import Step 4/5]   Dati Mappati Riga ${rowNumber}:`, JSON.stringify(mappedData)); 
 
            const transformedRow: Record<string, any> = {};
            let isValidRow = true;
+
            expectedSchema.forEach(field => {
                try {
                    const transformedValue = transformValue(field, mappedData[field]);
                    transformedRow[field] = transformedValue;
-                   // TODO: Aggiungere validazioni più specifiche qui se necessario (es. campo obbligatorio)
-                   // if (field === 'name' && !transformedValue) isValidRow = false;
+                   
+                   // --- VALIDAZIONE CAMPI OBBLIGATORI (RIMOSSA) ---
+                   // if (entityType === 'property') {
+                   //     const requiredPropertyFields = ["name", "address", "city", "postal_code", "type"];
+                   //     if (requiredPropertyFields.includes(field) && 
+                   //         (transformedValue === null || transformedValue === undefined || String(transformedValue).trim() === '')) {
+                   //          isValidRow = false;
+                   //          missingRequiredFields.push(field); 
+                   //      }
+                   // }
+                   // TODO: Aggiungere validazioni simili per Tenant, Contract, Transaction se necessario
+                   
                } catch (transformError: any) {
                    console.error(`[Import Step 4/5] Errore trasformazione campo '${field}' Riga ${rowNumber}:`, transformError.message, "Valore originale:", mappedData[field]);
                    isValidRow = false;
                }
            });
-           // console.log(`[Import Step 4/5]   Dati Trasformati Riga ${rowNumber}:`, JSON.stringify(transformedRow), `Valida: ${isValidRow}`); // Log troppo verboso
+           // console.log(`[Import Step 4/5]   Dati Trasformati Riga ${rowNumber}:`, JSON.stringify(transformedRow), `Valida: ${isValidRow}`);
 
            if (isValidRow) {
                dataToImport.push(transformedRow);
            } else {
                skippedRowCount++;
-               console.warn(`[Import Step 4/5] Riga ${rowNumber} scartata a causa di errori di trasformazione/validazione.`);
+               // Messaggio generico per righe scartate a causa di errori di trasformazione
+               console.warn(`[Import Step 4/5] Riga ${rowNumber} scartata: errore durante la trasformazione dei dati.`);
+               // let skipReason = "errore trasformazione/validazione";
+               // if (missingRequiredFields.length > 0) {
+               //     skipReason = `campo/i obbligatorio/i mancante/i: ${missingRequiredFields.join(', ')}`;
+               // }
+               // console.warn(`[Import Step 4/5] Riga ${rowNumber} scartata: ${skipReason}.`);
            }
        });
        console.log(`\n[Import Step 4/5] Righe totali processate: ${processedRowCount}, Righe valide: ${dataToImport.length}, Righe scartate: ${skippedRowCount}`);
@@ -672,6 +684,18 @@ export function ExcelImportWizard() {
               <Button onClick={resetWizard}>Importa un altro file</Button>
             </div>
           )}
+
+          {/* Step 4: Importing (handled by importData) */}
+          {/* Step 5: Completion - Modificato */}
+           {step === 5 && (
+               <CardContent className="text-center py-10"> {/* Aggiunto padding per estetica */}
+                    <p className="text-xl font-semibold">Importazione completata</p>
+                    {/* Rimosso: Icona CheckCircle2 */}
+                    {/* Rimosso: Titolo h3 "Importazione Completata!" */}
+                    {/* Rimosso: Descrizione p "I tuoi dati sono stati importati..." */}
+                    {/* Rimosso: Pulsante "Importa un altro file" */}
+               </CardContent>
+           )}
         </CardContent>
       </Card>
     </div>
