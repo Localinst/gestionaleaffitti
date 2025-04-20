@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,67 +16,45 @@ export default function UpdatePasswordPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isTokenValid, setIsTokenValid] = useState<boolean | null>(null); // null = non verificato, true = valido, false = non valido/assente
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // Verifica il token e lo stato di autenticazione all'avvio
   useEffect(() => {
-    // Imposta lo stato iniziale a "loading"
-    setIsTokenValid(null);
-    setError(null);
-
-    // Ascolta i cambiamenti nello stato di autenticazione
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('onAuthStateChange event:', event);
-      console.log('onAuthStateChange session:', session);
-
-      // Gli eventi rilevanti dopo il click sul link di recovery sono
-      // solitamente INITIAL_SESSION (se la pagina viene caricata la prima volta)
-      // o USER_UPDATED (se l'utente era già loggato e poi clicca).
-      // In alcuni casi, potrebbe essere SIGNED_IN.
-
-      // La presenza di una sessione valida indica che il token era buono.
-      if (session) {
-        // Verifica se l'utente è arrivato qui tramite un link di recovery
-        // (l'evento potrebbe essere diverso a seconda dello stato precedente)
-        // Controlliamo se l'evento è uno di quelli che indicano un login/update riuscito
-        if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'PASSWORD_RECOVERY') {
-            console.log("Sessione valida rilevata tramite onAuthStateChange, token OK.");
-            setIsTokenValid(true);
-            setError(null); // Pulisce eventuali errori precedenti di "link non valido"
+    const hash = location.hash;
+    console.log("Location hash:", hash);
+    
+    const queryParamsIndex = hash.indexOf('?');
+    if (queryParamsIndex !== -1) {
+        const queryString = hash.substring(queryParamsIndex + 1);
+        const urlParams = new URLSearchParams(queryString);
+        const token = urlParams.get('access_token');
+        
+        if (token) {
+            console.log("Access token trovato nell'hash:", token);
+            setAccessToken(token);
+            setError(null);
         } else {
-            // Se c'è una sessione ma l'evento non è quello atteso per il recovery,
-            // potrebbe essere una sessione normale. Consideriamo il link non valido per sicurezza.
-            console.warn("Sessione presente ma evento non corrisponde a recovery:", event);
-            setError("Link non valido o sessione non pertinente.");
-            setIsTokenValid(false);
+            console.log("access_token non trovato nei parametri dell'hash.");
+            setError("Token di recupero non trovato nell'URL.");
+            setAccessToken(null);
         }
-      } else {
-        // Nessuna sessione = token non valido, scaduto o assente.
-        console.log("Nessuna sessione valida rilevata tramite onAuthStateChange.");
-        // Mostra l'errore solo se non è già stato impostato da una verifica precedente
-        if (isTokenValid !== false) { // Evita di sovrascrivere un errore più specifico
-             setError("Il link di reset password non è valido o è scaduto. Richiedine uno nuovo.");
-        }
-        setIsTokenValid(false);
-      }
-      
-      // Potremmo voler smettere di ascoltare dopo il primo evento utile,
-      // ma per ora lo lasciamo attivo.
-    });
+    } else {
+         console.log("Nessun parametro query trovato nell'hash.");
+         setError("Link di recupero password non valido.");
+         setAccessToken(null);
+    }
 
-    // Cleanup: Rimuovi l'ascoltatore quando il componente viene smontato
-    return () => {
-      if (authListener && authListener.subscription) {
-        authListener.subscription.unsubscribe();
-        console.log("Unsubscribed from onAuthStateChange");
-      }
-    };
-  }, []); // Esegui solo al montaggio
+  }, [location.hash]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null); // Resetta errori precedenti
+    setError(null);
+
+    if (!accessToken) {
+       setError("Impossibile procedere: token di recupero mancante o non valido.");
+       return;
+    }
 
     if (!newPassword || !confirmPassword) {
       setError("Inserisci e conferma la nuova password.");
@@ -94,19 +72,16 @@ export default function UpdatePasswordPage() {
     setIsLoading(true);
 
     try {
-      // La libreria Supabase dovrebbe usare automaticamente la sessione/token 
-      // stabilita dal link cliccato per autenticare questa chiamata.
       const { data, error: updateError } = await supabase.auth.updateUser({
         password: newPassword
       });
-
+      
       if (updateError) {
         console.error("Errore Supabase update password:", updateError);
-        // Gestisci errori comuni
         if (updateError.message.includes("same password")) {
             throw new Error("La nuova password non può essere uguale alla vecchia.");
         } else if (updateError.message.includes("session not found")) {
-            throw new Error("Sessione scaduta o non valida. Riprova il processo di reset.");
+            throw new Error("Sessione scaduta o non valida. Potrebbe essere necessario verificare il token OTP manualmente.");
         }
         throw new Error(updateError.message || "Errore durante l'aggiornamento della password.");
       }
@@ -115,7 +90,6 @@ export default function UpdatePasswordPage() {
       toast.success("Password aggiornata con successo!", {
         description: "Ora puoi effettuare il login con la tua nuova password.",
       });
-      // Reindirizza alla pagina di login dopo un breve ritardo
       setTimeout(() => navigate('/login'), 2000);
 
     } catch (err: any) {
@@ -125,23 +99,13 @@ export default function UpdatePasswordPage() {
     }
   };
 
-  // Render condizionale basato sulla validità del token
-  if (isTokenValid === null) {
-      return (
-          <div className="flex items-center justify-center min-h-screen bg-gray-100">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2">Verifica del link in corso...</span>
-          </div>
-      );
-  }
-  
-  if (isTokenValid === false) {
-      return (
+  if (accessToken === null && error) {
+       return (
           <div className="flex items-center justify-center min-h-screen bg-gray-100 px-4">
               <Card className="w-full max-w-md">
                   <CardHeader>
                       <CardTitle>Link Non Valido</CardTitle>
-                      <CardDescription>{error || "Il link utilizzato non è valido o è scaduto."}</CardDescription>
+                      <CardDescription>{error}</CardDescription>
                   </CardHeader>
                   <CardContent>
                       <Button onClick={() => navigate('/login')} className="w-full">
@@ -152,8 +116,16 @@ export default function UpdatePasswordPage() {
           </div>
       );
   }
+  
+   if (accessToken === null && !error) {
+        return (
+          <div className="flex items-center justify-center min-h-screen bg-gray-100">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2">Lettura del link...</span>
+          </div>
+      );
+   }
 
-  // Se il token è valido, mostra il form
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 px-4">
       <Card className="w-full max-w-md">
@@ -165,7 +137,6 @@ export default function UpdatePasswordPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Nuova Password */}
             <div className="space-y-2">
               <Label htmlFor="new-password">Nuova Password</Label>
               <div className="relative">
@@ -192,7 +163,6 @@ export default function UpdatePasswordPage() {
               </div>
             </div>
             
-            {/* Conferma Password */}
             <div className="space-y-2">
               <Label htmlFor="confirm-password">Conferma Nuova Password</Label>
                <div className="relative">
@@ -219,7 +189,6 @@ export default function UpdatePasswordPage() {
                </div>
             </div>
             
-            {/* Messaggio di Errore */}
             {error && (
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>
