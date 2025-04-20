@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,45 +16,47 @@ export default function UpdatePasswordPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [isTokenValid, setIsTokenValid] = useState<boolean | null>(null);
   const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
-    const hash = location.hash;
-    console.log("Location hash:", hash);
-    
-    const queryParamsIndex = hash.indexOf('?');
-    if (queryParamsIndex !== -1) {
-        const queryString = hash.substring(queryParamsIndex + 1);
-        const urlParams = new URLSearchParams(queryString);
-        const token = urlParams.get('access_token');
-        
-        if (token) {
-            console.log("Access token trovato nell'hash:", token);
-            setAccessToken(token);
-            setError(null);
-        } else {
-            console.log("access_token non trovato nei parametri dell'hash.");
-            setError("Token di recupero non trovato nell'URL.");
-            setAccessToken(null);
-        }
-    } else {
-         console.log("Nessun parametro query trovato nell'hash.");
-         setError("Link di recupero password non valido.");
-         setAccessToken(null);
-    }
+    setIsTokenValid(null);
+    setError(null);
 
-  }, [location.hash]);
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('onAuthStateChange event:', event);
+      console.log('onAuthStateChange session:', session);
+
+      if (session) {
+          if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'PASSWORD_RECOVERY') {
+                console.log("Sessione valida rilevata tramite onAuthStateChange, token OK.");
+                setIsTokenValid(true);
+                setError(null);
+          } else {
+                console.warn("Sessione presente ma evento non corrisponde a recovery:", event);
+                setError("Link non valido o sessione non pertinente.");
+                setIsTokenValid(false);
+          }
+      } else {
+        console.log("Nessuna sessione valida rilevata tramite onAuthStateChange.");
+        if (isTokenValid !== false) { 
+             setError("Il link di reset password non è valido o è scaduto. Richiedine uno nuovo.");
+        }
+        setIsTokenValid(false);
+      }
+    });
+
+    return () => {
+      if (authListener && authListener.subscription) {
+        authListener.subscription.unsubscribe();
+        console.log("Unsubscribed from onAuthStateChange");
+      }
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-
-    if (!accessToken) {
-       setError("Impossibile procedere: token di recupero mancante o non valido.");
-       return;
-    }
 
     if (!newPassword || !confirmPassword) {
       setError("Inserisci e conferma la nuova password.");
@@ -81,7 +83,7 @@ export default function UpdatePasswordPage() {
         if (updateError.message.includes("same password")) {
             throw new Error("La nuova password non può essere uguale alla vecchia.");
         } else if (updateError.message.includes("session not found")) {
-            throw new Error("Sessione scaduta o non valida. Potrebbe essere necessario verificare il token OTP manualmente.");
+            throw new Error("Sessione scaduta o non valida. Riprova il processo di reset.");
         }
         throw new Error(updateError.message || "Errore durante l'aggiornamento della password.");
       }
@@ -99,13 +101,22 @@ export default function UpdatePasswordPage() {
     }
   };
 
-  if (accessToken === null && error) {
+  if (isTokenValid === null) {
+      return (
+          <div className="flex items-center justify-center min-h-screen bg-gray-100">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2">Verifica del link in corso...</span>
+          </div>
+      );
+  }
+  
+  if (isTokenValid === false) {
        return (
           <div className="flex items-center justify-center min-h-screen bg-gray-100 px-4">
               <Card className="w-full max-w-md">
                   <CardHeader>
                       <CardTitle>Link Non Valido</CardTitle>
-                      <CardDescription>{error}</CardDescription>
+                      <CardDescription>{error || "Il link utilizzato non è valido o è scaduto."}</CardDescription>
                   </CardHeader>
                   <CardContent>
                       <Button onClick={() => navigate('/login')} className="w-full">
@@ -116,15 +127,6 @@ export default function UpdatePasswordPage() {
           </div>
       );
   }
-  
-   if (accessToken === null && !error) {
-        return (
-          <div className="flex items-center justify-center min-h-screen bg-gray-100">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2">Lettura del link...</span>
-          </div>
-      );
-   }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 px-4">
