@@ -19,35 +19,60 @@ export default function UpdatePasswordPage() {
   const [isTokenValid, setIsTokenValid] = useState<boolean | null>(null); // null = non verificato, true = valido, false = non valido/assente
   const navigate = useNavigate();
 
-  // Verifica il token all'avvio del componente
+  // Verifica il token e lo stato di autenticazione all'avvio
   useEffect(() => {
-    // Supabase gestisce il token nel fragment URL automaticamente all'inizializzazione
-    // o tramite onAuthStateChange. Qui verifichiamo solo se c'è una sessione attiva
-    // derivante dal token.
-    const checkSession = async () => {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-          console.error("Errore nel recupero sessione:", sessionError);
-          setError("Errore durante la verifica dell'autenticazione.");
-          setIsTokenValid(false);
-          return;
+    // Imposta lo stato iniziale a "loading"
+    setIsTokenValid(null);
+    setError(null);
+
+    // Ascolta i cambiamenti nello stato di autenticazione
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('onAuthStateChange event:', event);
+      console.log('onAuthStateChange session:', session);
+
+      // Gli eventi rilevanti dopo il click sul link di recovery sono
+      // solitamente INITIAL_SESSION (se la pagina viene caricata la prima volta)
+      // o USER_UPDATED (se l'utente era già loggato e poi clicca).
+      // In alcuni casi, potrebbe essere SIGNED_IN.
+
+      // La presenza di una sessione valida indica che il token era buono.
+      if (session) {
+        // Verifica se l'utente è arrivato qui tramite un link di recovery
+        // (l'evento potrebbe essere diverso a seconda dello stato precedente)
+        // Controlliamo se l'evento è uno di quelli che indicano un login/update riuscito
+        if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'PASSWORD_RECOVERY') {
+            console.log("Sessione valida rilevata tramite onAuthStateChange, token OK.");
+            setIsTokenValid(true);
+            setError(null); // Pulisce eventuali errori precedenti di "link non valido"
+        } else {
+            // Se c'è una sessione ma l'evento non è quello atteso per il recovery,
+            // potrebbe essere una sessione normale. Consideriamo il link non valido per sicurezza.
+            console.warn("Sessione presente ma evento non corrisponde a recovery:", event);
+            setError("Link non valido o sessione non pertinente.");
+            setIsTokenValid(false);
+        }
+      } else {
+        // Nessuna sessione = token non valido, scaduto o assente.
+        console.log("Nessuna sessione valida rilevata tramite onAuthStateChange.");
+        // Mostra l'errore solo se non è già stato impostato da una verifica precedente
+        if (isTokenValid !== false) { // Evita di sovrascrivere un errore più specifico
+             setError("Il link di reset password non è valido o è scaduto. Richiedine uno nuovo.");
+        }
+        setIsTokenValid(false);
       }
       
-      // Se c'è una sessione attiva, il token era valido
-      if (session) {
-          console.log("Sessione valida trovata, token OK.");
-          setIsTokenValid(true);
-      } else {
-          // Se non c'è sessione, il token potrebbe essere scaduto o non valido
-          console.log("Nessuna sessione valida, token scaduto o non valido.");
-          setError("Il link di reset password non è valido o è scaduto. Richiedine uno nuovo.");
-          setIsTokenValid(false);
+      // Potremmo voler smettere di ascoltare dopo il primo evento utile,
+      // ma per ora lo lasciamo attivo.
+    });
+
+    // Cleanup: Rimuovi l'ascoltatore quando il componente viene smontato
+    return () => {
+      if (authListener && authListener.subscription) {
+        authListener.subscription.unsubscribe();
+        console.log("Unsubscribed from onAuthStateChange");
       }
     };
-    
-    checkSession();
-  }, []);
+  }, []); // Esegui solo al montaggio
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
