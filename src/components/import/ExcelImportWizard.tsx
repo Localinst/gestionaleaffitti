@@ -6,12 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle2, XCircle } from "lucide-react";
+import { AlertCircle, CheckCircle2, XCircle, FileUp, Map, Settings, Send, Loader2 } from "lucide-react";
 import ExcelJS from "exceljs";
+import Papa from 'papaparse'; // Importa PapaParse
 import { api } from "@/services/api";
 import { toast } from "sonner";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { FileUp, Map, Settings, Send } from "lucide-react";
 
 // Tipi di entità che possono essere importate
 type EntityType = "property" | "tenant" | "contract" | "transaction";
@@ -42,8 +42,9 @@ export function ExcelImportWizard() {
   const [incomeLabel, setIncomeLabel] = useState('Entrate'); // Valore predefinito
   const [expenseLabel, setExpenseLabel] = useState('Uscite'); // Valore predefinito
   const [isImporting, setIsImporting] = useState(false); // Stato per indicare l'importazione
+  const [parsedCsvData, setParsedCsvData] = useState<any[]>([]); // Stato per dati CSV parsati
 
-  // Carica il file Excel/CSV e leggi le intestazioni
+  // Carica il file Excel/CSV e leggi le intestazioni + anteprima
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
     if (!fileList || fileList.length === 0) return;
@@ -51,82 +52,101 @@ export function ExcelImportWizard() {
     const selectedFile = fileList[0];
     const fileExtension = selectedFile.name.split('.').pop()?.toLowerCase();
     setFile(selectedFile);
-    
-    try {
-      const workbook = new ExcelJS.Workbook();
-      let worksheet: ExcelJS.Worksheet;
+    setParsedCsvData([]); // Resetta dati CSV precedenti
+    setHeaders([]);
+    setPreview([]);
+    setMappings(savedMappings[entityType] || {}); // Carica mappatura salvata se esiste
 
-      // ---> LOGICA PER TIPO FILE <---
+    try {
+      let columnHeaders: string[] = [];
+      let previewData: any[] = [];
+
       if (fileExtension === 'xlsx') {
-         console.log("Rilevato file .xlsx, uso xlsx.load()");
+         console.log("Rilevato file .xlsx, uso ExcelJS");
+         const workbook = new ExcelJS.Workbook();
          await workbook.xlsx.load(await selectedFile.arrayBuffer());
-         worksheet = workbook.worksheets[0];
+         const worksheet = workbook.worksheets[0];
+         if (!worksheet) throw new Error("Foglio di lavoro Excel non trovato.");
+
+         // Leggi headers da ExcelJS
+         const headerRow = worksheet.getRow(1);
+         headerRow.eachCell({ includeEmpty: false }, (cell) => {
+           const value = cell.value?.toString()?.trim();
+           if (value) columnHeaders.push(value);
+         });
+
+         // Leggi anteprima da ExcelJS
+         let rowCount = 0;
+         worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+           if (rowNumber > 1 && rowCount < 5) { 
+             const rowData: Record<string, any> = {};
+             columnHeaders.forEach((header, index) => {
+               const cell = row.getCell(index + 1); 
+               rowData[header] = formatPreviewValue(cell?.value);
+             });
+             previewData.push(rowData);
+             rowCount++;
+           }
+         });
+
       } else if (fileExtension === 'csv') {
-         console.log("Rilevato file .csv, uso csv.read()");
-         // Per CSV, leggiamo come testo e usiamo csv.read
-         // Potrebbe essere necessario specificare opzioni di parsing (delimitatore, encoding) se diverse dallo standard
-         worksheet = await workbook.csv.read(selectedFile.stream()); // Usiamo lo stream
+         console.log("Rilevato file .csv, uso PapaParse");
+         // Usa PapaParse per CSV
+         await new Promise<void>((resolve, reject) => {
+            Papa.parse(selectedFile, {
+                header: true,       // Tratta la prima riga come intestazione
+                skipEmptyLines: true,
+                preview: 6,         // Leggi solo le prime righe per header e anteprima (1 header + 5 dati)
+                complete: (results) => {
+                    console.log("PapaParse results (preview):", results);
+                    if (results.errors.length > 0) {
+                        console.error('Errori PapaParse (preview):', results.errors);
+                        toast.error("Errore durante la lettura delle prime righe del CSV.");
+                        // Non bloccare tutto, ma segnala errore
+                    }
+                    if (results.meta.fields) {
+                         columnHeaders = results.meta.fields.map(h => h.trim()).filter(h => h); // Pulisci e filtra headers
+                    } else {
+                         toast.warning("Nessuna intestazione trovata nel file CSV.");
+                         // Permetti comunque di procedere, magari l'utente mappa manualmente
+                    }
+                    // Prendi i dati per l'anteprima (escludendo potenzialmente l'header se incluso nei dati)
+                    previewData = results.data.slice(0, 5).map(row => { 
+                         const formattedRow: Record<string, string> = {};
+                         // Usa Object.keys invece di for...in
+                         Object.keys(row as any).forEach(key => { 
+                             formattedRow[key] = formatPreviewValue((row as any)[key]);
+                         });
+                         return formattedRow;
+                     });
+                    resolve();
+                },
+                error: (error) => {
+                    console.error("Errore PapaParse (preview):", error);
+                    toast.error(`Errore PapaParse: ${error.message}`);
+                    reject(error);
+                }
+            });
+         });
+
       } else {
          toast.error("Formato file non supportato. Usa .xlsx o .csv");
+         setFile(null);
          return;
       }
-      // ---> FINE LOGICA PER TIPO FILE <---
-
-      // Verifica se il worksheet è stato caricato
-      if (!worksheet) {
-        toast.error("Impossibile leggere il contenuto del file.");
-        return;
-      }
-
-      const headerRow = worksheet.getRow(1);
-      const columnHeaders: string[] = [];
-      // La lettura degli header potrebbe variare leggermente tra xlsx e csv
-      headerRow.eachCell({ includeEmpty: false }, (cell) => { // includeEmpty: false potrebbe aiutare
-        const value = cell.value?.toString()?.trim();
-        if (value) {
-          columnHeaders.push(value);
-        }
-      });
       
-      console.log("Intestazioni lette dal file:", columnHeaders);
-      if (columnHeaders.length === 0) {
-         toast.warning("Nessuna intestazione trovata nella prima riga del file. Assicurati che la prima riga contenga i nomi delle colonne.");
-         // Non resettare tutto, ma magari non passare allo step 2?
-         // return; 
+      console.log("Intestazioni lette:", columnHeaders);
+      if (columnHeaders.length === 0 && fileExtension !== 'csv') { // CSV warning è già gestito
+         toast.warning("Nessuna intestazione trovata nella prima riga del file.");
       }
       setHeaders(columnHeaders);
-      
-      // Carica mappature salvate se esistono
-      const savedMapping = savedMappings[entityType];
-      setMappings(savedMapping || {}); // Resetta se non c'è mappatura salvata per il nuovo tipo
-      
-      // Genera anteprima dei dati (limitata per CSV potenzialmente grandi)
-      const previewData: any[] = [];
-      // Usiamo un ciclo sicuro che non si blocchi se worksheet.rowCount non è affidabile (CSV)
-      let rowCount = 0;
-      worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
-        if (rowNumber > 1 && rowCount < 5) { // Salta header, max 5 righe preview
-          const rowData: Record<string, any> = {};
-          columnHeaders.forEach((header, index) => {
-             // Per CSV l'indice potrebbe non essere +1, ma basato su header
-             // Usiamo l'indice trovato in headers
-             const cell = row.getCell(index + 1); // Tentativo, potrebbe variare per CSV
-             const value = cell?.value; // Accedi in modo sicuro
-            if (value !== null && value !== undefined) {
-              rowData[header] = formatPreviewValue(value);
-            }
-          });
-          previewData.push(rowData);
-          rowCount++;
-        }
-      });
       console.log("Anteprima generata:", previewData);
       setPreview(previewData);
       setValidationErrors([]);
       setStep(2);
 
-    } catch (error) {
-      toast.error(`Errore nella lettura del file ${fileExtension?.toUpperCase()}`);
+    } catch (error: any) {
+      toast.error(`Errore nella lettura del file: ${error.message || 'Errore sconosciuto'}`);
       console.error(`Errore lettura ${fileExtension}:`, error);
       setFile(null);
       setHeaders([]);
@@ -245,113 +265,161 @@ export function ExcelImportWizard() {
   // Importa i dati mappati
   const importData = async () => {
     if (!file || !validateMapping()) return;
-    setIsImporting(true); 
-    
+    setIsImporting(true);
+    console.log(`[Import Step 4/5] Inizio importazione per tipo: ${entityType}`); 
+
     const fileExtension = file.name.split('.').pop()?.toLowerCase();
+    let dataToImport: any[] = [];
 
     try {
-      const workbook = new ExcelJS.Workbook();
-      let worksheet: ExcelJS.Worksheet;
+      // ---> LETTURA COMPLETA del file <---
+      console.log(`[Import Step 4/5] Lettura completa del file ${fileExtension}...`);
 
-      // ---> LOGICA PER TIPO FILE <---
+      let allRows: any[] = [];
+
       if (fileExtension === 'xlsx') {
-         await workbook.xlsx.load(await file.arrayBuffer());
-         worksheet = workbook.worksheets[0];
+          const workbook = new ExcelJS.Workbook();
+          await workbook.xlsx.load(await file.arrayBuffer());
+          const worksheet = workbook.worksheets[0];
+          if (!worksheet) throw new Error("Foglio di lavoro Excel non trovato.");
+          console.log(`[Import Step 4/5] File XLSX riletto. Righe: ${worksheet.rowCount}`);
+
+          // Ottieni gli indici delle colonne Excel basati sugli headers letti
+          const headerIndexMap: Record<string, number> = {};
+          headers.forEach((header, index) => {
+              headerIndexMap[header] = index + 1; 
+          });
+
+          worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+              if (rowNumber > 1) { // Salta header
+                  const rawRowData: Record<string, any> = {};
+                  headers.forEach(header => {
+                      const cellIndex = headerIndexMap[header];
+                      if (cellIndex) {
+                          rawRowData[header] = row.getCell(cellIndex)?.value ?? null;
+                      } else {
+                           rawRowData[header] = null; // Header non trovato?
+                      }
+                  });
+                  allRows.push(rawRowData);
+              }
+          });
+          console.log(`[Import Step 4/5] Righe lette da XLSX: ${allRows.length}`);
+
       } else if (fileExtension === 'csv') {
-         worksheet = await workbook.csv.read(file.stream());
+          console.log("[Import Step 4/5] Rilettura CSV con PapaParse...");
+          // Usa PapaParse per leggere l'intero CSV
+          await new Promise<void>((resolve, reject) => {
+              Papa.parse(file, {
+                  header: true, // Usa le intestazioni per creare oggetti
+                  skipEmptyLines: true,
+                  complete: (results) => {
+                      console.log("PapaParse results (full):"); // Non loggare tutti i dati
+                      if (results.errors.length > 0) {
+                          console.error('Errori PapaParse (full):', results.errors);
+                          toast.warning("Alcune righe del CSV potrebbero contenere errori.");
+                          // Non blocchiamo, ma segnaliamo
+                      }
+                      allRows = results.data; // PapaParse restituisce già oggetti mappati header->valore
+                      console.log(`[Import Step 4/5] Righe lette da CSV: ${allRows.length}`);
+                      resolve();
+                  },
+                  error: (error) => {
+                      console.error("Errore PapaParse (full):", error);
+                      reject(new Error(`Errore durante la lettura completa del CSV: ${error.message}`));
+                  }
+              });
+          });
       } else {
-         toast.error("Formato file non supportato.");
-         setIsImporting(false);
-         return;
+           throw new Error("Formato file non supportato per l'importazione.");
       }
-      // ---> FINE LOGICA PER TIPO FILE <---
 
-      if (!worksheet) {
-        toast.error("Impossibile leggere il contenuto del file per l'importazione.");
-        setIsImporting(false);
-        return;
-      }
-      
-      let rawData: any[] = []; 
-      
-      worksheet.eachRow((row, rowNumber) => {
-        if (rowNumber === 1) return; // Salta intestazione
-        
-        const rowData: Record<string, any> = {};
-        let hasValue = false; 
-        headers.forEach((header, index) => {
-          const mappedField = mappings[header] || 'none';
-          if (mappedField && mappedField !== 'none') {
-            const cell = row.getCell(index + 1); // Tentativo, potrebbe variare per CSV
-            const value = cell?.value;
-            rowData[mappedField] = value; 
-            if (value !== null && value !== undefined && value.toString().trim() !== '') {
-              hasValue = true;
-            }
+      // ---> APPLICA MAPPATURA E TRASFORMAZIONE <---
+      console.log("[Import Step 4/5] Applicazione mappatura e trasformazione...");
+
+      // Ottieni la mappatura inversa: { systemField: fileHeader }
+      const reverseMapping: Record<string, string> = {};
+      Object.entries(mappings).forEach(([fileHeader, systemField]) => {
+          if (systemField && systemField !== 'none') {
+              reverseMapping[systemField] = fileHeader;
           }
-        });
-
-        if (hasValue) {
-          rawData.push(rowData);
-        }
       });
+      console.log("[Import Step 4/5] Mappatura Inversa:", reverseMapping);
 
-      console.log("Dati GREZZI letti dal file (prima di trasformazioni/normalizzazioni):", rawData);
+      const expectedSchema = entitySchemas[entityType];
+      let processedRowCount = 0;
+      let skippedRowCount = 0;
 
-      let dataToImport = rawData;
+      allRows.forEach((rawRowData, index) => {
+           processedRowCount++;
+           const rowNumber = index + 2; // +2 perché index è 0-based e saltiamo header
+           // console.log(`\n[Import Step 4/5] Processo Riga ${rowNumber}`); // Log troppo verboso
+           // console.log(`[Import Step 4/5]   Dati Grezzi Riga ${rowNumber}:`, JSON.stringify(rawRowData)); // Log troppo verboso
 
-      // Normalizza i dati SE sono transazioni
+           const mappedData: Record<string, any> = {};
+           expectedSchema.forEach(systemField => {
+               const fileHeaderMapped = reverseMapping[systemField];
+               if (fileHeaderMapped && rawRowData.hasOwnProperty(fileHeaderMapped)) {
+                   mappedData[systemField] = rawRowData[fileHeaderMapped];
+               } else {
+                   mappedData[systemField] = null;
+               }
+           });
+           // console.log(`[Import Step 4/5]   Dati Mappati Riga ${rowNumber}:`, JSON.stringify(mappedData)); // Log troppo verboso
+
+           const transformedRow: Record<string, any> = {};
+           let isValidRow = true;
+           expectedSchema.forEach(field => {
+               try {
+                   const transformedValue = transformValue(field, mappedData[field]);
+                   transformedRow[field] = transformedValue;
+                   // TODO: Aggiungere validazioni più specifiche qui se necessario (es. campo obbligatorio)
+                   // if (field === 'name' && !transformedValue) isValidRow = false;
+               } catch (transformError: any) {
+                   console.error(`[Import Step 4/5] Errore trasformazione campo '${field}' Riga ${rowNumber}:`, transformError.message, "Valore originale:", mappedData[field]);
+                   isValidRow = false;
+               }
+           });
+           // console.log(`[Import Step 4/5]   Dati Trasformati Riga ${rowNumber}:`, JSON.stringify(transformedRow), `Valida: ${isValidRow}`); // Log troppo verboso
+
+           if (isValidRow) {
+               dataToImport.push(transformedRow);
+           } else {
+               skippedRowCount++;
+               console.warn(`[Import Step 4/5] Riga ${rowNumber} scartata a causa di errori di trasformazione/validazione.`);
+           }
+       });
+       console.log(`\n[Import Step 4/5] Righe totali processate: ${processedRowCount}, Righe valide: ${dataToImport.length}, Righe scartate: ${skippedRowCount}`);
+
+      // Normalizzazione Transazioni (invariata)
       if (entityType === 'transaction') {
-        console.log("Dati transazioni prima della normalizzazione:", rawData);
-        dataToImport = normalizeTransactionData(rawData);
-        console.log("Dati transazioni dopo la normalizzazione:", dataToImport);
-      } else {
-        // Per altri tipi di entità, applica la trasformazione originale
-        dataToImport = rawData.map(row => {
-          const transformedRow: Record<string, any> = {};
-          for (const field in row) {
-            transformedRow[field] = transformValue(field, row[field]);
-          }
-          return transformedRow;
-        });
+        console.log("[Import Step 4/5] Normalizzazione dati transazioni...");
+        const normalizedTransactions = normalizeTransactionData(dataToImport);
+        console.log("[Import Step 4/5] Dati transazioni normalizzati:", normalizedTransactions.length); // Log count
+        dataToImport.splice(0, dataToImport.length, ...normalizedTransactions);
       }
+
+      console.log(`[Import Step 4/5] Dati finali pronti per l'invio (${dataToImport.length} righe)`); 
 
       if (dataToImport.length === 0) {
-        toast.info("Nessun dato valido da importare trovato nel file.");
+        toast.warning("Nessun dato valido trovato da importare dopo la validazione. Controlla la mappatura e il contenuto del file.");
         setIsImporting(false);
-        return;
+        return; 
       }
 
-      // Chiamata API per importare i dati
-      try {
-        console.log(`Importazione di ${dataToImport.length} record di tipo ${entityType}...`);
-        const result = await api.import.data(entityType, dataToImport);
-        toast.success("Importazione completata con successo!");
-        setStep(3); // Vai allo step di successo/riepilogo
-      } catch (importError: any) {
-        // Gestisci l'errore ma considera l'importazione parzialmente riuscita
-        console.error("Errore API durante l'importazione:", importError);
-        let errorMessage = importError.message || "Errore sconosciuto durante l'importazione.";
-        // Prova a estrarre dettagli dall'errore del backend, se presenti
-        if (importError.response?.data?.details) {
-          errorMessage += ` Dettagli: ${importError.response.data.details}`;
-        } else if (importError.response?.data?.error) {
-          errorMessage = importError.response.data.error;
-        }
+      // ---> INVIO AL BACKEND <---
+      console.log(`[Import Step 4/5] Invio ${dataToImport.length} righe a /import/${entityType}...`);
+      await api.import.data(entityType, dataToImport);
 
-        if (importError.message && importError.message.includes('403')) {
-          toast.warning("Importazione completata parzialmente. Alcuni record potrebbero non essere stati importati a causa di permessi insufficienti.", { duration: 10000 });
-          setStep(3); // Passa comunque allo step successivo
-        } else {
-          toast.error(errorMessage, { duration: 10000 });
-          // Non resettare per permettere all'utente di vedere l'errore e magari correggere
-        }
-      }
-    } catch (error) {
-      toast.error(`Errore durante la lettura del file ${fileExtension?.toUpperCase()} per l'importazione`);
-      console.error(`Errore lettura ${fileExtension} per import:`, error);
+      toast.success(`${dataToImport.length} ${entityType}(s) importati con successo! ${skippedRowCount > 0 ? `(${skippedRowCount} righe scartate)` : ''}`);
+      setStep(5); // Vai allo step di completamento
+
+    } catch (error: any) {
+      console.error("[Import Step 4/5] Errore durante il processo di importazione:", error);
+      toast.error(`Errore durante l'importazione: ${error.message || 'Errore sconosciuto'}`);
     } finally {
-       setIsImporting(false); 
+      setIsImporting(false); 
+      console.log("[Import Step 4/5] Fine processo importazione.");
     }
   };
 
