@@ -83,7 +83,7 @@ const setupCSP = () => {
       // Limita fonti di font
       "font-src 'self' https://fonts.gstatic.com",
       // Limita connessioni a websocket e XHR - aggiunto localhost:3000, onrender e Supabase URL
-      "connect-src 'self' https://www.google-analytics.com http://localhost:3000 https://localhost:3000 https://gestionaleaffitti.onrender.com https://fdufcrgckojbaghdvhgj.supabase.co",
+      "connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com http://localhost:3000 https://localhost:3000 https://gestionaleaffitti.onrender.com https://fdufcrgckojbaghdvhgj.supabase.co",
       // Limita form al proprio dominio
       "form-action 'self'",
       // Limita integrazione frame
