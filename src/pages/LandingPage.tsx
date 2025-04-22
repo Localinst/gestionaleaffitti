@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { LandingNav } from "@/components/layout/LandingNav";
 import SEO from '@/components/SEO';
+import { getHreflangUrls } from '@/i18n';
 
 const LandingPage = () => {
   const [activeFeature, setActiveFeature] = useState<number>(0);
@@ -79,6 +80,7 @@ const LandingPage = () => {
           "contratti di locazione"
         ]}
         canonicalUrl="https://tenoris360.com/"
+        hreflang={getHreflangUrls(location.pathname)}
       />
       <div className="min-h-screen flex flex-col">
         {/* Header/Navigation */}

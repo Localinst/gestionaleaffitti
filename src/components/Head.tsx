@@ -6,6 +6,7 @@ interface HeadProps {
   keywords?: string[];
   image?: string;
   canonical?: string;
+  hreflang?: Array<{locale: string, url: string}>;
   noIndex?: boolean;
   structuredData?: object;
   debug?: boolean;
@@ -27,6 +28,7 @@ const Head = ({
   keywords,
   image = '/simbolologo.png',
   canonical,
+  hreflang,
   noIndex = false,
   structuredData,
   debug = false
@@ -193,6 +195,42 @@ const Head = ({
         meta.setAttribute('property', 'og:url');
         meta.setAttribute('content', absoluteUrl);
         document.head.appendChild(meta);
+      }
+    }
+    
+    // Gestione hreflang
+    if (hreflang && hreflang.length > 0) {
+      logDebug('Setting hreflang links', hreflang);
+      
+      // Rimuovi eventuali tag hreflang esistenti per evitare duplicati
+      document.querySelectorAll('link[rel="alternate"][hreflang]').forEach(el => {
+        el.remove();
+      });
+      
+      // Aggiungi il tag hreflang x-default se non è già presente
+      let hasDefaultHreflang = false;
+      
+      // Crea nuovi tag hreflang
+      hreflang.forEach(item => {
+        if (item.locale === 'x-default') {
+          hasDefaultHreflang = true;
+        }
+        
+        const link = document.createElement('link');
+        link.setAttribute('rel', 'alternate');
+        link.setAttribute('hreflang', item.locale);
+        link.setAttribute('href', item.url.startsWith('http') ? item.url : new URL(item.url, window.location.origin).toString());
+        document.head.appendChild(link);
+      });
+      
+      // Se non c'è x-default, aggiungi la versione italiana come default
+      if (!hasDefaultHreflang && canonical) {
+        const link = document.createElement('link');
+        link.setAttribute('rel', 'alternate');
+        link.setAttribute('hreflang', 'x-default');
+        const defaultUrl = canonical.startsWith('http') ? canonical : new URL(canonical, window.location.origin).toString();
+        link.setAttribute('href', defaultUrl);
+        document.head.appendChild(link);
       }
     }
     

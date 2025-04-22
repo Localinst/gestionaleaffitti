@@ -7,6 +7,275 @@
       "notifications": "Notifications",
       "appearance": "Apparence",
       "advanced": "Avancé"
+    },
+    "general": {
+      "title": "Paramètres généraux",
+      "language": "Langue",
+      "timezone": "Fuseau horaire",
+      "dateFormat": "Format de date",
+      "timeFormat": "Format d'heure",
+      "startOfWeek": "Début de la semaine"
+    },
+    "notifications": {
+      "title": "Préférences de notification",
+      "email": "Notifications par e-mail",
+      "push": "Notifications push",
+      "sms": "Notifications SMS",
+      "frequency": "Fréquence",
+      "types": {
+        "payments": "Paiements",
+        "maintenance": "Entretien",
+        "leases": "Contrats",
+        "messages": "Messages"
+      },
+      "frequencies": {
+        "immediately": "Immédiatement",
+        "daily": "Quotidien",
+        "weekly": "Hebdomadaire",
+        "never": "Jamais"
+      }
+    },
+    "appearance": {
+      "title": "Apparence",
+      "theme": "Thème",
+      "themes": {
+        "light": "Clair",
+        "dark": "Sombre",
+        "system": "Système"
+      },
+      "density": "Densité d'affichage",
+      "densities": {
+        "comfortable": "Confortable",
+        "compact": "Compact",
+        "standard": "Standard"
+      },
+      "fontSize": "Taille de la police",
+      "fontSizes": {
+        "small": "Petite",
+        "medium": "Moyenne",
+        "large": "Grande"
+      }
+    },
+    "advanced": {
+      "title": "Paramètres avancés",
+      "dataSync": "Synchronisation des données",
+      "backups": "Sauvegardes",
+      "export": "Exporter les données",
+      "import": "Importer les données",
+      "resetSettings": "Réinitialiser les paramètres",
+      "resetConfirmation": "Êtes-vous sûr de vouloir réinitialiser tous les paramètres?"
+    }
+  },
+  "transactions": {
+    "title": "Transactions",
+    "description": "Gérer toutes les transactions financières",
+    "filters": {
+      "all": "Toutes",
+      "income": "Revenus",
+      "expense": "Dépenses",
+      "pending": "En attente",
+      "completed": "Complétées",
+      "dateRange": "Période"
+    },
+    "income": {
+      "title": "Revenus",
+      "description": "Gérer les revenus locatifs",
+      "rent": "Loyers",
+      "deposits": "Cautions",
+      "other": "Autres"
+    },
+    "expense": {
+      "title": "Dépenses",
+      "description": "Gérer les dépenses immobilières",
+      "maintenance": "Entretien",
+      "utilities": "Services publics",
+      "taxes": "Impôts",
+      "insurance": "Assurance",
+      "other": "Autres"
+    },
+    "details": {
+      "amount": "Montant",
+      "date": "Date",
+      "category": "Catégorie",
+      "property": "Propriété",
+      "tenant": "Locataire",
+      "description": "Description",
+      "status": "Statut",
+      "paymentMethod": "Méthode de paiement"
+    },
+    "status": {
+      "pending": "En attente",
+      "completed": "Complétée",
+      "canceled": "Annulée",
+      "failed": "Échouée"
+    },
+    "actions": {
+      "addTransaction": "Ajouter une transaction",
+      "editTransaction": "Modifier la transaction",
+      "deleteTransaction": "Supprimer la transaction",
+      "markAsPaid": "Marquer comme payée",
+      "downloadReceipt": "Télécharger le reçu"
+    }
+  },
+  "common": {
+    "actions": {
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "delete": "Supprimer",
+      "edit": "Modifier",
+      "add": "Ajouter",
+      "confirm": "Confirmer",
+      "back": "Retour",
+      "next": "Suivant",
+      "search": "Rechercher",
+      "filter": "Filtrer",
+      "upload": "Télécharger",
+      "download": "Télécharger",
+      "import": "Importer",
+      "export": "Exporter",
+      "refresh": "Actualiser"
+    },
+    "status": {
+      "loading": "Chargement...",
+      "success": "Opération réussie",
+      "error": "Une erreur s'est produite",
+      "empty": "Aucun élément trouvé",
+      "saving": "Enregistrement en cours...",
+      "processing": "Traitement en cours..."
+    },
+    "navigation": {
+      "dashboard": "Tableau de bord",
+      "properties": "Propriétés",
+      "tenants": "Locataires",
+      "contracts": "Contrats",
+      "payments": "Paiements",
+      "documents": "Documents",
+      "reports": "Rapports",
+      "settings": "Paramètres",
+      "profile": "Profil",
+      "logout": "Déconnexion",
+      "home": "Accueil",
+      "pricing": "Service Gratuit",
+      "blog": "Blog",
+      "guides": "Guides",
+      "support": "Support",
+      "login": "Connexion",
+      "register": "Inscription",
+      "features": "Fonctionnalités",
+      "activities": "Activités",
+      "tourism": "Locations Touristiques",
+      "tourismProperties": "Propriétés Touristiques",
+      "bookings": "Réservations",
+      "import": "Importation",
+      "info": "Informations",
+      "appSettings": "Paramètres de l'application",
+      "notifications": "Notifications"
+    },
+    "dateTime": {
+      "today": "Aujourd'hui",
+      "yesterday": "Hier",
+      "tomorrow": "Demain",
+      "days": "Jours",
+      "weeks": "Semaines",
+      "months": "Mois",
+      "years": "Années"
+    }
+  },
+  "errors": {
+    "general": "Une erreur s'est produite. Veuillez réessayer plus tard.",
+    "network": "Erreur de connexion. Vérifiez votre connexion internet.",
+    "notFound": "La ressource demandée n'a pas été trouvée.",
+    "unauthorized": "Vous n'êtes pas autorisé à accéder à cette ressource.",
+    "forbidden": "Vous n'avez pas la permission d'accéder à cette ressource.",
+    "validation": "Des erreurs de validation se sont produites.",
+    "server": "Une erreur s'est produite sur le serveur. Veuillez réessayer plus tard.",
+    "properties": {
+      "loading": "Erreur lors du chargement des propriétés",
+      "description": "Impossible de récupérer les propriétés. Veuillez réessayer plus tard."
+    }
+  },
+  "auth": {
+    "loading": "Chargement...",
+    "accessDenied": "Accès refusé",
+    "loginRequired": "Vous devez vous connecter pour accéder à cette page"
+  },
+  "app": {
+    "greeting": "Bonjour, {name}"
+  },
+  "mobileNav": {
+    "home": "Accueil",
+    "info": "Info",
+    "support": "Support"
+  },
+  "tourism": {
+    "title": "Locations Touristiques",
+    "description": "Gérez les propriétés et les réservations touristiques",
+    "properties": {
+      "title": "Propriétés Touristiques",
+      "description": "Gérez vos propriétés touristiques",
+      "addProperty": "Ajouter une Propriété",
+      "propertyList": "Liste des Propriétés",
+      "noProperties": "Aucune propriété touristique trouvée",
+      "searchProperties": "Rechercher des propriétés...",
+      "propertyDetails": {
+        "amenities": "Équipements",
+        "availability": "Disponibilité",
+        "pricing": "Tarifs",
+        "location": "Emplacement",
+        "photos": "Photos",
+        "reviews": "Avis",
+        "rules": "Règles"
+      },
+      "amenities": {
+        "wifi": "Wi-Fi",
+        "airConditioning": "Climatisation",
+        "heating": "Chauffage",
+        "kitchen": "Cuisine",
+        "tv": "TV",
+        "washer": "Lave-linge",
+        "dryer": "Sèche-linge",
+        "parking": "Parking",
+        "elevator": "Ascenseur",
+        "pool": "Piscine",
+        "gym": "Salle de sport"
+      }
+    }
+  },
+  "ui": {
+    "dialog": {
+      "close": "Fermer",
+      "confirm": "Confirmer",
+      "cancel": "Annuler"
+    },
+    "table": {
+      "rowsPerPage": "Lignes par page:",
+      "of": "sur",
+      "loading": "Chargement...",
+      "noData": "Aucune donnée disponible"
+    },
+    "pagination": {
+      "previous": "Précédent",
+      "next": "Suivant",
+      "page": "Page"
+    },
+    "notification": {
+      "success": "Succès",
+      "error": "Erreur",
+      "warning": "Avertissement",
+      "info": "Information"
+    },
+    "validation": {
+      "required": "Champ obligatoire",
+      "email": "Email invalide",
+      "minLength": "Minimum {{min}} caractères",
+      "maxLength": "Maximum {{max}} caractères",
+      "pattern": "Format invalide",
+      "match": "Les champs ne correspondent pas"
+    },
+    "forms": {
+      "submitting": "Envoi en cours...",
+      "submitted": "Envoyé avec succès",
+      "error": "Une erreur s'est produite"
     }
   }
 } 

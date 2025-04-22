@@ -7,6 +7,275 @@
       "notifications": "Notifications",
       "appearance": "Appearance",
       "advanced": "Advanced"
+    },
+    "general": {
+      "title": "General Settings",
+      "language": "Language",
+      "timezone": "Time Zone",
+      "dateFormat": "Date Format",
+      "timeFormat": "Time Format",
+      "startOfWeek": "Start of Week"
+    },
+    "notifications": {
+      "title": "Notification Preferences",
+      "email": "Email Notifications",
+      "push": "Push Notifications",
+      "sms": "SMS Notifications",
+      "frequency": "Frequency",
+      "types": {
+        "payments": "Payments",
+        "maintenance": "Maintenance",
+        "leases": "Leases",
+        "messages": "Messages"
+      },
+      "frequencies": {
+        "immediately": "Immediately",
+        "daily": "Daily",
+        "weekly": "Weekly",
+        "never": "Never"
+      }
+    },
+    "appearance": {
+      "title": "Appearance",
+      "theme": "Theme",
+      "themes": {
+        "light": "Light",
+        "dark": "Dark",
+        "system": "System"
+      },
+      "density": "Display Density",
+      "densities": {
+        "comfortable": "Comfortable",
+        "compact": "Compact",
+        "standard": "Standard"
+      },
+      "fontSize": "Font Size",
+      "fontSizes": {
+        "small": "Small",
+        "medium": "Medium",
+        "large": "Large"
+      }
+    },
+    "advanced": {
+      "title": "Advanced Settings",
+      "dataSync": "Data Synchronisation",
+      "backups": "Backups",
+      "export": "Export Data",
+      "import": "Import Data",
+      "resetSettings": "Reset Settings",
+      "resetConfirmation": "Are you sure you want to reset all settings?"
+    }
+  },
+  "transactions": {
+    "title": "Transactions",
+    "description": "Manage all financial transactions",
+    "filters": {
+      "all": "All",
+      "income": "Income",
+      "expense": "Expense",
+      "pending": "Pending",
+      "completed": "Completed",
+      "dateRange": "Date Range"
+    },
+    "income": {
+      "title": "Income",
+      "description": "Manage rental income",
+      "rent": "Rent",
+      "deposits": "Deposits",
+      "other": "Other"
+    },
+    "expense": {
+      "title": "Expense",
+      "description": "Manage property expenses",
+      "maintenance": "Maintenance",
+      "utilities": "Utilities",
+      "taxes": "Taxes",
+      "insurance": "Insurance",
+      "other": "Other"
+    },
+    "details": {
+      "amount": "Amount",
+      "date": "Date",
+      "category": "Category",
+      "property": "Property",
+      "tenant": "Tenant",
+      "description": "Description",
+      "status": "Status",
+      "paymentMethod": "Payment Method"
+    },
+    "status": {
+      "pending": "Pending",
+      "completed": "Completed",
+      "canceled": "Cancelled",
+      "failed": "Failed"
+    },
+    "actions": {
+      "addTransaction": "Add Transaction",
+      "editTransaction": "Edit Transaction",
+      "deleteTransaction": "Delete Transaction",
+      "markAsPaid": "Mark as Paid",
+      "downloadReceipt": "Download Receipt"
+    }
+  },
+  "common": {
+    "actions": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "edit": "Edit",
+      "add": "Add",
+      "confirm": "Confirm",
+      "back": "Back",
+      "next": "Next",
+      "search": "Search",
+      "filter": "Filter",
+      "upload": "Upload",
+      "download": "Download",
+      "import": "Import",
+      "export": "Export",
+      "refresh": "Refresh"
+    },
+    "status": {
+      "loading": "Loading...",
+      "success": "Operation completed",
+      "error": "An error occurred",
+      "empty": "No items found",
+      "saving": "Saving...",
+      "processing": "Processing..."
+    },
+    "navigation": {
+      "dashboard": "Dashboard",
+      "properties": "Properties",
+      "tenants": "Tenants",
+      "contracts": "Contracts",
+      "payments": "Payments",
+      "documents": "Documents",
+      "reports": "Reports",
+      "settings": "Settings",
+      "profile": "Profile",
+      "logout": "Logout",
+      "home": "Home",
+      "pricing": "Free Service",
+      "blog": "Blog",
+      "guides": "Guides",
+      "support": "Support",
+      "login": "Login",
+      "register": "Register",
+      "features": "Features",
+      "activities": "Activities",
+      "tourism": "Holiday Lets",
+      "tourismProperties": "Holiday Properties",
+      "bookings": "Bookings",
+      "import": "Import",
+      "info": "Information",
+      "appSettings": "App Settings",
+      "notifications": "Notifications"
+    },
+    "dateTime": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "tomorrow": "Tomorrow",
+      "days": "Days",
+      "weeks": "Weeks",
+      "months": "Months",
+      "years": "Years"
+    }
+  },
+  "errors": {
+    "general": "An error occurred. Please try again later.",
+    "network": "Connection error. Check your internet connection.",
+    "notFound": "The requested resource was not found.",
+    "unauthorized": "You are not authorised to access this resource.",
+    "forbidden": "You do not have permission to access this resource.",
+    "validation": "Validation errors occurred.",
+    "server": "A server error occurred. Please try again later.",
+    "properties": {
+      "loading": "Error loading properties",
+      "description": "Could not retrieve properties. Please try again later."
+    }
+  },
+  "auth": {
+    "loading": "Loading...",
+    "accessDenied": "Access denied",
+    "loginRequired": "You must log in to access this page"
+  },
+  "app": {
+    "greeting": "Hello, {name}"
+  },
+  "mobileNav": {
+    "home": "Home",
+    "info": "Info",
+    "support": "Support"
+  },
+  "tourism": {
+    "title": "Holiday Lets",
+    "description": "Manage holiday properties and bookings",
+    "properties": {
+      "title": "Holiday Properties",
+      "description": "Manage your holiday properties",
+      "addProperty": "Add Property",
+      "propertyList": "Property List",
+      "noProperties": "No holiday properties found",
+      "searchProperties": "Search properties...",
+      "propertyDetails": {
+        "amenities": "Amenities",
+        "availability": "Availability",
+        "pricing": "Pricing",
+        "location": "Location",
+        "photos": "Photos",
+        "reviews": "Reviews",
+        "rules": "Rules"
+      },
+      "amenities": {
+        "wifi": "Wi-Fi",
+        "airConditioning": "Air Conditioning",
+        "heating": "Heating",
+        "kitchen": "Kitchen",
+        "tv": "TV",
+        "washer": "Washing Machine",
+        "dryer": "Tumble Dryer",
+        "parking": "Parking",
+        "elevator": "Lift",
+        "pool": "Swimming Pool",
+        "gym": "Gym"
+      }
+    }
+  },
+  "ui": {
+    "dialog": {
+      "close": "Close",
+      "confirm": "Confirm",
+      "cancel": "Cancel"
+    },
+    "table": {
+      "rowsPerPage": "Rows per page:",
+      "of": "of",
+      "loading": "Loading...",
+      "noData": "No data available"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page"
+    },
+    "notification": {
+      "success": "Success",
+      "error": "Error",
+      "warning": "Warning",
+      "info": "Information"
+    },
+    "validation": {
+      "required": "Required field",
+      "email": "Invalid email",
+      "minLength": "Minimum {{min}} characters",
+      "maxLength": "Maximum {{max}} characters",
+      "pattern": "Invalid format",
+      "match": "Fields do not match"
+    },
+    "forms": {
+      "submitting": "Submitting...",
+      "submitted": "Successfully submitted",
+      "error": "An error occurred"
     }
   }
 } 

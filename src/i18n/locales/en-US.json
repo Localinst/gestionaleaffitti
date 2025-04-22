@@ -1,11 +1,12 @@
 {
   "settings": {
     "title": "Settings",
-    "description": "Customize the application based on your preferences",
+    "description": "Customize the application according to your preferences",
     "tabs": {
       "general": "General",
       "notifications": "Notifications",
-      "appearance": "Appearance"
+      "appearance": "Appearance",
+      "advanced": "Advanced"
     },
     "general": {
       "title": "General Settings",
@@ -27,10 +28,14 @@
         "label": "Show Confirmation Dialogs",
         "description": "Display confirmation dialogs before performing important actions"
       },
-      "saveButton": "Save Settings"
+      "saveButton": "Save Settings",
+      "timezone": "Time Zone",
+      "dateFormat": "Date Format",
+      "timeFormat": "Time Format",
+      "startOfWeek": "Start of Week"
     },
     "notifications": {
-      "title": "Notification Settings",
+      "title": "Notification Preferences",
       "description": "Configure how and when to receive notifications",
       "notificationsEnabled": {
         "title": "Enable Notifications",
@@ -39,16 +44,21 @@
       "channels": {
         "title": "Notification Channels"
       },
-      "emailNotifications": {
-        "label": "Email Notifications",
-        "description": "Receive notifications via email"
+      "email": "Email Notifications",
+      "push": "Push Notifications",
+      "sms": "SMS Notifications",
+      "frequency": "Frequency",
+      "types": {
+        "payments": "Payments",
+        "maintenance": "Maintenance",
+        "leases": "Leases",
+        "messages": "Messages"
       },
-      "pushNotifications": {
-        "label": "Push Notifications",
-        "description": "Receive push notifications in the browser"
-      },
-      "categories": {
-        "title": "Notification Categories"
+      "frequencies": {
+        "immediately": "Immediately",
+        "daily": "Daily",
+        "weekly": "Weekly",
+        "never": "Never"
       },
       "contractNotifications": {
         "label": "Contract Notifications",
@@ -65,7 +75,7 @@
       "saveButton": "Save Settings"
     },
     "appearance": {
-      "title": "Appearance Settings",
+      "title": "Appearance",
       "description": "Customize the visual appearance of the application",
       "theme": {
         "title": "Theme",
@@ -75,6 +85,17 @@
           "system": "System"
         }
       },
+      "themes": {
+        "light": "Light",
+        "dark": "Dark",
+        "system": "System"
+      },
+      "density": "Display Density",
+      "densities": {
+        "comfortable": "Comfortable",
+        "compact": "Compact",
+        "standard": "Standard"
+      },
       "fontSize": {
         "title": "Font Size",
         "options": {
@@ -83,12 +104,26 @@
           "large": "Large"
         }
       },
+      "fontSizes": {
+        "small": "Small",
+        "medium": "Medium",
+        "large": "Large"
+      },
       "animations": {
         "title": "Animations",
         "label": "Interface Animations",
         "description": "Enable or disable interface animations"
       },
       "saveButton": "Save Settings"
+    },
+    "advanced": {
+      "title": "Advanced Settings",
+      "dataSync": "Data Synchronization",
+      "backups": "Backups",
+      "export": "Export Data",
+      "import": "Import Data",
+      "resetSettings": "Reset Settings",
+      "resetConfirmation": "Are you sure you want to reset all settings?"
     },
     "toasts": {
       "generalSaved": "General settings saved successfully",
@@ -143,8 +178,8 @@
       "register": "Register",
       "features": "Features",
       "activities": "Activities",
-      "tourism": "Tourism Rentals",
-      "tourismProperties": "Tourism Properties",
+      "tourism": "Vacation Rentals",
+      "tourismProperties": "Vacation Properties",
       "bookings": "Bookings",
       "import": "Import",
       "info": "Information",
@@ -754,14 +789,14 @@
     }
   },
   "tourism": {
-    "title": "Tourist Rentals",
-    "description": "Manage properties and bookings for tourist rentals",
+    "title": "Vacation Rentals",
+    "description": "Manage vacation properties and bookings",
     "properties": {
-      "title": "Tourist Properties",
-      "description": "Manage your tourist properties",
+      "title": "Vacation Properties",
+      "description": "Manage your vacation properties",
       "addProperty": "Add Property",
       "propertyList": "Property List",
-      "noProperties": "No tourist properties found",
+      "noProperties": "No vacation properties found",
       "searchProperties": "Search properties...",
       "propertyDetails": {
         "amenities": "Amenities",
@@ -778,11 +813,11 @@
         "heating": "Heating",
         "kitchen": "Kitchen",
         "tv": "TV",
-        "washer": "Washer",
+        "washer": "Washing Machine",
         "dryer": "Dryer",
         "parking": "Parking",
         "elevator": "Elevator",
-        "pool": "Pool",
+        "pool": "Swimming Pool",
         "gym": "Gym"
       }
     },
@@ -847,6 +882,109 @@
       "available": "Available",
       "unavailable": "Unavailable",
       "blocked": "Blocked"
+    },
+    "activities": {
+      "title": "Activities",
+      "description": "Manage tourism activities",
+      "loading": "Loading activities...",
+      "addActivity": "Add activity",
+      "searchActivities": "Search activities...",
+      "noActivities": "No activities found",
+      "filters": {
+        "all": "All",
+        "active": "Active",
+        "inactive": "Inactive",
+        "category": "Category",
+        "location": "Location",
+        "applyFilters": "Apply filters",
+        "resetFilters": "Reset filters"
+      },
+      "fields": {
+        "id": "ID",
+        "name": "Name",
+        "description": "Description",
+        "category": "Category",
+        "location": "Location",
+        "duration": "Duration",
+        "price": "Price",
+        "capacity": "Capacity",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "categories": {
+        "tour": "Tour",
+        "excursion": "Excursion",
+        "adventure": "Adventure",
+        "cultural": "Cultural",
+        "food": "Food & Dining",
+        "sport": "Sports",
+        "wellness": "Wellness",
+        "workshop": "Workshop",
+        "other": "Other"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "seasonal": "Seasonal"
+      },
+      "form": {
+        "title": "Activity details",
+        "basicInfo": "Basic information",
+        "name": "Name",
+        "description": "Description",
+        "shortDescription": "Short description",
+        "category": "Category",
+        "selectCategory": "Select category",
+        "locationDetails": "Location details",
+        "location": "Location",
+        "address": "Address",
+        "meetingPoint": "Meeting point",
+        "schedulingDetails": "Scheduling details",
+        "duration": "Duration (hours)",
+        "startTime": "Start time",
+        "endTime": "End time",
+        "availability": "Availability",
+        "monday": "Monday",
+        "tuesday": "Tuesday",
+        "wednesday": "Wednesday",
+        "thursday": "Thursday",
+        "friday": "Friday",
+        "saturday": "Saturday",
+        "sunday": "Sunday",
+        "capacityAndPricing": "Capacity and pricing",
+        "capacity": "Capacity (people)",
+        "minCapacity": "Minimum capacity",
+        "maxCapacity": "Maximum capacity",
+        "price": "Price per adult",
+        "childPrice": "Price per child",
+        "additionalDetails": "Additional details",
+        "included": "Included",
+        "notIncluded": "Not included",
+        "requirements": "Requirements",
+        "notes": "Notes",
+        "images": "Images",
+        "addImage": "Add image",
+        "submit": "Save activity",
+        "cancel": "Cancel"
+      },
+      "confirmation": {
+        "deleteTitle": "Delete activity",
+        "deleteMessage": "Are you sure you want to delete this activity? This action cannot be undone.",
+        "cancel": "Cancel",
+        "confirm": "Confirm"
+      },
+      "details": {
+        "title": "Activity details",
+        "basicInfo": "Basic information",
+        "locationDetails": "Location details",
+        "schedulingDetails": "Scheduling details",
+        "capacityAndPricing": "Capacity and pricing",
+        "additionalDetails": "Additional details",
+        "bookings": "Bookings",
+        "editActivity": "Edit activity",
+        "deleteActivity": "Delete activity",
+        "viewBookings": "View bookings"
+      }
     }
   },
   "reports": {
@@ -985,7 +1123,7 @@
       "info": "Information"
     },
     "validation": {
-      "required": "Field is required",
+      "required": "Required field",
       "email": "Invalid email",
       "minLength": "Minimum {{min}} characters",
       "maxLength": "Maximum {{max}} characters",
@@ -1008,7 +1146,7 @@
     "server": "A server error occurred. Please try again later.",
     "properties": {
       "loading": "Error loading properties",
-      "description": "Unable to retrieve properties. Please try again later."
+      "description": "Could not retrieve properties. Please try again later."
     }
   },
   "auth": {
@@ -1095,261 +1233,6 @@
       "countryPlaceholder": "Country",
       "saveChanges": "Save Changes",
       "cancel": "Cancel"
-    }
-  },
-  "tourism": {
-    "title": "Tourism Rentals",
-    "description": "Manage properties and bookings for tourism rentals",
-    "properties": {
-      "title": "Tourism Properties",
-      "description": "Manage your tourism properties",
-      "addProperty": "Add Property",
-      "propertyList": "Property List",
-      "noProperties": "No tourism properties found",
-      "searchProperties": "Search properties...",
-      "propertyDetails": {
-        "amenities": "Amenities",
-        "availability": "Availability",
-        "pricing": "Pricing",
-        "location": "Location",
-        "photos": "Photos",
-        "reviews": "Reviews",
-        "rules": "Rules"
-      },
-      "amenities": {
-        "wifi": "Wi-Fi",
-        "airConditioning": "Air Conditioning",
-        "heating": "Heating",
-        "kitchen": "Kitchen",
-        "tv": "TV",
-        "washer": "Washer",
-        "dryer": "Dryer",
-        "parking": "Parking",
-        "elevator": "Elevator",
-        "pool": "Pool",
-        "gym": "Gym"
-      }
-    },
-    "bookings": {
-      "title": "Bookings",
-      "description": "Manage tourism bookings",
-      "loading": "Loading bookings...",
-      "addBooking": "Add booking",
-      "searchBookings": "Search bookings...",
-      "noBookings": "No bookings found",
-      "filters": {
-        "all": "All",
-        "upcoming": "Upcoming",
-        "current": "Current",
-        "completed": "Completed",
-        "cancelled": "Cancelled",
-        "property": "Property",
-        "dateRange": "Date range",
-        "applyFilters": "Apply filters",
-        "resetFilters": "Reset filters"
-      },
-      "fields": {
-        "id": "ID",
-        "guest": "Guest",
-        "property": "Property",
-        "checkIn": "Check-in",
-        "checkOut": "Check-out",
-        "nights": "Nights",
-        "guests": "Guests",
-        "status": "Status",
-        "totalAmount": "Total amount",
-        "payment": "Payment",
-        "actions": "Actions"
-      },
-      "status": {
-        "pending": "Pending",
-        "confirmed": "Confirmed",
-        "checkedIn": "Checked in",
-        "checkedOut": "Checked out",
-        "cancelled": "Cancelled",
-        "noShow": "No show"
-      },
-      "form": {
-        "title": "Booking details",
-        "guestInfo": "Guest information",
-        "guestName": "Name",
-        "guestEmail": "Email",
-        "guestPhone": "Phone",
-        "guestCountry": "Country",
-        "selectCountry": "Select country",
-        "bookingDetails": "Booking details",
-        "property": "Property",
-        "selectProperty": "Select property",
-        "checkIn": "Check-in date",
-        "checkOut": "Check-out date",
-        "adults": "Adults",
-        "children": "Children",
-        "infants": "Infants",
-        "notes": "Notes",
-        "notesPlaceholder": "Add any notes or special requests",
-        "pricing": "Pricing",
-        "baseRate": "Base rate",
-        "cleaningFee": "Cleaning fee",
-        "serviceFee": "Service fee",
-        "taxAmount": "Taxes",
-        "totalAmount": "Total",
-        "deposit": "Deposit",
-        "payment": "Payment",
-        "paymentMethod": "Payment method",
-        "paymentStatus": "Payment status",
-        "submit": "Save booking",
-        "cancel": "Cancel"
-      },
-      "confirmation": {
-        "deleteTitle": "Delete booking",
-        "deleteMessage": "Are you sure you want to delete this booking? This action cannot be undone.",
-        "cancelTitle": "Cancel booking",
-        "cancelMessage": "Are you sure you want to cancel this booking?",
-        "cancel": "Cancel",
-        "confirm": "Confirm"
-      },
-      "details": {
-        "title": "Booking details",
-        "guestInfo": "Guest information",
-        "bookingInfo": "Booking information",
-        "paymentInfo": "Payment information",
-        "createChecklist": "Create checklist",
-        "addNote": "Add note",
-        "sendMessage": "Send message",
-        "actions": "Actions",
-        "checkInGuest": "Check in guest",
-        "checkOutGuest": "Check out guest",
-        "cancelBooking": "Cancel booking",
-        "editBooking": "Edit booking"
-      },
-      "calendar": {
-        "title": "Booking calendar",
-        "today": "Today",
-        "month": "Month",
-        "week": "Week",
-        "day": "Day",
-        "list": "List",
-        "viewAll": "View all",
-        "availability": "Availability",
-        "booked": "Booked",
-        "blocked": "Blocked",
-        "available": "Available"
-      }
-    },
-    "calendar": {
-      "title": "Availability Calendar",
-      "monthView": "Month View",
-      "weekView": "Week View",
-      "dayView": "Day View",
-      "listView": "List View",
-      "today": "Today",
-      "bookings": "Bookings",
-      "available": "Available",
-      "unavailable": "Unavailable",
-      "blocked": "Blocked"
-    },
-    "activities": {
-      "title": "Activities",
-      "description": "Manage tourism activities",
-      "loading": "Loading activities...",
-      "addActivity": "Add activity",
-      "searchActivities": "Search activities...",
-      "noActivities": "No activities found",
-      "filters": {
-        "all": "All",
-        "active": "Active",
-        "inactive": "Inactive",
-        "category": "Category",
-        "location": "Location",
-        "applyFilters": "Apply filters",
-        "resetFilters": "Reset filters"
-      },
-      "fields": {
-        "id": "ID",
-        "name": "Name",
-        "description": "Description",
-        "category": "Category",
-        "location": "Location",
-        "duration": "Duration",
-        "price": "Price",
-        "capacity": "Capacity",
-        "status": "Status",
-        "actions": "Actions"
-      },
-      "categories": {
-        "tour": "Tour",
-        "excursion": "Excursion",
-        "adventure": "Adventure",
-        "cultural": "Cultural",
-        "food": "Food & Dining",
-        "sport": "Sports",
-        "wellness": "Wellness",
-        "workshop": "Workshop",
-        "other": "Other"
-      },
-      "status": {
-        "active": "Active",
-        "inactive": "Inactive",
-        "seasonal": "Seasonal"
-      },
-      "form": {
-        "title": "Activity details",
-        "basicInfo": "Basic information",
-        "name": "Name",
-        "description": "Description",
-        "shortDescription": "Short description",
-        "category": "Category",
-        "selectCategory": "Select category",
-        "locationDetails": "Location details",
-        "location": "Location",
-        "address": "Address",
-        "meetingPoint": "Meeting point",
-        "schedulingDetails": "Scheduling details",
-        "duration": "Duration (hours)",
-        "startTime": "Start time",
-        "endTime": "End time",
-        "availability": "Availability",
-        "monday": "Monday",
-        "tuesday": "Tuesday",
-        "wednesday": "Wednesday",
-        "thursday": "Thursday",
-        "friday": "Friday",
-        "saturday": "Saturday",
-        "sunday": "Sunday",
-        "capacityAndPricing": "Capacity and pricing",
-        "capacity": "Capacity (people)",
-        "minCapacity": "Minimum capacity",
-        "maxCapacity": "Maximum capacity",
-        "price": "Price per adult",
-        "childPrice": "Price per child",
-        "additionalDetails": "Additional details",
-        "included": "Included",
-        "notIncluded": "Not included",
-        "requirements": "Requirements",
-        "notes": "Notes",
-        "images": "Images",
-        "addImage": "Add image",
-        "submit": "Save activity",
-        "cancel": "Cancel"
-      },
-      "confirmation": {
-        "deleteTitle": "Delete activity",
-        "deleteMessage": "Are you sure you want to delete this activity? This action cannot be undone.",
-        "cancel": "Cancel",
-        "confirm": "Confirm"
-      },
-      "details": {
-        "title": "Activity details",
-        "basicInfo": "Basic information",
-        "locationDetails": "Location details",
-        "schedulingDetails": "Scheduling details",
-        "capacityAndPricing": "Capacity and pricing",
-        "additionalDetails": "Additional details",
-        "bookings": "Bookings",
-        "editActivity": "Edit activity",
-        "deleteActivity": "Delete activity",
-        "viewBookings": "View bookings"
-      }
     }
   },
   "booking": {

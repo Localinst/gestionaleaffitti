@@ -28,6 +28,20 @@ Allow: /login
 Allow: /register
 Allow: /assets/
 
+# Conferma esplicitamente l'accesso alle versioni in altre lingue
+Allow: /en/
+Allow: /en-gb/
+Allow: /fr/
+Allow: /de/
+Allow: /es/
+Allow: /en/blog
+Allow: /en/guide
+Allow: /en/supporto
+Allow: /en/privacy
+Allow: /en/termini
+Allow: /en/cookie
+Allow: /en/pricing
+
 # Disabilita l'accesso alle pagine protette/amministrative (solo le rotte, non le risorse)
 Disallow: /dashboard$
 Disallow: /dashboard/

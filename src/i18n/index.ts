@@ -70,4 +70,70 @@ export const changeLanguage = (language: string) => {
   i18n.changeLanguage(language);
 };
 
+// Mappa delle lingue supportate e relative URLs
+export const supportedLanguages = {
+  'it-IT': {
+    code: 'it-it',
+    name: 'Italiano',
+    path: ''
+  },
+  'en-US': {
+    code: 'en',
+    name: 'English',
+    path: '/en'
+  },
+  'en-GB': {
+    code: 'en-gb',
+    name: 'English (UK)',
+    path: '/en-gb'
+  },
+  'fr-FR': {
+    code: 'fr',
+    name: 'Français',
+    path: '/fr'
+  },
+  'de-DE': {
+    code: 'de',
+    name: 'Deutsch',
+    path: '/de'
+  },
+  'es-ES': {
+    code: 'es',
+    name: 'Español',
+    path: '/es'
+  }
+};
+
+/**
+ * Genera gli URL per le lingue alternative per una pagina specifica
+ * @param currentPath Il percorso corrente della pagina (senza il prefisso della lingua)
+ * @param baseUrl L'URL base del sito
+ * @returns Un array di oggetti {locale, url} per tutti i tag hreflang
+ */
+export const getHreflangUrls = (currentPath: string, baseUrl = 'https://tenoris360.com'): Array<{locale: string, url: string}> => {
+  // Rimuovi eventuali prefissi di lingua dal percorso corrente
+  const pathWithoutLang = Object.values(supportedLanguages).reduce((path, lang) => {
+    if (lang.path && path.startsWith(lang.path)) {
+      return path.substring(lang.path.length);
+    }
+    return path;
+  }, currentPath);
+  
+  // Crea array di oggetti hreflang
+  const hreflangUrls = Object.entries(supportedLanguages).map(([langKey, langData]) => {
+    return {
+      locale: langData.code,
+      url: `${baseUrl}${langData.path}${pathWithoutLang}`
+    };
+  });
+  
+  // Aggiungi x-default (utilizzando la versione italiana)
+  hreflangUrls.push({
+    locale: 'x-default',
+    url: `${baseUrl}${pathWithoutLang}`
+  });
+  
+  return hreflangUrls;
+};
+
 export default i18n; 

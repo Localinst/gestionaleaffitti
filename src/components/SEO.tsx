@@ -8,6 +8,7 @@ interface SEOProps {
   ogType?: string;
   twitterImage?: string;
   canonicalUrl?: string;
+  hreflang?: Array<{locale: string, url: string}>;
   noIndex?: boolean;
 }
 
@@ -24,6 +25,7 @@ export const SEO = ({
   ogType = 'website',
   twitterImage = 'https://www.tenoris360.com/images/tenoris360-twitter-card.jpg',
   canonicalUrl,
+  hreflang,
   noIndex = false,
 }: SEOProps) => {
   // Titolo base dell'applicazione per casi in cui non viene fornito un titolo specifico
@@ -102,6 +104,23 @@ export const SEO = ({
     if (link && canonicalUrl) {
       link.href = canonicalUrl;
     }
+    
+    // Gestione dei tag hreflang
+    if (hreflang && hreflang.length > 0) {
+      // Rimuovi eventuali tag hreflang esistenti per evitare duplicati
+      document.querySelectorAll('link[rel="alternate"][hreflang]').forEach(el => {
+        el.remove();
+      });
+      
+      // Crea i nuovi tag hreflang
+      hreflang.forEach(item => {
+        const link = document.createElement('link');
+        link.setAttribute('rel', 'alternate');
+        link.setAttribute('hreflang', item.locale);
+        link.setAttribute('href', item.url);
+        document.head.appendChild(link);
+      });
+    }
   }, [
     title,
     description,
@@ -110,6 +129,7 @@ export const SEO = ({
     ogType,
     twitterImage,
     canonicalUrl,
+    hreflang,
     noIndex
   ]);
 

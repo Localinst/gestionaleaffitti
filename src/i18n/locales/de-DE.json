@@ -7,6 +7,275 @@
       "notifications": "Benachrichtigungen",
       "appearance": "Erscheinungsbild",
       "advanced": "Erweitert"
+    },
+    "general": {
+      "title": "Allgemeine Einstellungen",
+      "language": "Sprache",
+      "timezone": "Zeitzone",
+      "dateFormat": "Datumsformat",
+      "timeFormat": "Zeitformat",
+      "startOfWeek": "Wochenbeginn"
+    },
+    "notifications": {
+      "title": "Benachrichtigungseinstellungen",
+      "email": "E-Mail-Benachrichtigungen",
+      "push": "Push-Benachrichtigungen",
+      "sms": "SMS-Benachrichtigungen",
+      "frequency": "Häufigkeit",
+      "types": {
+        "payments": "Zahlungen",
+        "maintenance": "Instandhaltung",
+        "leases": "Mietverträge",
+        "messages": "Nachrichten"
+      },
+      "frequencies": {
+        "immediately": "Sofort",
+        "daily": "Täglich",
+        "weekly": "Wöchentlich",
+        "never": "Nie"
+      }
+    },
+    "appearance": {
+      "title": "Erscheinungsbild",
+      "theme": "Thema",
+      "themes": {
+        "light": "Hell",
+        "dark": "Dunkel",
+        "system": "System"
+      },
+      "density": "Anzeigedichte",
+      "densities": {
+        "comfortable": "Komfortabel",
+        "compact": "Kompakt",
+        "standard": "Standard"
+      },
+      "fontSize": "Schriftgröße",
+      "fontSizes": {
+        "small": "Klein",
+        "medium": "Mittel",
+        "large": "Groß"
+      }
+    },
+    "advanced": {
+      "title": "Erweiterte Einstellungen",
+      "dataSync": "Datensynchronisierung",
+      "backups": "Sicherungen",
+      "export": "Daten exportieren",
+      "import": "Daten importieren",
+      "resetSettings": "Einstellungen zurücksetzen",
+      "resetConfirmation": "Sind Sie sicher, dass Sie alle Einstellungen zurücksetzen möchten?"
+    }
+  },
+  "transactions": {
+    "title": "Transaktionen",
+    "description": "Verwalten Sie alle finanziellen Transaktionen",
+    "filters": {
+      "all": "Alle",
+      "income": "Einnahmen",
+      "expense": "Ausgaben",
+      "pending": "Ausstehend",
+      "completed": "Abgeschlossen",
+      "dateRange": "Datumsbereich"
+    },
+    "income": {
+      "title": "Einnahmen",
+      "description": "Mieteinnahmen verwalten",
+      "rent": "Miete",
+      "deposits": "Kautionen",
+      "other": "Sonstige"
+    },
+    "expense": {
+      "title": "Ausgaben",
+      "description": "Immobilienausgaben verwalten",
+      "maintenance": "Instandhaltung",
+      "utilities": "Nebenkosten",
+      "taxes": "Steuern",
+      "insurance": "Versicherung",
+      "other": "Sonstige"
+    },
+    "details": {
+      "amount": "Betrag",
+      "date": "Datum",
+      "category": "Kategorie",
+      "property": "Immobilie",
+      "tenant": "Mieter",
+      "description": "Beschreibung",
+      "status": "Status",
+      "paymentMethod": "Zahlungsmethode"
+    },
+    "status": {
+      "pending": "Ausstehend",
+      "completed": "Abgeschlossen",
+      "canceled": "Storniert",
+      "failed": "Fehlgeschlagen"
+    },
+    "actions": {
+      "addTransaction": "Transaktion hinzufügen",
+      "editTransaction": "Transaktion bearbeiten",
+      "deleteTransaction": "Transaktion löschen",
+      "markAsPaid": "Als bezahlt markieren",
+      "downloadReceipt": "Quittung herunterladen"
+    }
+  },
+  "common": {
+    "actions": {
+      "save": "Speichern",
+      "cancel": "Abbrechen",
+      "delete": "Löschen",
+      "edit": "Bearbeiten",
+      "add": "Hinzufügen",
+      "confirm": "Bestätigen",
+      "back": "Zurück",
+      "next": "Weiter",
+      "search": "Suchen",
+      "filter": "Filtern",
+      "upload": "Hochladen",
+      "download": "Herunterladen",
+      "import": "Importieren",
+      "export": "Exportieren",
+      "refresh": "Aktualisieren"
+    },
+    "status": {
+      "loading": "Wird geladen...",
+      "success": "Vorgang erfolgreich",
+      "error": "Ein Fehler ist aufgetreten",
+      "empty": "Keine Elemente gefunden",
+      "saving": "Wird gespeichert...",
+      "processing": "Wird verarbeitet..."
+    },
+    "navigation": {
+      "dashboard": "Dashboard",
+      "properties": "Immobilien",
+      "tenants": "Mieter",
+      "contracts": "Verträge",
+      "payments": "Zahlungen",
+      "documents": "Dokumente",
+      "reports": "Berichte",
+      "settings": "Einstellungen",
+      "profile": "Profil",
+      "logout": "Abmelden",
+      "home": "Startseite",
+      "pricing": "Kostenloser Service",
+      "blog": "Blog",
+      "guides": "Anleitungen",
+      "support": "Support",
+      "login": "Anmelden",
+      "register": "Registrieren",
+      "features": "Funktionen",
+      "activities": "Aktivitäten",
+      "tourism": "Ferienvermietung",
+      "tourismProperties": "Ferienwohnungen",
+      "bookings": "Buchungen",
+      "import": "Import",
+      "info": "Informationen",
+      "appSettings": "App-Einstellungen",
+      "notifications": "Benachrichtigungen"
+    },
+    "dateTime": {
+      "today": "Heute",
+      "yesterday": "Gestern",
+      "tomorrow": "Morgen",
+      "days": "Tage",
+      "weeks": "Wochen",
+      "months": "Monate",
+      "years": "Jahre"
+    }
+  },
+  "errors": {
+    "general": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.",
+    "network": "Verbindungsfehler. Überprüfen Sie Ihre Internetverbindung.",
+    "notFound": "Die angeforderte Ressource wurde nicht gefunden.",
+    "unauthorized": "Sie sind nicht berechtigt, auf diese Ressource zuzugreifen.",
+    "forbidden": "Sie haben keine Berechtigung, auf diese Ressource zuzugreifen.",
+    "validation": "Validierungsfehler sind aufgetreten.",
+    "server": "Ein Serverfehler ist aufgetreten. Bitte versuchen Sie es später erneut.",
+    "properties": {
+      "loading": "Fehler beim Laden der Immobilien",
+      "description": "Die Immobilien konnten nicht abgerufen werden. Bitte versuchen Sie es später erneut."
+    }
+  },
+  "auth": {
+    "loading": "Wird geladen...",
+    "accessDenied": "Zugriff verweigert",
+    "loginRequired": "Sie müssen sich anmelden, um auf diese Seite zuzugreifen"
+  },
+  "app": {
+    "greeting": "Hallo, {name}"
+  },
+  "mobileNav": {
+    "home": "Startseite",
+    "info": "Info",
+    "support": "Support"
+  },
+  "tourism": {
+    "title": "Ferienvermietung",
+    "description": "Verwalten Sie Ferienwohnungen und Buchungen",
+    "properties": {
+      "title": "Ferienwohnungen",
+      "description": "Verwalten Sie Ihre Ferienwohnungen",
+      "addProperty": "Immobilie hinzufügen",
+      "propertyList": "Immobilienliste",
+      "noProperties": "Keine Ferienwohnungen gefunden",
+      "searchProperties": "Immobilien suchen...",
+      "propertyDetails": {
+        "amenities": "Ausstattung",
+        "availability": "Verfügbarkeit",
+        "pricing": "Preise",
+        "location": "Standort",
+        "photos": "Fotos",
+        "reviews": "Bewertungen",
+        "rules": "Regeln"
+      },
+      "amenities": {
+        "wifi": "WLAN",
+        "airConditioning": "Klimaanlage",
+        "heating": "Heizung",
+        "kitchen": "Küche",
+        "tv": "Fernseher",
+        "washer": "Waschmaschine",
+        "dryer": "Trockner",
+        "parking": "Parkplatz",
+        "elevator": "Aufzug",
+        "pool": "Schwimmbad",
+        "gym": "Fitnessraum"
+      }
+    }
+  },
+  "ui": {
+    "dialog": {
+      "close": "Schließen",
+      "confirm": "Bestätigen",
+      "cancel": "Abbrechen"
+    },
+    "table": {
+      "rowsPerPage": "Zeilen pro Seite:",
+      "of": "von",
+      "loading": "Wird geladen...",
+      "noData": "Keine Daten verfügbar"
+    },
+    "pagination": {
+      "previous": "Zurück",
+      "next": "Weiter",
+      "page": "Seite"
+    },
+    "notification": {
+      "success": "Erfolg",
+      "error": "Fehler",
+      "warning": "Warnung",
+      "info": "Information"
+    },
+    "validation": {
+      "required": "Pflichtfeld",
+      "email": "Ungültige E-Mail",
+      "minLength": "Mindestens {{min}} Zeichen",
+      "maxLength": "Maximal {{max}} Zeichen",
+      "pattern": "Ungültiges Format",
+      "match": "Felder stimmen nicht überein"
+    },
+    "forms": {
+      "submitting": "Wird gesendet...",
+      "submitted": "Erfolgreich gesendet",
+      "error": "Ein Fehler ist aufgetreten"
     }
   }
 } 

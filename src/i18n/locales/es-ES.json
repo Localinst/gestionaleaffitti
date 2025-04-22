@@ -7,6 +7,275 @@
       "notifications": "Notificaciones",
       "appearance": "Apariencia",
       "advanced": "Avanzado"
+    },
+    "general": {
+      "title": "Configuración General",
+      "language": "Idioma",
+      "timezone": "Zona horaria",
+      "dateFormat": "Formato de fecha",
+      "timeFormat": "Formato de hora",
+      "startOfWeek": "Inicio de la semana"
+    },
+    "notifications": {
+      "title": "Preferencias de notificación",
+      "email": "Notificaciones por correo electrónico",
+      "push": "Notificaciones push",
+      "sms": "Notificaciones SMS",
+      "frequency": "Frecuencia",
+      "types": {
+        "payments": "Pagos",
+        "maintenance": "Mantenimiento",
+        "leases": "Contratos",
+        "messages": "Mensajes"
+      },
+      "frequencies": {
+        "immediately": "Inmediatamente",
+        "daily": "Diario",
+        "weekly": "Semanal",
+        "never": "Nunca"
+      }
+    },
+    "appearance": {
+      "title": "Apariencia",
+      "theme": "Tema",
+      "themes": {
+        "light": "Claro",
+        "dark": "Oscuro",
+        "system": "Sistema"
+      },
+      "density": "Densidad de visualización",
+      "densities": {
+        "comfortable": "Cómodo",
+        "compact": "Compacto",
+        "standard": "Estándar"
+      },
+      "fontSize": "Tamaño de letra",
+      "fontSizes": {
+        "small": "Pequeño",
+        "medium": "Mediano",
+        "large": "Grande"
+      }
+    },
+    "advanced": {
+      "title": "Configuración avanzada",
+      "dataSync": "Sincronización de datos",
+      "backups": "Copias de seguridad",
+      "export": "Exportar datos",
+      "import": "Importar datos",
+      "resetSettings": "Restablecer configuración",
+      "resetConfirmation": "¿Está seguro de que desea restablecer toda la configuración?"
+    }
+  },
+  "transactions": {
+    "title": "Transacciones",
+    "description": "Gestiona todas las transacciones financieras",
+    "filters": {
+      "all": "Todas",
+      "income": "Ingresos",
+      "expense": "Gastos",
+      "pending": "Pendientes",
+      "completed": "Completadas",
+      "dateRange": "Rango de fechas"
+    },
+    "income": {
+      "title": "Ingresos",
+      "description": "Gestionar ingresos por alquiler",
+      "rent": "Alquileres",
+      "deposits": "Fianzas",
+      "other": "Otros"
+    },
+    "expense": {
+      "title": "Gastos",
+      "description": "Gestionar gastos inmobiliarios",
+      "maintenance": "Mantenimiento",
+      "utilities": "Servicios",
+      "taxes": "Impuestos",
+      "insurance": "Seguro",
+      "other": "Otros"
+    },
+    "details": {
+      "amount": "Importe",
+      "date": "Fecha",
+      "category": "Categoría",
+      "property": "Propiedad",
+      "tenant": "Inquilino",
+      "description": "Descripción",
+      "status": "Estado",
+      "paymentMethod": "Método de pago"
+    },
+    "status": {
+      "pending": "Pendiente",
+      "completed": "Completada",
+      "canceled": "Cancelada",
+      "failed": "Fallida"
+    },
+    "actions": {
+      "addTransaction": "Añadir transacción",
+      "editTransaction": "Editar transacción",
+      "deleteTransaction": "Eliminar transacción",
+      "markAsPaid": "Marcar como pagada",
+      "downloadReceipt": "Descargar recibo"
+    }
+  },
+  "common": {
+    "actions": {
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "delete": "Eliminar",
+      "edit": "Editar",
+      "add": "Añadir",
+      "confirm": "Confirmar",
+      "back": "Atrás",
+      "next": "Siguiente",
+      "search": "Buscar",
+      "filter": "Filtrar",
+      "upload": "Subir",
+      "download": "Descargar",
+      "import": "Importar",
+      "export": "Exportar",
+      "refresh": "Actualizar"
+    },
+    "status": {
+      "loading": "Cargando...",
+      "success": "Operación completada",
+      "error": "Se ha producido un error",
+      "empty": "No se encontraron elementos",
+      "saving": "Guardando...",
+      "processing": "Procesando..."
+    },
+    "navigation": {
+      "dashboard": "Panel",
+      "properties": "Propiedades",
+      "tenants": "Inquilinos",
+      "contracts": "Contratos",
+      "payments": "Pagos",
+      "documents": "Documentos",
+      "reports": "Informes",
+      "settings": "Configuración",
+      "profile": "Perfil",
+      "logout": "Cerrar sesión",
+      "home": "Inicio",
+      "pricing": "Servicio Gratuito",
+      "blog": "Blog",
+      "guides": "Guías",
+      "support": "Soporte",
+      "login": "Iniciar sesión",
+      "register": "Registrarse",
+      "features": "Características",
+      "activities": "Actividades",
+      "tourism": "Alquileres Turísticos",
+      "tourismProperties": "Propiedades Turísticas",
+      "bookings": "Reservas",
+      "import": "Importación",
+      "info": "Información",
+      "appSettings": "Configuración de la aplicación",
+      "notifications": "Notificaciones"
+    },
+    "dateTime": {
+      "today": "Hoy",
+      "yesterday": "Ayer",
+      "tomorrow": "Mañana",
+      "days": "Días",
+      "weeks": "Semanas",
+      "months": "Meses",
+      "years": "Años"
+    }
+  },
+  "errors": {
+    "general": "Se ha producido un error. Inténtelo de nuevo más tarde.",
+    "network": "Error de conexión. Compruebe su conexión a Internet.",
+    "notFound": "No se ha encontrado el recurso solicitado.",
+    "unauthorized": "No está autorizado para acceder a este recurso.",
+    "forbidden": "No tiene permiso para acceder a este recurso.",
+    "validation": "Se han producido errores de validación.",
+    "server": "Se ha producido un error en el servidor. Inténtelo de nuevo más tarde.",
+    "properties": {
+      "loading": "Error al cargar propiedades",
+      "description": "No se pudieron recuperar las propiedades. Inténtelo de nuevo más tarde."
+    }
+  },
+  "auth": {
+    "loading": "Cargando...",
+    "accessDenied": "Acceso denegado",
+    "loginRequired": "Debe iniciar sesión para acceder a esta página"
+  },
+  "app": {
+    "greeting": "Hola, {name}"
+  },
+  "mobileNav": {
+    "home": "Inicio",
+    "info": "Info",
+    "support": "Soporte"
+  },
+  "tourism": {
+    "title": "Alquileres Turísticos",
+    "description": "Gestiona propiedades y reservas turísticas",
+    "properties": {
+      "title": "Propiedades Turísticas",
+      "description": "Gestiona tus propiedades turísticas",
+      "addProperty": "Añadir Propiedad",
+      "propertyList": "Lista de Propiedades",
+      "noProperties": "No se encontraron propiedades turísticas",
+      "searchProperties": "Buscar propiedades...",
+      "propertyDetails": {
+        "amenities": "Comodidades",
+        "availability": "Disponibilidad",
+        "pricing": "Precios",
+        "location": "Ubicación",
+        "photos": "Fotos",
+        "reviews": "Reseñas",
+        "rules": "Reglas"
+      },
+      "amenities": {
+        "wifi": "Wi-Fi",
+        "airConditioning": "Aire acondicionado",
+        "heating": "Calefacción",
+        "kitchen": "Cocina",
+        "tv": "TV",
+        "washer": "Lavadora",
+        "dryer": "Secadora",
+        "parking": "Aparcamiento",
+        "elevator": "Ascensor",
+        "pool": "Piscina",
+        "gym": "Gimnasio"
+      }
+    }
+  },
+  "ui": {
+    "dialog": {
+      "close": "Cerrar",
+      "confirm": "Confirmar",
+      "cancel": "Cancelar"
+    },
+    "table": {
+      "rowsPerPage": "Filas por página:",
+      "of": "de",
+      "loading": "Cargando...",
+      "noData": "No hay datos disponibles"
+    },
+    "pagination": {
+      "previous": "Anterior",
+      "next": "Siguiente",
+      "page": "Página"
+    },
+    "notification": {
+      "success": "Éxito",
+      "error": "Error",
+      "warning": "Advertencia",
+      "info": "Información"
+    },
+    "validation": {
+      "required": "Campo obligatorio",
+      "email": "Email inválido",
+      "minLength": "Mínimo {{min}} caracteres",
+      "maxLength": "Máximo {{max}} caracteres",
+      "pattern": "Formato inválido",
+      "match": "Los campos no coinciden"
+    },
+    "forms": {
+      "submitting": "Enviando...",
+      "submitted": "Enviado con éxito",
+      "error": "Se ha producido un error"
     }
   }
 } 
