@@ -277,5 +277,50 @@
       "submitted": "Erfolgreich gesendet",
       "error": "Ein Fehler ist aufgetreten"
     }
+  },
+  "landing": {
+    "hero": {
+      "title": "Vereinfachen Sie Ihre Mietverwaltung mit Tenoris360",
+      "highlight": "KOSTENLOS",
+      "description": "Die komplette und KOSTENLOSE Plattform für Immobilieneigentümer und -verwalter, die Verträge, Mieter und Zahlungen effizient verwalten möchten.",
+      "cta": {
+        "register": "Kostenlos starten",
+        "learnMore": "Mehr erfahren"
+      }
+    },
+    "features": {
+      "title": "Hauptfunktionen",
+      "description": "Unsere Plattform bietet umfassende Tools zur Optimierung der Verwaltung Ihrer Mietobjekte.",
+      "items": {
+        "0": {
+          "title": "Immobilienverwaltung",
+          "description": "Behalten Sie alle Ihre Immobilien an einem Ort mit vollständigen Details und Bildern im Blick."
+        },
+        "1": {
+          "title": "Mieterverwaltung",
+          "description": "Verwalten Sie Verträge, Kommunikation und Zahlungen von Mietern einfach und effizient."
+        },
+        "2": {
+          "title": "Finanzanalyse",
+          "description": "Betrachten Sie detaillierte Diagramme und Berichte zur Performance Ihrer Immobilieninvestitionen."
+        },
+        "3": {
+          "title": "Fristen & Verlängerungen",
+          "description": "Erhalten Sie automatische Benachrichtigungen über Vertragsablauf und geplante Wartungsarbeiten."
+        }
+      }
+    },
+    "nav": {
+      "features": "Funktionen",
+      "pricing": "Kostenlos",
+      "testimonials": "Kundenstimmen",
+      "login": "Anmelden",
+      "register": "Registrieren",
+      "freeService": "Kostenloser Service"
+    },
+    "cta": {
+      "title": "Bereit, Ihre Mietverwaltung zu vereinfachen?",
+      "description": "Registrieren Sie sich noch heute und entdecken Sie, wie unser System Ihnen helfen kann, Zeit zu sparen und die Rentabilität Ihrer Investitionen zu steigern."
+    }
   }
 } 

@@ -277,5 +277,50 @@
       "submitted": "Enviado con éxito",
       "error": "Se ha producido un error"
     }
+  },
+  "landing": {
+    "hero": {
+      "title": "Simplifica la gestión de tus alquileres con Tenoris360",
+      "highlight": "GRATUITO",
+      "description": "La plataforma completa y GRATUITA para propietarios y administradores inmobiliarios que desean gestionar contratos, inquilinos y pagos de manera eficiente.",
+      "cta": {
+        "register": "Comenzar gratis",
+        "learnMore": "Saber más"
+      }
+    },
+    "features": {
+      "title": "Características principales",
+      "description": "Nuestra plataforma ofrece herramientas completas para optimizar la gestión de tus propiedades en alquiler.",
+      "items": {
+        "0": {
+          "title": "Gestión de propiedades",
+          "description": "Mantén un registro de todas tus propiedades en un solo lugar con detalles completos e imágenes."
+        },
+        "1": {
+          "title": "Administración de inquilinos",
+          "description": "Gestiona fácilmente contratos, comunicaciones y pagos de inquilinos."
+        },
+        "2": {
+          "title": "Análisis financiero",
+          "description": "Visualiza gráficos detallados e informes sobre el rendimiento de tus inversiones inmobiliarias."
+        },
+        "3": {
+          "title": "Vencimientos y renovaciones",
+          "description": "Recibe notificaciones automáticas para vencimientos de contratos y mantenimientos programados."
+        }
+      }
+    },
+    "nav": {
+      "features": "Características",
+      "pricing": "Gratis",
+      "testimonials": "Testimonios",
+      "login": "Iniciar sesión",
+      "register": "Registrarse",
+      "freeService": "Servicio Gratuito"
+    },
+    "cta": {
+      "title": "¿Listo para simplificar la gestión de tus alquileres?",
+      "description": "Regístrate hoy y descubre cómo nuestro sistema puede ayudarte a ahorrar tiempo y aumentar la rentabilidad de tus inversiones."
+    }
   }
 } 

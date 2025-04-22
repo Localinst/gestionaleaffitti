@@ -277,5 +277,50 @@
       "submitted": "Envoyé avec succès",
       "error": "Une erreur s'est produite"
     }
+  },
+  "landing": {
+    "hero": {
+      "title": "Simplifiez la gestion de vos locations avec Tenoris360",
+      "highlight": "GRATUIT",
+      "description": "La plateforme complète et GRATUITE pour les propriétaires et gestionnaires immobiliers qui souhaitent gérer efficacement les contrats, les locataires et les paiements.",
+      "cta": {
+        "register": "Commencer gratuitement",
+        "learnMore": "En savoir plus"
+      }
+    },
+    "features": {
+      "title": "Fonctionnalités principales",
+      "description": "Notre plateforme offre des outils complets pour optimiser la gestion de vos propriétés locatives.",
+      "items": {
+        "0": {
+          "title": "Gestion des propriétés",
+          "description": "Gardez une trace de toutes vos propriétés en un seul endroit avec des détails complets et des images."
+        },
+        "1": {
+          "title": "Administration des locataires",
+          "description": "Gérez facilement les contrats, les communications et les paiements des locataires."
+        },
+        "2": {
+          "title": "Analyse financière",
+          "description": "Visualisez des graphiques détaillés et des rapports sur la performance de vos investissements immobiliers."
+        },
+        "3": {
+          "title": "Échéances et renouvellements",
+          "description": "Recevez des notifications automatiques pour les échéances de contrats et les entretiens programmés."
+        }
+      }
+    },
+    "nav": {
+      "features": "Fonctionnalités",
+      "pricing": "Gratuit",
+      "testimonials": "Témoignages",
+      "login": "Connexion",
+      "register": "S'inscrire",
+      "freeService": "Service Gratuit"
+    },
+    "cta": {
+      "title": "Prêt à simplifier la gestion de vos locations ?",
+      "description": "Inscrivez-vous aujourd'hui et découvrez comment notre système peut vous aider à gagner du temps et à augmenter la rentabilité de vos investissements."
+    }
   }
 } 

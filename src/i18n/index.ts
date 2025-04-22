@@ -67,7 +67,37 @@ i18n
 
 // Funzione per cambiare lingua dinamicamente
 export const changeLanguage = (language: string) => {
-  i18n.changeLanguage(language);
+  try {
+    // Cambia la lingua in i18next
+    i18n.changeLanguage(language);
+    
+    // Salva l'impostazione della lingua nelle userSettings di localStorage
+    const savedSettings = localStorage.getItem("userSettings");
+    if (savedSettings) {
+      const settings = JSON.parse(savedSettings) as UserSettings;
+      settings.language = language;
+      localStorage.setItem("userSettings", JSON.stringify(settings));
+    } else {
+      // Se non esistono impostazioni, crea un nuovo oggetto con solo la lingua
+      const newSettings: UserSettings = {
+        language,
+        theme: "system",
+        fontSize: "medium",
+        animations: true,
+        autoSave: true,
+        confirmDialogs: true,
+        notificationsEnabled: true,
+        emailNotifications: true,
+        pushNotifications: true,
+        contractNotifications: true,
+        tenantNotifications: true,
+        systemNotifications: true
+      };
+      localStorage.setItem("userSettings", JSON.stringify(newSettings));
+    }
+  } catch (error) {
+    console.error("Errore nel salvataggio della lingua:", error);
+  }
 };
 
 // Mappa delle lingue supportate e relative URLs

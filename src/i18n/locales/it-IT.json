@@ -1399,5 +1399,50 @@
       "tryAgain": "Riprova",
       "backToContracts": "Torna alla lista contratti"
     }
+  },
+  "landing": {
+    "hero": {
+      "title": "Semplifica la gestione dei tuoi affitti con Tenoris360",
+      "highlight": "GRATUITO",
+      "description": "La piattaforma completa e GRATUITA per proprietari e amministratori immobiliari che desiderano gestire contratti, inquilini e pagamenti in modo efficiente.",
+      "cta": {
+        "register": "Inizia Gratuitamente",
+        "learnMore": "Scopri di più"
+      }
+    },
+    "features": {
+      "title": "Funzionalità Principali",
+      "description": "La nostra piattaforma offre strumenti completi per ottimizzare la gestione dei tuoi immobili in affitto.",
+      "items": {
+        "0": {
+          "title": "Gestione Proprietà",
+          "description": "Tieni traccia di tutti i tuoi immobili in un unico posto con dettagli completi e immagini."
+        },
+        "1": {
+          "title": "Amministrazione Inquilini",
+          "description": "Gestisci facilmente contratti, comunicazioni e pagamenti degli inquilini."
+        },
+        "2": {
+          "title": "Analisi Finanziaria",
+          "description": "Visualizza grafici dettagliati e rapporti sul rendimento dei tuoi investimenti immobiliari."
+        },
+        "3": {
+          "title": "Scadenze & Rinnovi",
+          "description": "Ricevi notifiche automatiche per scadenze di contratti e manutenzioni programmate."
+        }
+      }
+    },
+    "nav": {
+      "features": "Funzionalità",
+      "pricing": "Gratis",
+      "testimonials": "Testimonianze",
+      "login": "Accedi",
+      "register": "Registrati",
+      "freeService": "Servizio Gratuito"
+    },
+    "cta": {
+      "title": "Pronto a semplificare la gestione dei tuoi affitti?",
+      "description": "Registrati oggi e scopri come il nostro gestionale può aiutarti a risparmiare tempo e aumentare la redditività dei tuoi investimenti."
+    }
   }
 }

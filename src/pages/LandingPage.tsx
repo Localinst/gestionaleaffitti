@@ -7,12 +7,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { LandingNav } from "@/components/layout/LandingNav";
 import SEO from '@/components/SEO';
 import { getHreflangUrls } from '@/i18n';
+import { useTranslation } from "react-i18next";
 
 const LandingPage = () => {
   const [activeFeature, setActiveFeature] = useState<number>(0);
   const featuresRef = useRef<HTMLElement>(null);
   const testimonialsRef = useRef<HTMLElement>(null);
   const location = useLocation();
+  const { t } = useTranslation();
 
   useEffect(() => {
     // Gestisce lo scroll alle sezioni quando si accede tramite URL
@@ -84,36 +86,7 @@ const LandingPage = () => {
       />
       <div className="min-h-screen flex flex-col">
         {/* Header/Navigation */}
-        <header className="bg-background border-b border-border sticky top-0 z-10">
-          <div className="container flex items-center justify-between h-16 px-2 md:px-6">
-            <div className="flex items-center gap-2 min-w-0 max-w-[50%] xs:max-w-none">
-              <img src="/simbolologo.png" alt="Tenoris360 Logo" className="h-7 w-auto" />
-              <span className="text-base md:text-xl font-bold truncate">Tenoris360 <span className="text-primary hidden xs:inline">GRATUITO</span></span>
-            </div>
-            <nav className="hidden md:flex items-center gap-6">
-              <a href="#features" className="text-sm font-medium hover:text-primary transition-colors">
-                Funzionalità
-              </a>
-              <Link to="/pricing" className="text-sm font-medium hover:text-primary transition-colors">
-                Gratis
-              </Link>
-              <a href="#testimonials" className="text-sm font-medium hover:text-primary transition-colors">
-                Testimonianze
-              </a>
-            </nav>
-            <div className="flex items-center gap-1 sm:gap-4">
-              <Link to="/login">
-                <Button variant="ghost" size="sm" className="px-2 sm:px-4">Accedi</Button>
-              </Link>
-              <Link to="/register">
-                <Button size="sm" className="px-2 sm:px-4">Registrati</Button>
-              </Link>
-              <Link to="/pricing" className="hidden sm:block">
-                <Button variant="outline" size="sm">Servizio Gratuito</Button>
-              </Link>
-            </div>
-          </div>
-        </header>
+        <LandingNav />
 
         {/* Hero Section */}
         <section className="relative py-10 lg:py-36 overflow-hidden bg-gradient-to-b from-background to-muted/30">
@@ -121,22 +94,21 @@ const LandingPage = () => {
             <div className="grid gap-8 lg:grid-cols-2 lg:gap-16 items-center">
               <div className="flex flex-col gap-4">
                 <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
-                  Semplifica la gestione dei tuoi affitti con Tenoris360 <span className="text-primary">GRATUITO</span>
+                  {t("landing.hero.title")} <span className="text-primary">{t("landing.hero.highlight")}</span>
                 </h1>
                 <p className="text-muted-foreground text-lg md:text-xl">
-                  La piattaforma completa e GRATUITA per proprietari e amministratori immobiliari che desiderano 
-                  gestire contratti, inquilini e pagamenti in modo efficiente.
+                  {t("landing.hero.description")}
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 mt-8">
                   <Link to="/register">
                     <Button size="lg" className="gap-2 w-full sm:w-auto">
-                      Inizia Gratuitamente
+                      {t("landing.hero.cta.register")}
                       <ArrowRight className="h-4 w-4" />
                     </Button>
                   </Link>
                   <a href="#features">
                     <Button size="lg" variant="outline" className="w-full sm:w-auto mt-3 sm:mt-0">
-                      Scopri di più
+                      {t("landing.hero.cta.learnMore")}
                     </Button>
                   </a>
                 </div>
@@ -161,10 +133,10 @@ const LandingPage = () => {
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center text-center mb-12">
               <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
-                Funzionalità Principali
+                {t("landing.features.title")}
               </h2>
               <p className="mt-4 text-muted-foreground text-lg max-w-[800px]">
-                La nostra piattaforma offre strumenti completi per ottimizzare la gestione dei tuoi immobili in affitto.
+                {t("landing.features.description")}
               </p>
             </div>
 
@@ -179,8 +151,8 @@ const LandingPage = () => {
                     <CardContent className="p-6 flex items-start gap-4">
                       <div className="mt-1">{feature.icon}</div>
                       <div>
-                        <h3 className="font-semibold text-xl">{feature.title}</h3>
-                        <p className="text-muted-foreground mt-2">{feature.description}</p>
+                        <h3 className="font-semibold text-xl">{t(`landing.features.items.${index}.title`, feature.title)}</h3>
+                        <p className="text-muted-foreground mt-2">{t(`landing.features.items.${index}.description`, feature.description)}</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -293,10 +265,10 @@ const LandingPage = () => {
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center text-center mb-12">
               <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
-                Cosa Dicono i Nostri Clienti
+                {t("testimonials.title")}
               </h2>
               <p className="mt-4 text-muted-foreground text-lg max-w-[800px]">
-                Scopri le esperienze di chi utilizza Tenoris360 per gestire i propri immobili in affitto.
+                {t("testimonials.description")}
               </p>
             </div>
 
@@ -315,7 +287,7 @@ const LandingPage = () => {
                       <p className="text-sm font-medium">5.0</p>
                     </div>
                     <p className="text-foreground italic">
-                      "Tenoris360 ha semplificato enormemente la gestione dei miei 5 appartamenti. Le notifiche automatiche mi aiutano a non dimenticare scadenze importanti."
+                      {t("testimonials.feedback.example")}
                     </p>
                     <div className="flex items-center gap-3 mt-4">
                       <div className="rounded-full bg-primary/10 p-1 w-10 h-10 flex items-center justify-center text-primary font-semibold">
@@ -395,16 +367,15 @@ const LandingPage = () => {
         <section className="py-20 bg-primary text-primary-foreground">
           <div className="container px-4 md:px-6 text-center">
             <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
-              Pronto a semplificare la gestione dei tuoi affitti?
+              {t("landing.cta.title", "Pronto a semplificare la gestione dei tuoi affitti?")}
             </h2>
             <p className="mt-6 text-primary-foreground/90 text-lg max-w-[700px] mx-auto">
-              Registrati oggi e scopri come il nostro gestionale può aiutarti 
-              a risparmiare tempo e aumentare la redditività dei tuoi investimenti.
+              {t("landing.cta.description", "Registrati oggi e scopri come il nostro gestionale può aiutarti a risparmiare tempo e aumentare la redditività dei tuoi investimenti.")}
             </p>
             <div className="mt-10">
               <Link to="/register">
                 <Button size="lg" variant="secondary" className="gap-2 px-8 py-6 text-lg">
-                  Inizia Gratuitamente
+                  {t("landing.hero.cta.register")}
                   <ArrowRight className="h-5 w-5" />
                 </Button>
               </Link>
@@ -422,31 +393,31 @@ const LandingPage = () => {
                   <span className="font-bold">Tenoris360</span>
                 </div>
                 <p className="text-muted-foreground text-sm">
-                  La soluzione completa per la gestione degli affitti e delle proprietà immobiliari.
+                  {t("footer.companyDescription")}
                 </p>
               </div>
               <div>
-                <h3 className="font-semibold mb-4">Link Rapidi</h3>
+                <h3 className="font-semibold mb-4">{t("footer.quickLinks")}</h3>
                 <ul className="space-y-2 text-sm">
                   <li>
                     <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
-                      Funzionalità
+                      {t("landing.nav.features")}
                     </a>
                   </li>
                   <li>
                     <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
-                      Servizio Gratuito
+                      {t("landing.nav.freeService")}
                     </Link>
                   </li>
                   <li>
                     <a href="#testimonials" className="text-muted-foreground hover:text-foreground transition-colors">
-                      Testimonianze
+                      {t("landing.nav.testimonials")}
                     </a>
                   </li>
                 </ul>
               </div>
               <div>
-                <h3 className="font-semibold mb-4">Risorse</h3>
+                <h3 className="font-semibold mb-4">{t("footer.resources")}</h3>
                 <ul className="space-y-2 text-sm">
                   <li>
                     <Link to="/blog" className="text-muted-foreground hover:text-foreground transition-colors">
@@ -455,18 +426,18 @@ const LandingPage = () => {
                   </li>
                   <li>
                     <Link to="/guide" className="text-muted-foreground hover:text-foreground transition-colors">
-                      Guide
+                      {t("common.navigation.guides")}
                     </Link>
                   </li>
                   <li>
                     <Link to="/supporto" className="text-muted-foreground hover:text-foreground transition-colors">
-                      Supporto
+                      {t("common.navigation.support")}
                     </Link>
                   </li>
                 </ul>
               </div>
               <div>
-                <h3 className="font-semibold mb-4">Legale</h3>
+                <h3 className="font-semibold mb-4">{t("footer.legal")}</h3>
                 <ul className="space-y-2 text-sm">
                   <li>
                     <Link to="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">
@@ -475,19 +446,19 @@ const LandingPage = () => {
                   </li>
                   <li>
                     <Link to="/termini" className="text-muted-foreground hover:text-foreground transition-colors">
-                      Termini di Servizio
+                      {t("footer.termsOfService")}
                     </Link>
                   </li>
                   <li>
                     <Link to="/cookie" className="text-muted-foreground hover:text-foreground transition-colors">
-                      Cookie Policy
+                      {t("footer.cookieSettings")}
                     </Link>
                   </li>
                 </ul>
               </div>
             </div>
             <div className="mt-12 pt-8 border-t border-border text-center text-sm text-muted-foreground">
-              <p>© {new Date().getFullYear()} Tenoris360. Tutti i diritti riservati.</p>
+              <p>&copy; {new Date().getFullYear()} Tenoris360. {t("footer.allRightsReserved")}</p>
             </div>
           </div>
         </footer>

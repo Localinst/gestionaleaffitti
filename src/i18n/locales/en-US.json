@@ -1493,5 +1493,50 @@
       "tryAgain": "Try again",
       "backToContracts": "Back to contract list"
     }
+  },
+  "landing": {
+    "hero": {
+      "title": "Simplify your rental management with Tenoris360",
+      "highlight": "FREE",
+      "description": "The complete and FREE platform for property owners and managers who want to efficiently manage contracts, tenants, and payments.",
+      "cta": {
+        "register": "Get Started Free",
+        "learnMore": "Learn More"
+      }
+    },
+    "features": {
+      "title": "Key Features",
+      "description": "Our platform offers comprehensive tools to optimize the management of your rental properties.",
+      "items": {
+        "0": {
+          "title": "Property Management",
+          "description": "Keep track of all your properties in one place with complete details and images."
+        },
+        "1": {
+          "title": "Tenant Administration",
+          "description": "Easily manage contracts, communications, and payments from tenants."
+        },
+        "2": {
+          "title": "Financial Analysis",
+          "description": "View detailed charts and reports on the performance of your real estate investments."
+        },
+        "3": {
+          "title": "Deadlines & Renewals",
+          "description": "Receive automatic notifications for contract expirations and scheduled maintenance."
+        }
+      }
+    },
+    "nav": {
+      "features": "Features",
+      "pricing": "Free",
+      "testimonials": "Testimonials",
+      "login": "Login",
+      "register": "Sign Up",
+      "freeService": "Free Service"
+    },
+    "cta": {
+      "title": "Ready to simplify your rental management?",
+      "description": "Sign up today and discover how our system can help you save time and increase the profitability of your investments."
+    }
   }
 } 
