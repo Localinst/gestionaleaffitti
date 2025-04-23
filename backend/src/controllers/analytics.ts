@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { AuthRequest } from '../middleware/auth';
+import { authenticate } from '../middleware/auth';
 import pool from '../db';
 import { executeQuery } from '../db';
 
