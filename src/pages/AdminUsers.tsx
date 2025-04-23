@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Shield, User, Mail, Calendar, Info, RotateCw, Search as SearchIcon } from "lucide-react";
+import { X, Shield, User, Mail, Calendar, Info, RotateCw, Search as SearchIcon, BarChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { SecureCookie } from "@/lib/security";
+import { Link } from "react-router-dom";
 
 // Tipo per gli utenti
 interface User {
@@ -154,8 +155,16 @@ const AdminUsers = () => {
             <Shield className="h-6 w-6 text-primary" />
             <CardTitle className="text-2xl font-bold">Pannello Admin - Gestione Utenti</CardTitle>
           </div>
-          <div className="text-sm text-muted-foreground">
-            Admin: {_currentUser?.email || 'N/A'}
+          <div className="flex items-center space-x-4">
+            <Link to="/admin-8b5c127e3f/dashboard">
+              <Button variant="outline" size="sm" className="flex items-center gap-2">
+                <BarChart className="h-4 w-4" />
+                Dashboard Analytics
+              </Button>
+            </Link>
+            <div className="text-sm text-muted-foreground">
+              Admin: {_currentUser?.email || 'N/A'}
+            </div>
           </div>
         </CardHeader>
         <CardContent className="p-6">

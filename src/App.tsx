@@ -40,6 +40,7 @@ import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import InfoPage from "./pages/InfoPage";
 import AdminUsers from './pages/AdminUsers';
+import AdminDashboard from './pages/AdminDashboard';
 import UpdatePasswordPage from "./pages/UpdatePasswordPage";
 import { useEffect } from "react";
 
@@ -65,46 +66,7 @@ const queryClient = new QueryClient({
   },
 });
 
-// Imposta una Content Security Policy (CSP) per proteggere l'applicazione
-const setupCSP = () => {
-  if (typeof document !== 'undefined') {
-    // Creiamo un meta tag per CSP
-    const meta = document.createElement('meta');
-    meta.httpEquiv = 'Content-Security-Policy';
-    
-    // Definisci una policy CSP restrittiva
-    meta.content = [
-      // Limita fonti di scripts al proprio dominio
-      "script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://fonts.googleapis.com 'unsafe-inline' 'unsafe-eval'",
-      // Limita fonti di stili
-      "style-src 'self' https://fonts.googleapis.com 'unsafe-inline'",
-      // Limita fonti di immagini
-      "img-src 'self' data: https://images.unsplash.com",
-      // Limita fonti di font
-      "font-src 'self' https://fonts.gstatic.com",
-      // Limita connessioni a websocket e XHR - aggiunto localhost:3000, onrender e Supabase URL
-      "connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com http://localhost:3000 https://localhost:3000 https://gestionaleaffitti.onrender.com https://fdufcrgckojbaghdvhgj.supabase.co",
-      // Limita form al proprio dominio
-      "form-action 'self'",
-      // Limita integrazione frame
-      "frame-src 'self'",
-      // Applica protezione XSS
-      "base-uri 'self'",
-      // Previeni MIME type sniffing
-      "object-src 'none'"
-    ].join('; ');
-    
-    // Aggiungi il meta tag all'head
-    document.head.appendChild(meta);
-  }
-};
-
-const App = () => {
-  // Esegui setup CSP al caricamento dell'app
-  useEffect(() => {
-    setupCSP();
-  }, []);
-  
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -134,6 +96,16 @@ const App = () => {
                           element={
                             <ProtectedRoute requiredRole="admin">
                               <AdminUsers />
+                            </ProtectedRoute>
+                          } 
+                        />
+
+                        {/* Nuova rotta admin dashboard */}
+                        <Route 
+                          path="/admin-8b5c127e3f/dashboard" 
+                          element={
+                            <ProtectedRoute requiredRole="admin">
+                              <AdminDashboard />
                             </ProtectedRoute>
                           } 
                         />
@@ -252,6 +224,6 @@ const App = () => {
       </TooltipProvider>
     </QueryClientProvider>
   );
-};
+}
 
 export default App;
