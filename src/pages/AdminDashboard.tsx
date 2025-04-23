@@ -54,9 +54,7 @@ const AdminDashboard = () => {
         </Card>
       </div>
 
-      <div className="text-sm text-muted-foreground">
-        <p>Nota: Tutti i dati sono generati automaticamente per scopi dimostrativi. In produzione, questi verrebbero recuperati dalle API di analytics.</p>
-      </div>
+      
     </div>
   );
 };

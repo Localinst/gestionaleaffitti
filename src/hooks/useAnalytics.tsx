@@ -38,6 +38,9 @@ export const useAnalytics = () => {
     window.gtag('config', 'G-ZNFK6CQ3LM', { 'page_path': path });
     
     console.log(`Pageview tracciato: ${path}`);
+
+    // Traccia anche per l'analytics locale
+    trackLocalPageView(path);
   };
 
   // Funzione per inizializzare altri servizi di analytics/marketing (Facebook Pixel, ecc.)
@@ -49,6 +52,181 @@ export const useAnalytics = () => {
     // !function(f,b,e,v,n,t,s) {...} // Facebook Pixel
     
     console.log("Strumenti di marketing inizializzati");
+  };
+
+  /**
+   * Traccia una visualizzazione di pagina nell'analytics locale
+   */
+  const trackLocalPageView = (path: string) => {
+    try {
+      // Recupera le visualizzazioni esistenti o inizializza un array vuoto
+      const existingViewsString = localStorage.getItem("page_views");
+      let pageViews = [];
+      
+      if (existingViewsString) {
+        try {
+          pageViews = JSON.parse(existingViewsString);
+        } catch (e) {
+          console.warn("Errore nel parsing delle visualizzazioni:", e);
+          pageViews = [];
+        }
+      }
+      
+      // Ottieni l'ID utente/sessione
+      const currentUserString = localStorage.getItem("currentUser");
+      const sessionId = localStorage.getItem("sessionId") || `session_${Date.now()}`;
+      
+      if (!localStorage.getItem("sessionId")) {
+        localStorage.setItem("sessionId", sessionId);
+      }
+      
+      let userId = null;
+      if (currentUserString) {
+        try {
+          const currentUser = JSON.parse(currentUserString);
+          userId = currentUser.id;
+        } catch (e) {
+          console.warn("Errore nel parsing dell'utente corrente:", e);
+        }
+      }
+      
+      // Crea una nuova visualizzazione
+      const newView = {
+        path,
+        timestamp: Date.now(),
+        userId,
+        sessionId,
+        referrer: document.referrer,
+        userAgent: navigator.userAgent,
+        device: getDeviceType(),
+        browser: detectBrowser(navigator.userAgent)
+      };
+      
+      // Aggiungi la visualizzazione all'array e salva
+      pageViews.push(newView);
+      localStorage.setItem("page_views", JSON.stringify(pageViews));
+      
+      // Aggiorna la sessione corrente
+      updateCurrentSession(path);
+      
+    } catch (error) {
+      console.error("Errore nel tracciamento della pagina:", error);
+    }
+  };
+  
+  /**
+   * Aggiorna i dati della sessione corrente
+   */
+  const updateCurrentSession = (path: string) => {
+    try {
+      // Controlla se c'è una sessione esistente nel localStorage
+      const sessionId = localStorage.getItem("sessionId") || `session_${Date.now()}`;
+      const sessionsString = localStorage.getItem("user_sessions");
+      let sessions = [];
+      
+      if (sessionsString) {
+        try {
+          sessions = JSON.parse(sessionsString);
+        } catch (e) {
+          console.warn("Errore nel parsing delle sessioni:", e);
+          sessions = [];
+        }
+      }
+      
+      // Ottieni l'ID utente se l'utente è loggato
+      const currentUserString = localStorage.getItem("currentUser");
+      let userId = null;
+      
+      if (currentUserString) {
+        try {
+          const currentUser = JSON.parse(currentUserString);
+          userId = currentUser.id;
+        } catch (e) {
+          console.warn("Errore nel parsing dell'utente corrente:", e);
+        }
+      }
+      
+      // Trova la sessione corrente o crea una nuova sessione
+      let currentSession = sessions.find(s => s.sessionId === sessionId);
+      const now = Date.now();
+      
+      if (!currentSession) {
+        // Crea una nuova sessione
+        currentSession = {
+          sessionId,
+          userId,
+          startTime: now,
+          lastActivity: now,
+          pages: [path],
+          pageViews: 1,
+          duration: 0,
+          device: getDeviceType(),
+          browser: detectBrowser(navigator.userAgent),
+          userAgent: navigator.userAgent,
+          referrer: document.referrer,
+          country: 'IT', // Potrebbe essere ottenuto tramite un servizio di geolocalizzazione IP
+          timestamp: now
+        };
+        
+        sessions.push(currentSession);
+      } else {
+        // Aggiorna la sessione esistente
+        currentSession.lastActivity = now;
+        currentSession.duration = (now - currentSession.startTime) / 1000; // durata in secondi
+        
+        // Aggiorna la lista delle pagine visitate se la pagina non è già presente
+        if (!currentSession.pages.includes(path)) {
+          currentSession.pages.push(path);
+        }
+        
+        // Incrementa il contatore delle visualizzazioni di pagina
+        currentSession.pageViews = (currentSession.pageViews || 0) + 1;
+      }
+      
+      // Salva le sessioni aggiornate
+      localStorage.setItem("user_sessions", JSON.stringify(sessions));
+      
+    } catch (error) {
+      console.error("Errore nell'aggiornamento della sessione:", error);
+    }
+  };
+  
+  /**
+   * Determina il tipo di dispositivo in base allo user agent
+   */
+  const getDeviceType = (): string => {
+    const ua = navigator.userAgent;
+    
+    if (/iPad|tablet|Kindle/i.test(ua)) {
+      return "tablet";
+    } else if (/Mobile|iP(hone|od)|Android|BlackBerry|IEMobile|Opera Mini/i.test(ua)) {
+      return "mobile";
+    }
+    
+    return "desktop";
+  };
+  
+  /**
+   * Rileva il browser in base allo user agent
+   */
+  const detectBrowser = (userAgent: string): string => {
+    userAgent = userAgent.toLowerCase();
+    
+    if (userAgent.indexOf("edge") > -1 || userAgent.indexOf("edg/") > -1) {
+      return "Edge";
+    } else if (userAgent.indexOf("chrome") > -1 && userAgent.indexOf("safari") > -1) {
+      return "Chrome";
+    } else if (userAgent.indexOf("firefox") > -1) {
+      return "Firefox";
+    } else if (userAgent.indexOf("safari") > -1 && userAgent.indexOf("chrome") === -1) {
+      return "Safari";
+    } else if (userAgent.indexOf("opera") > -1 || userAgent.indexOf("opr/") > -1) {
+      return "Opera";
+    } else if (userAgent.indexOf("msie") > -1 || userAgent.indexOf("trident") > -1) {
+      return "Internet Explorer";
+    } else {
+      return "Altro";
+    }
   };
 
   // Inizializza gli strumenti di analytics e marketing quando il componente viene montato
