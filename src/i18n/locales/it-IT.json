@@ -240,7 +240,7 @@
       "profile": "Profilo",
       "logout": "Esci",
       "home": "Home",
-      "pricing": "Servizio Gratuito",
+      "pricing": "Prezzi",
       "blog": "Blog",
       "guides": "Guide",
       "support": "Supporto",
@@ -1403,7 +1403,7 @@
   "landing": {
     "hero": {
       "title": "Semplifica la gestione dei tuoi affitti con Tenoris360",
-      "highlight": "GRATUITO",
+      "highlight": "PREMIUM",
       "description": "La piattaforma completa e GRATUITA per proprietari e amministratori immobiliari che desiderano gestire contratti, inquilini e pagamenti in modo efficiente.",
       "cta": {
         "register": "Inizia Gratuitamente",
@@ -1434,11 +1434,11 @@
     },
     "nav": {
       "features": "Funzionalità",
-      "pricing": "Gratis",
+      "pricing": "Prezzi",
       "testimonials": "Testimonianze",
       "login": "Accedi",
       "register": "Registrati",
-      "freeService": "Servizio Gratuito"
+      "freeService": "Prezzi"
     },
     "cta": {
       "title": "Pronto a semplificare la gestione dei tuoi affitti?",
