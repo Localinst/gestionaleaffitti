@@ -19,6 +19,7 @@ import { startSyncService } from './services/sync-service';
 import paymentsRouter from './routes/payments';
 import adminRouter from './routes/admin';
 import analyticsRoutes from './routes/analytics';
+import lemonSqueezyRouter from './routes/lemon-squeezy';
 
 // Definisci solo requestId, timedout è già definito da connect-timeout
 declare global {
@@ -170,6 +171,7 @@ app.get('/api/cors-test', (req, res) => {
 // Rotte pubbliche
 app.use('/api/auth', authRouter);
 app.use('/api/payments', paymentsRouter);
+app.use('/api/lemon-squeezy/webhook', lemonSqueezyRouter);
 
 // Rotte specifiche (mettere prima quelle più specifiche se ci sono overlap)
 // Esempio: app.use('/api/integrations', integrationsRouter);
@@ -189,6 +191,7 @@ app.use('/api/tourism', authenticate, tourismRouter);
 app.use('/api/integrations', authenticate, integrationsRouter);
 app.use('/api/import', authenticate, importRouter);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/lemon-squeezy', lemonSqueezyRouter);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

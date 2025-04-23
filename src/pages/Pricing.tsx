@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Check, ArrowLeft } from 'lucide-react';
+import { Check, ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PageBreadcrumb } from '@/components/layout/PageBreadcrumb';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { LandingNav } from "@/components/layout/LandingNav";
+import { LemonSqueezyPayment } from "@/components/ui/lemon-squeezy-payment";
+import { getProducts, getProductVariants } from "@/services/lemon-squeezy-api";
 
 const Pricing: React.FC = () => {
   const faqs = [
@@ -26,98 +29,85 @@ const Pricing: React.FC = () => {
     }
   ];
 
+  const [plans, setPlans] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPlansData = async () => {
+      try {
+        // Carica i prodotti da Lemon Squeezy
+        const productsResponse = await getProducts();
+        const products = productsResponse.data || [];
+
+        if (products.length === 0) {
+          setIsLoading(false);
+          return;
+        }
+
+        // Per ogni prodotto, carica le sue varianti
+        const updatedPlans = await Promise.all(
+          products.map(async (product: any) => {
+            const variantsResponse = await getProductVariants(product.id);
+            const variants = variantsResponse.data || [];
+
+            // Se il prodotto ha varianti, usa la prima
+            const variant = variants.length > 0 ? variants[0] : null;
+
+            // Trova il piano corrispondente nei default plans
+            const matchingPlan = defaultPlans.find(
+              (plan) => plan.name.toLowerCase().includes(product.attributes.name.toLowerCase())
+            );
+
+            if (!matchingPlan) return null;
+
+            // Estrai il prezzo dalla variante
+            const price = variant
+              ? `€${(variant.attributes.price / 100).toFixed(0)}/${
+                  variant.attributes.interval === "month" ? "mese" : "anno"
+                }`
+              : matchingPlan.price;
+
+            return {
+              ...matchingPlan,
+              name: product.attributes.name,
+              description: product.attributes.description || matchingPlan.description,
+              price,
+              variantId: variant ? variant.id : matchingPlan.variantId,
+            };
+          })
+        );
+
+        // Filtra i piani nulli e aggiorna lo stato
+        setPlans(updatedPlans.filter(Boolean));
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Errore nel caricamento dei piani:", error);
+        setIsLoading(false);
+      }
+    };
+
+    fetchPlansData();
+  }, []);
+
   return (
-    <main className="min-h-screen bg-gradient-to-b from-sky-50 to-white flex flex-col items-center justify-start pt-12 md:pt-20 pb-12">
-      <div className="text-center px-4 w-full max-w-4xl mx-auto space-y-8">
-        {/* Breadcrumb */}
-        <div className="text-left max-w-4xl w-full mx-auto">
-          <PageBreadcrumb items={[{ label: "Prezzi" }]} />
-        </div>
-        
-        {/* Intestazione */}
-        <header className="space-y-4">
-          <h1 className="text-5xl font-bold text-sky-700">SERVIZIO GRATUITO</h1>
-          <p className="text-xl text-muted-foreground">
-            Gestionale Affitti è ora completamente gratuito per tutti gli utenti
-          </p>
-        </header>
+    <div className="min-h-screen bg-background">
+      <LandingNav />
 
-        {/* Piano gratuito */}
-        <section className="mt-8 grid max-w-md mx-auto">
-          <Card className="bg-white shadow-md border-2 border-green-500 transition-all duration-300 h-full">
-            <CardHeader className="text-center">
-              <CardTitle className="text-3xl font-bold">Piano Completo</CardTitle>
-              <CardDescription className="text-lg mt-2">Tutte le funzionalità incluse</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="text-center">
-                <span className="text-5xl font-bold">€0</span>
-                <span className="text-muted-foreground">/sempre</span>
-                <p className="text-sm text-muted-foreground mt-2">Accesso completo a tutte le funzionalità del gestionale affitti</p>
-              </div>
-              <ul className="space-y-3">
-                <li className="flex items-center">
-                  <Check className="h-5 w-5 text-green-500 mr-2" />
-                  <span>Gestione di tutti gli immobili</span>
-                </li>
-                <li className="flex items-center">
-                  <Check className="h-5 w-5 text-green-500 mr-2" />
-                  <span>Tracciamento pagamenti</span>
-                </li>
-                <li className="flex items-center">
-                  <Check className="h-5 w-5 text-green-500 mr-2" />
-                  <span>Gestione contratti</span>
-                </li>
-                <li className="flex items-center">
-                  <Check className="h-5 w-5 text-green-500 mr-2" />
-                  <span>Supporto via email</span>
-                </li>
-                <li className="flex items-center">
-                  <Check className="h-5 w-5 text-green-500 mr-2" />
-                  <span>Report analitici avanzati</span>
-                </li>
-              </ul>
-            </CardContent>
-            <CardFooter>
-              <Link to="/register" className="w-full">
-                <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
-                  Registrati Gratis
-                </Button>
-              </Link>
-            </CardFooter>
-          </Card>
-        </section>
-
-        {/* FAQ con accordion */}
-        <section className="mt-12">
-          <Card className="bg-white/50 shadow-sm">
-            <CardContent className="p-6">
-              <h2 className="text-xl font-semibold mb-4">Domande Frequenti</h2>
-              <Accordion type="single" collapsible className="w-full">
-                {faqs.map((faq, index) => (
-                  <AccordionItem key={index} value={`faq-${index}`}>
-                    <AccordionTrigger className="text-left font-medium">
-                      {faq.question}
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <p className="text-muted-foreground">{faq.answer}</p>
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            </CardContent>
-          </Card>
-        </section>
-
-        {/* Pulsante torna indietro */}
-        <section className="mt-8">
-          <Link to="/" className="inline-flex items-center text-sky-600 hover:text-sky-800">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Torna alla Home
-          </Link>
-        </section>
-      </div>
-    </main>
+      <main className="container max-w-6xl mx-auto py-16 px-4">
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center min-h-[400px]">
+            <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
+            <p className="text-lg text-muted-foreground">Caricamento piani in corso...</p>
+          </div>
+        ) : (
+          <LemonSqueezyPayment
+            planOptions={plans}
+            title="Scegli il piano più adatto alle tue esigenze"
+            subtitle="Tutti i piani includono accesso completo a tutte le funzionalità"
+          />
+        )}
+      </main>
+    </div>
   );
 };
 
