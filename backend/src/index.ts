@@ -18,6 +18,7 @@ import { authenticate } from './middleware/auth';
 import { startSyncService } from './services/sync-service';
 import paymentsRouter from './routes/payments';
 import adminRouter from './routes/admin';
+import analyticsRoutes from './routes/analytics';
 
 // Definisci solo requestId, timedout è già definito da connect-timeout
 declare global {
@@ -187,6 +188,7 @@ app.use('/api/activities', authenticate, activitiesRouter);
 app.use('/api/tourism', authenticate, tourismRouter);
 app.use('/api/integrations', authenticate, integrationsRouter);
 app.use('/api/import', authenticate, importRouter);
+app.use('/api/analytics', analyticsRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

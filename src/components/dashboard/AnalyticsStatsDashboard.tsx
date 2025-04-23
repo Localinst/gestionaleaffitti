@@ -23,55 +23,58 @@ import { Separator } from "@/components/ui/separator";
 import { UserRound, Globe, Clock, MousePointerClick, LineChart as LineChartIcon, Layers, Smartphone, Laptop, PieChart as PieChartIcon } from "lucide-react";
 import { SecureCookie } from "@/lib/security";
 import { useToast } from "@/components/ui/use-toast";
+import { getAnalyticsStats } from '@/services/api';
+import { Button } from '@/components/ui/button';
 
 // Interfaccia per i dati di analytics
 interface AnalyticsData {
-  pageViews: {
+  pageViews: Array<{
     date: string;
     views: number;
-    uniqueVisitors: number;
+    unique_visitors: number;
     sessions: number;
-  }[];
-  devices: {
+  }>;
+  devices: Array<{
     name: string;
     value: number;
-  }[];
-  browsers: {
+  }>;
+  browsers: Array<{
     name: string;
     value: number;
-  }[];
-  conversions: {
+  }>;
+  conversions: Array<{
     name: string;
     completato: number;
     abbandonato: number;
-  }[];
-  topPages: {
+  }>;
+  topPages: Array<{
     name: string;
     views: number;
-    avgTime: string;
-  }[];
-  geoData: {
+    avg_time: string;
+  }>;
+  geoData: Array<{
     name: string;
     value: number;
-  }[];
+  }>;
   visitors: number;
   averageSessionDuration: number;
   bounceRate: number;
-  deviceUsage: {
+  totalViews: number;
+  totalSessions: number;
+  // I campi seguenti sono opzionali per supportare i dati dal server
+  deviceUsage?: {
     device: string;
     percentage: number;
   }[];
-  timeEngagement: {
+  timeEngagement?: {
     day: string;
     visits: number;
   }[];
-  conversionValues: {
+  conversionValues?: {
     signup: number;
     purchase: number;
     download: number;
   };
-  totalViews: number;
-  totalSessions: number;
 }
 
 // Funzione per ottenere dati reali di analytics dalle sessioni utente
@@ -175,7 +178,7 @@ const getRealAnalyticsData = (): AnalyticsData | null => {
       return { 
         name: path, 
         views: count as number,
-        avgTime: avgTimeFormatted
+        avg_time: avgTimeFormatted
       };
     })
     .sort((a, b) => b.views - a.views)
@@ -283,7 +286,7 @@ const getRealAnalyticsData = (): AnalyticsData | null => {
     return {
       date: dayStr,
       views: views,
-      uniqueVisitors: uniqueVisitorsForDay,
+      unique_visitors: uniqueVisitorsForDay,
       sessions: sessionsForDay
     };
   });
@@ -317,15 +320,15 @@ const getRealAnalyticsData = (): AnalyticsData | null => {
   // Raccogli tutti i dati in una struttura conforme all'interfaccia
   const analyticsData: AnalyticsData = {
     pageViews: pageViewsData,
-    devices: deviceUsage.map(d => ({ name: d.device, value: d.percentage })),
-    browsers: browserData,
+    devices: deviceUsage.map(d => ({ name: d.device, value: d.percentage as number })),
+    browsers: browserData.map(b => ({ name: b.name, value: b.value as number })),
     conversions: [
       { name: "Registrazione", completato: conversionsData.signup, abbandonato: Math.round(conversionsData.signup * 0.3) },
       { name: "Pagamento", completato: conversionsData.purchase, abbandonato: Math.round(conversionsData.purchase * 0.5) },
       { name: "Download", completato: conversionsData.download, abbandonato: Math.round(conversionsData.download * 0.2) }
     ],
     topPages: topPages,
-    geoData: geoDataArray,
+    geoData: geoDataArray.map(g => ({ name: g.name, value: g.value as number })),
     visitors: uniqueVisitors,
     averageSessionDuration: averageSessionDuration,
     bounceRate: bounceRate,
@@ -489,7 +492,8 @@ const getDeviceType = () => {
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
 const AnalyticsStatsDashboard = () => {
-  const [timeRange, setTimeRange] = useState("7d");
+  const [timeRange, setTimeRange] = useState('7d');
+  const [mode, setMode] = useState<'local' | 'server'>('server'); // Default al server
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [noData, setNoData] = useState(false);
@@ -499,18 +503,32 @@ const AnalyticsStatsDashboard = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Ottieni dati di analytics
-        const data = getRealAnalyticsData();
-        setAnalyticsData(data);
-        setNoData(!data); // Imposta lo stato noData se non ci sono dati
+        if (mode === 'local') {
+          // Ottieni dati locali di analytics
+          const localData = getRealAnalyticsData();
+          setAnalyticsData(localData);
+          setNoData(!localData);
+        } else {
+          // Ottieni dati dal server
+          const serverData = await getAnalyticsStats(timeRange);
+          setAnalyticsData(serverData);
+          setNoData(!serverData);
+        }
       } catch (error) {
         console.error("Errore nel recupero dei dati di analytics:", error);
         toast({
           title: "Errore",
-          description: "Impossibile caricare le statistiche di analytics",
+          description: "Impossibile caricare le statistiche di analytics dal server. Passaggio alla modalità locale.",
           variant: "destructive"
         });
-        setNoData(true);
+        
+        // Prova con la modalità locale in caso di errore
+        if (mode === 'server') {
+          setMode('local');
+          const localData = getRealAnalyticsData();
+          setAnalyticsData(localData);
+          setNoData(!localData);
+        }
       } finally {
         setLoading(false);
       }
@@ -527,7 +545,7 @@ const AnalyticsStatsDashboard = () => {
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [timeRange, toast]);
+  }, [timeRange, toast, mode]);
   
   const handleBeforeUnload = () => {
     // Aggiorna la sessione corrente prima di uscire
@@ -542,6 +560,11 @@ const AnalyticsStatsDashboard = () => {
     
     // Formatta con i punti come separatori delle migliaia
     return roundedNum.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  };
+  
+  // Aggiungi un pulsante per cambiare la modalità dei dati (server/locale)
+  const toggleDataMode = () => {
+    setMode(prevMode => prevMode === 'local' ? 'server' : 'local');
   };
   
   // Mostra stato di caricamento
@@ -568,17 +591,26 @@ const AnalyticsStatsDashboard = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Dashboard Analytics</h2>
-        <Select value={timeRange} onValueChange={setTimeRange}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Periodo" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="7d">Ultimi 7 giorni</SelectItem>
-            <SelectItem value="30d">Ultimi 30 giorni</SelectItem>
-            <SelectItem value="90d">Ultimi 3 mesi</SelectItem>
-            <SelectItem value="1y">Ultimo anno</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-4">
+          <Button 
+            variant="outline" 
+            onClick={toggleDataMode}
+            className="text-xs"
+          >
+            {mode === 'local' ? 'Modalità: Locale' : 'Modalità: Server'}
+          </Button>
+          <Select value={timeRange} onValueChange={setTimeRange}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Periodo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1d">Ultime 24 ore</SelectItem>
+              <SelectItem value="7d">Ultimi 7 giorni</SelectItem>
+              <SelectItem value="30d">Ultimi 30 giorni</SelectItem>
+              <SelectItem value="90d">Ultimi 3 mesi</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Overview Cards */}
@@ -707,7 +739,7 @@ const AnalyticsStatsDashboard = () => {
                     />
                     <Area
                       type="monotone"
-                      dataKey="uniqueVisitors"
+                      dataKey="unique_visitors"
                       name="Visitatori Unici"
                       stroke="#82ca9d"
                       fillOpacity={1}
@@ -739,7 +771,7 @@ const AnalyticsStatsDashboard = () => {
                       </div>
                       <div className="flex space-x-4 text-sm">
                         <span>{formatNumber(page.views)}</span>
-                        <span className="text-muted-foreground">{page.avgTime}</span>
+                        <span className="text-muted-foreground">{page.avg_time}</span>
                       </div>
                     </div>
                   ))}

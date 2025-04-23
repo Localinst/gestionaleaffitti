@@ -1212,6 +1212,103 @@ export const importData = async (entityType: string, data: any[]) => {
   }
 };
 
+// Interfaccia per i dati di analytics
+export interface AnalyticsData {
+  pageViews: Array<{
+    date: string;
+    views: number;
+    unique_visitors: number;
+    sessions: number;
+  }>;
+  visitors: number;
+  totalViews: number;
+  totalSessions: number;
+  averageSessionDuration: number;
+  bounceRate: number;
+  topPages: Array<{
+    name: string;
+    views: number;
+    avg_time: string;
+  }>;
+  devices: Array<{
+    name: string;
+    value: number;
+  }>;
+  browsers: Array<{
+    name: string;
+    value: number;
+  }>;
+  geoData: Array<{
+    name: string;
+    value: number;
+  }>;
+  conversions: Array<{
+    name: string;
+    completato: number;
+    abbandonato: number;
+  }>;
+}
+
+/**
+ * Traccia una visualizzazione di pagina inviando i dati al server
+ */
+export async function trackPageView(data: any): Promise<void> {
+  try {
+    await fetch(`${API_URL}/analytics/track/pageview`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data),
+      credentials: 'include'
+    });
+  } catch (error) {
+    console.error('Errore nel tracciamento della pagina:', error);
+    // Non facciamo fallire l'applicazione se il tracciamento fallisce
+  }
+}
+
+/**
+ * Traccia una conversione inviando i dati al server
+ */
+export async function trackConversion(data: any): Promise<void> {
+  try {
+    await fetch(`${API_URL}/analytics/track/conversion`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data),
+      credentials: 'include'
+    });
+  } catch (error) {
+    console.error('Errore nel tracciamento della conversione:', error);
+    // Non facciamo fallire l'applicazione se il tracciamento fallisce
+  }
+}
+
+/**
+ * Ottiene i dati di analytics dal server
+ */
+export async function getAnalyticsStats(timeRange: string = '7d'): Promise<AnalyticsData> {
+  try {
+    const response = await fetch(`${API_URL}/analytics/stats?timeRange=${timeRange}`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+      credentials: 'include'
+    });
+
+    if (!response.ok) {
+      throw new Error(`Errore nel recupero delle statistiche: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Errore nel recupero delle statistiche:', error);
+    throw error;
+  }
+}
+
 // Oggetto API con tutti i metodi per semplificare le chiamate
 export const api = {
   auth: {

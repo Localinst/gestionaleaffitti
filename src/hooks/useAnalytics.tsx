@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useCookieConsent } from "@/context/CookieConsentContext";
+import * as api from "@/services/api";
 
 // Definisco i tipi per gtag
 declare global {
@@ -31,15 +32,14 @@ export const useAnalytics = () => {
   };
 
   // Track page views
-  const trackPageView = (path: string) => {
-    if (!hasConsent("analytics")) return;
-    
-    // Invia il pageview a Google Analytics
-    window.gtag('config', 'G-ZNFK6CQ3LM', { 'page_path': path });
-    
-    console.log(`Pageview tracciato: ${path}`);
+  const trackPageView = (path: string = location.pathname + location.search) => {
+    // Traccia in Google Analytics se c'è il consenso
+    if (hasConsent("analytics")) {
+      window.gtag?.('config', 'G-ZNFK6CQ3LM', { 'page_path': path });
+      console.log(`Pageview tracciato in GA: ${path}`);
+    }
 
-    // Traccia anche per l'analytics locale
+    // Traccia per l'analytics locale e server
     trackLocalPageView(path);
   };
 
@@ -55,9 +55,61 @@ export const useAnalytics = () => {
   };
 
   /**
-   * Traccia una visualizzazione di pagina nell'analytics locale
+   * Traccia una visualizzazione di pagina nel sistema di analytics locale e sul server
    */
-  const trackLocalPageView = (path: string) => {
+  const trackLocalPageView = async (path: string) => {
+    try {
+      // Ottieni sessionId dal localStorage o creane uno nuovo
+      let sessionId = localStorage.getItem("sessionId");
+      if (!sessionId) {
+        sessionId = `session_${Date.now()}`;
+        localStorage.setItem("sessionId", sessionId);
+      }
+      
+      // Ottieni l'ID utente se l'utente è loggato
+      const currentUserString = localStorage.getItem("currentUser");
+      let userId = null;
+      
+      if (currentUserString) {
+        try {
+          const currentUser = JSON.parse(currentUserString);
+          userId = currentUser.id;
+        } catch (e) {
+          console.warn("Errore nel parsing dell'utente corrente:", e);
+        }
+      }
+      
+      // Crea i dati per il tracking
+      const trackingData = {
+        sessionId,
+        userId,
+        path,
+        referrer: document.referrer,
+        userAgent: navigator.userAgent,
+        deviceType: getDeviceType(),
+        browser: detectBrowser(navigator.userAgent),
+        operatingSystem: detectOS(navigator.userAgent),
+        screenWidth: window.screen.width,
+        screenHeight: window.screen.height,
+        country: 'IT', // Per semplicità, usiamo IT fisso (in produzione servirebbe un servizio di geoIP)
+        timestamp: Date.now()
+      };
+      
+      // Salva i dati anche nel localStorage per la dashboard locale
+      saveToLocalStorage(trackingData);
+      
+      // Invia i dati al server
+      await api.trackPageView(trackingData);
+      
+    } catch (error) {
+      console.error("Errore nel tracciamento della pagina:", error);
+    }
+  };
+  
+  /**
+   * Salva i dati di analytics nel localStorage (per la visualizzazione offline)
+   */
+  const saveToLocalStorage = (data: any) => {
     try {
       // Recupera le visualizzazioni esistenti o inizializza un array vuoto
       const existingViewsString = localStorage.getItem("page_views");
@@ -72,45 +124,33 @@ export const useAnalytics = () => {
         }
       }
       
-      // Ottieni l'ID utente/sessione
-      const currentUserString = localStorage.getItem("currentUser");
-      const sessionId = localStorage.getItem("sessionId") || `session_${Date.now()}`;
-      
-      if (!localStorage.getItem("sessionId")) {
-        localStorage.setItem("sessionId", sessionId);
-      }
-      
-      let userId = null;
-      if (currentUserString) {
-        try {
-          const currentUser = JSON.parse(currentUserString);
-          userId = currentUser.id;
-        } catch (e) {
-          console.warn("Errore nel parsing dell'utente corrente:", e);
-        }
-      }
-      
       // Crea una nuova visualizzazione
       const newView = {
-        path,
-        timestamp: Date.now(),
-        userId,
-        sessionId,
-        referrer: document.referrer,
-        userAgent: navigator.userAgent,
-        device: getDeviceType(),
-        browser: detectBrowser(navigator.userAgent)
+        path: data.path,
+        timestamp: data.timestamp,
+        userId: data.userId,
+        sessionId: data.sessionId,
+        referrer: data.referrer,
+        userAgent: data.userAgent,
+        device: data.deviceType,
+        browser: data.browser
       };
       
       // Aggiungi la visualizzazione all'array e salva
       pageViews.push(newView);
+      
+      // Limita a 1000 visualizzazioni per non occupare troppo spazio
+      if (pageViews.length > 1000) {
+        pageViews = pageViews.slice(-1000);
+      }
+      
       localStorage.setItem("page_views", JSON.stringify(pageViews));
       
       // Aggiorna la sessione corrente
-      updateCurrentSession(path);
+      updateCurrentSession(data.path);
       
     } catch (error) {
-      console.error("Errore nel tracciamento della pagina:", error);
+      console.error("Errore nel salvataggio locale:", error);
     }
   };
   
@@ -228,6 +268,71 @@ export const useAnalytics = () => {
       return "Altro";
     }
   };
+  
+  /**
+   * Rileva il sistema operativo in base allo user agent
+   */
+  const detectOS = (userAgent: string): string => {
+    userAgent = userAgent.toLowerCase();
+    
+    if (userAgent.indexOf("win") > -1) {
+      return "Windows";
+    } else if (userAgent.indexOf("mac") > -1) {
+      return "MacOS";
+    } else if (userAgent.indexOf("linux") > -1) {
+      return "Linux";
+    } else if (userAgent.indexOf("android") > -1) {
+      return "Android";
+    } else if (userAgent.indexOf("ios") > -1 || userAgent.indexOf("iphone") > -1 || userAgent.indexOf("ipad") > -1) {
+      return "iOS";
+    } else {
+      return "Altro";
+    }
+  };
+  
+  /**
+   * Traccia una conversione (registrazione, acquisto, download, ecc.)
+   */
+  const trackConversion = async (conversionType: string, value: number = 0, details: any = null) => {
+    try {
+      // Ottieni sessionId e userId
+      const sessionId = localStorage.getItem("sessionId") || `session_${Date.now()}`;
+      let userId = null;
+      
+      const currentUserString = localStorage.getItem("currentUser");
+      if (currentUserString) {
+        try {
+          const currentUser = JSON.parse(currentUserString);
+          userId = currentUser.id;
+        } catch (e) {}
+      }
+      
+      const conversionData = {
+        sessionId,
+        userId,
+        conversionType,
+        value,
+        path: location.pathname,
+        details,
+        timestamp: Date.now()
+      };
+      
+      // Invia al server
+      await api.trackConversion(conversionData);
+      
+      // Traccia anche in Google Analytics se c'è il consenso
+      if (hasConsent("analytics")) {
+        window.gtag('event', conversionType, {
+          value: value,
+          event_category: 'conversions',
+          event_label: details?.label || ''
+        });
+      }
+      
+    } catch (error) {
+      console.error('Errore nel tracciamento della conversione:', error);
+    }
+  };
 
   // Inizializza gli strumenti di analytics e marketing quando il componente viene montato
   useEffect(() => {
@@ -249,6 +354,9 @@ export const useAnalytics = () => {
       window.gtag('event', eventName, eventParams);
       
       console.log(`Evento tracciato: ${eventName}`, eventParams);
-    }
+    },
+    
+    // Esporta la funzione di tracciamento conversioni
+    trackConversion
   };
 }; 
