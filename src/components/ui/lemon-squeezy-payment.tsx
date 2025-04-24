@@ -22,6 +22,17 @@ interface LemonSqueezyPaymentProps {
   subtitle?: string;
 }
 
+/**
+ * Questo componente gestisce l'integrazione con Lemon Squeezy.
+ * 
+ * NOTA IMPORTANTE:
+ * Tutte le richieste a Lemon Squeezy seguono lo standard JSON:API e devono includere:
+ * - Header 'Accept: application/vnd.api+json'
+ * - Header 'Content-Type: application/vnd.api+json'
+ * - Formato query params conforme a JSON:API (es. ?filter[parameter]=value)
+ * - Supporto per include di risorse correlate tramite ?include=resource1,resource2
+ */
+
 export const LemonSqueezyPayment = ({
   planOptions,
   title = 'Scegli il tuo piano',

@@ -191,6 +191,7 @@ app.use('/api/tourism', authenticate, tourismRouter);
 app.use('/api/integrations', authenticate, integrationsRouter);
 app.use('/api/import', authenticate, importRouter);
 app.use('/api/analytics', analyticsRoutes);
+// Rotta per Lemon Squeezy ma senza autenticazione per il test iniziale
 app.use('/api/lemon-squeezy', lemonSqueezyRouter);
 
 app.listen(PORT, () => {

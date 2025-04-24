@@ -3,15 +3,70 @@ import axios from 'axios';
 import { authenticate } from '../middleware/auth';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
 
+// Forziamo il ricaricamento delle variabili d'ambiente
 dotenv.config();
+
+// Verifica se siamo in ambiente di sviluppo
+const isDev = process.env.NODE_ENV !== 'production';
 
 const router = Router();
 const API_URL = 'https://api.lemonsqueezy.com/v1';
 const API_KEY = process.env.LEMON_SQUEEZY_API_KEY || '';
+const STORE_ID = process.env.LEMON_SQUEEZY_STORE_ID || '';
 const WEBHOOK_SECRET = process.env.LEMON_SQUEEZY_WEBHOOK_SECRET || '';
 
-// Client API per Lemon Squeezy
+// Funzione per scrivere log anche su file in ambiente di sviluppo
+const debugLog = (message: string, details?: any) => {
+  const timestamp = new Date().toISOString();
+  const logMessage = `${timestamp} - ${message} ${details ? JSON.stringify(details, null, 2) : ''}`;
+  
+  console.log(logMessage);
+  
+  if (isDev) {
+    try {
+      const logDir = path.join(__dirname, '..', '..', 'logs');
+      if (!fs.existsSync(logDir)) {
+        fs.mkdirSync(logDir, { recursive: true });
+      }
+      fs.appendFileSync(path.join(logDir, 'lemon-squeezy.log'), logMessage + '\n');
+    } catch (err) {
+      console.error('Errore nella scrittura dei log:', err);
+    }
+  }
+};
+
+// Debug log: verifica se le variabili d'ambiente sono disponibili
+debugLog('--- LEMON SQUEEZY CONFIG ---');
+debugLog('API Key disponibile:', { 
+  available: !!API_KEY, 
+  keyExists: API_KEY ? 'Sì' : 'No',
+  keyLength: API_KEY ? API_KEY.length : 0,
+  keyPreview: API_KEY ? `${API_KEY.substring(0, 4)}...${API_KEY.substring(API_KEY.length - 4)}` : 'mancante'
+});
+debugLog('Store ID disponibile:', { storeId: STORE_ID || 'mancante' });
+debugLog('Webhook Secret disponibile:', { webhookSecretExists: !!WEBHOOK_SECRET });
+debugLog('--------------------------');
+
+// Stampa tutte le variabili d'ambiente (NON farlo in produzione)
+if (isDev) {
+  debugLog('Tutte le variabili d\'ambiente:', process.env);
+}
+
+// Stampa il percorso del file .env 
+const possibleEnvPaths = [
+  path.join(__dirname, '..', '..', '.env'),
+  path.join(process.cwd(), '.env'),
+  path.join(process.cwd(), 'backend', '.env')
+];
+
+possibleEnvPaths.forEach(envPath => {
+  debugLog(`Verifica file .env in: ${envPath}`, { exists: fs.existsSync(envPath) });
+});
+
+// Client API per Lemon Squeezy configurato secondo lo standard JSON:API
 const lemonSqueezyApi = axios.create({
   baseURL: API_URL,
   headers: {
@@ -21,12 +76,48 @@ const lemonSqueezyApi = axios.create({
   }
 });
 
+// Intercettore per loggare le richieste e risposte in modalità sviluppo
+if (isDev) {
+  lemonSqueezyApi.interceptors.request.use(request => {
+    debugLog('Richiesta in uscita:', { 
+      method: request.method, 
+      url: request.url,
+      headers: {
+        ...request.headers,
+        Authorization: request.headers.Authorization ? 'Bearer ***' : undefined
+      }
+    });
+    return request;
+  });
+
+  lemonSqueezyApi.interceptors.response.use(
+    response => {
+      debugLog('Risposta ricevuta:', { 
+        status: response.status, 
+        statusText: response.statusText,
+        data: response.data ? 'Dati ricevuti' : 'Nessun dato'
+      });
+      return response;
+    },
+    error => {
+      debugLog('Errore nella risposta:', { 
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data
+      });
+      return Promise.reject(error);
+    }
+  );
+}
+
 // Middleware per verificare le richieste webhook da Lemon Squeezy
 const verifyWebhookSignature = (req: Request, res: Response, next: Function) => {
   // Ottenere la firma dall'header
   const signature = req.headers['x-signature'];
   
   if (!signature || typeof signature !== 'string') {
+    debugLog('Firma webhook mancante', { headers: req.headers });
     return res.status(400).json({ error: 'Firma webhook mancante' });
   }
   
@@ -37,6 +128,10 @@ const verifyWebhookSignature = (req: Request, res: Response, next: Function) => 
   
   // Verificare che la firma corrisponda
   if (signature !== digest) {
+    debugLog('Firma webhook non valida', { 
+      expected: digest, 
+      received: signature 
+    });
     return res.status(401).json({ error: 'Firma webhook non valida' });
   }
   
@@ -44,42 +139,96 @@ const verifyWebhookSignature = (req: Request, res: Response, next: Function) => 
 };
 
 // Ottiene i prodotti dallo store Lemon Squeezy
-router.get('/products', authenticate, async (req: Request, res: Response) => {
+router.get('/products', async (req: Request, res: Response) => {
   try {
-    const response = await lemonSqueezyApi.get('/products');
+    const { include } = req.query;
+    const params = new URLSearchParams();
+    
+    // Applica il filtro per lo store ID se disponibile
+    if (STORE_ID) {
+      params.append('filter[store_id]', STORE_ID);
+    }
+    
+    // Applica include se specificato
+    if (include) {
+      params.append('include', include.toString());
+    }
+    
+    const queryString = params.toString() ? `?${params.toString()}` : '';
+    
+    debugLog('Chiamata a Lemon Squeezy API', { 
+      endpoint: `${API_URL}/products${queryString}`,
+      headers: {
+        Accept: 'application/vnd.api+json',
+        'Content-Type': 'application/vnd.api+json',
+        Authorization: API_KEY ? 'Bearer presente' : 'Bearer mancante'
+      }
+    });
+    
+    const response = await lemonSqueezyApi.get(`/products${queryString}`);
     res.json(response.data);
-  } catch (error) {
-    console.error('Errore nel recupero dei prodotti:', error);
-    res.status(500).json({ error: 'Errore nel recupero dei prodotti' });
+  } catch (error: any) {
+    debugLog('Errore nel recupero dei prodotti', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status
+    });
+    
+    res.status(error.response?.status || 500).json({ 
+      error: 'Errore nel recupero dei prodotti',
+      details: error.response?.data || error.message 
+    });
   }
 });
 
 // Ottiene i dettagli di un prodotto specifico
-router.get('/products/:id', authenticate, async (req: Request, res: Response) => {
+router.get('/products/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const response = await lemonSqueezyApi.get(`/products/${id}`);
+    const { include } = req.query;
+    
+    const includeParam = include ? `?include=${include}` : '';
+    const response = await lemonSqueezyApi.get(`/products/${id}${includeParam}`);
     res.json(response.data);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Errore nel recupero del prodotto:', error);
-    res.status(500).json({ error: 'Errore nel recupero del prodotto' });
+    console.error('Risposta errore:', error.response?.data || 'Nessun dettaglio disponibile');
+    res.status(error.response?.status || 500).json({ 
+      error: 'Errore nel recupero del prodotto',
+      details: error.response?.data || error.message  
+    });
   }
 });
 
 // Ottiene le varianti di un prodotto
-router.get('/variants', authenticate, async (req: Request, res: Response) => {
+router.get('/variants', async (req: Request, res: Response) => {
   try {
-    const { productId } = req.query;
-    const response = await lemonSqueezyApi.get(`/variants?filter[product_id]=${productId}`);
+    const { productId, include } = req.query;
+    const params = new URLSearchParams();
+    
+    if (productId) {
+      params.append('filter[product_id]', productId.toString());
+    }
+    
+    if (include) {
+      params.append('include', include.toString());
+    }
+    
+    const queryString = params.toString() ? `?${params.toString()}` : '';
+    const response = await lemonSqueezyApi.get(`/variants${queryString}`);
     res.json(response.data);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Errore nel recupero delle varianti:', error);
-    res.status(500).json({ error: 'Errore nel recupero delle varianti' });
+    console.error('Risposta errore:', error.response?.data || 'Nessun dettaglio disponibile');
+    res.status(error.response?.status || 500).json({ 
+      error: 'Errore nel recupero delle varianti',
+      details: error.response?.data || error.message 
+    });
   }
 });
 
 // Crea un checkout
-router.post('/create-checkout', authenticate, async (req: Request, res: Response) => {
+router.post('/create-checkout', async (req: Request, res: Response) => {
   try {
     const { variantId, email, customData } = req.body;
     
@@ -113,19 +262,48 @@ router.post('/create-checkout', authenticate, async (req: Request, res: Response
       }
     };
     
+    debugLog('Creazione checkout', { 
+      variantId,
+      email: email || 'non specificata',
+      payload: payload
+    });
+    
     const response = await lemonSqueezyApi.post('/checkouts', payload);
     res.json(response.data);
-  } catch (error) {
-    console.error('Errore nella creazione del checkout:', error);
-    res.status(500).json({ error: 'Errore nella creazione del checkout' });
+  } catch (error: any) {
+    debugLog('Errore nella creazione del checkout', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status
+    });
+    
+    res.status(error.response?.status || 500).json({ 
+      error: 'Errore nella creazione del checkout',
+      details: error.response?.data || error.message 
+    });
   }
 });
 
 // Ottiene le sottoscrizioni dell'utente
 router.get('/subscriptions', authenticate, async (req: Request, res: Response) => {
   try {
-    const { userId } = req.query;
-    const response = await lemonSqueezyApi.get(`/subscriptions?filter[user_id]=${userId}`);
+    const { userId, include } = req.query;
+    const params = new URLSearchParams();
+    
+    if (userId) {
+      params.append('filter[user_id]', userId.toString());
+    }
+    
+    if (STORE_ID) {
+      params.append('filter[store_id]', STORE_ID);
+    }
+    
+    if (include) {
+      params.append('include', include.toString());
+    }
+    
+    const queryString = params.toString() ? `?${params.toString()}` : '';
+    const response = await lemonSqueezyApi.get(`/subscriptions${queryString}`);
     res.json(response.data);
   } catch (error) {
     console.error('Errore nel recupero delle sottoscrizioni:', error);
@@ -137,7 +315,10 @@ router.get('/subscriptions', authenticate, async (req: Request, res: Response) =
 router.get('/subscriptions/:id', authenticate, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const response = await lemonSqueezyApi.get(`/subscriptions/${id}`);
+    const { include } = req.query;
+    
+    const includeParam = include ? `?include=${include}` : '';
+    const response = await lemonSqueezyApi.get(`/subscriptions/${id}${includeParam}`);
     res.json(response.data);
   } catch (error) {
     console.error('Errore nel recupero della sottoscrizione:', error);
@@ -192,6 +373,12 @@ router.post('/webhook', verifyWebhookSignature, async (req: Request, res: Respon
     const event = meta.event_name;
     
     console.log(`Ricevuto webhook Lemon Squeezy: ${event}`);
+    console.log('Dati webhook:', JSON.stringify({
+      eventName: event,
+      dataId: data.id,
+      type: data.type,
+      timestamp: new Date().toISOString()
+    }));
     
     // Gestione degli eventi webhook
     switch(event) {
