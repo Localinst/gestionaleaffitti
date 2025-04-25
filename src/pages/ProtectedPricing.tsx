@@ -1,17 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Check, ArrowLeft, Loader2, Bug } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { PageBreadcrumb } from '@/components/layout/PageBreadcrumb';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { LandingNav } from "@/components/layout/LandingNav";
+import { Header } from "@/components/layout/Header";
 import { LemonSqueezyPayment } from "@/components/ui/lemon-squeezy-payment";
-import { getProducts, getProductVariants, testLemonSqueezyConnection } from "@/services/lemon-squeezy-api";
+import { getProducts, getProductVariants } from "@/services/lemon-squeezy-api";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/context/AuthContext";
 
-const Pricing: React.FC = () => {
+const ProtectedPricing: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   const faqs = [
     {
@@ -61,9 +63,8 @@ const Pricing: React.FC = () => {
         "Backup settimanali",
         "Report avanzati"
       ],
-      // Per il piano annuale, dovrai ottenere il suo ID specifico in modo simile
-      // Nota: Per ora, utilizziamo lo stesso ID del piano mensile per test
-      variantId: "https://tenoris360.lemonsqueezy.com/buy/34ba8568-c3af-42d2-9d64-052f90879543",
+      // Per il piano annuale, userai un URL simile a quello mensile
+      variantId: "https://tenoris360.lemonsqueezy.com/buy/1101e76e-e411-41d1-832b-d1fd5f534775",
       isPopular: true,
     }
   ];
@@ -72,6 +73,12 @@ const Pricing: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Messaggio di benvenuto
+    toast({
+      title: "Benvenuto in Tenoris360!",
+      description: "Per iniziare a utilizzare l'app, seleziona un piano di abbonamento.",
+    });
+
     const fetchPlansData = async () => {
       try {
         // Carica i prodotti da Lemon Squeezy
@@ -133,17 +140,17 @@ const Pricing: React.FC = () => {
     };
 
     fetchPlansData();
-  }, []);
+  }, [toast]);
 
   return (
     <div className="min-h-screen bg-background">
-      <LandingNav />
+      <Header />
 
       <main className="container max-w-6xl mx-auto py-16 px-4">
         <div className="flex flex-col items-center text-center mb-12">
-          <h1 className="text-4xl font-bold tracking-tighter mb-4">Piani e Prezzi</h1>
+          <h1 className="text-4xl font-bold tracking-tighter mb-4">Completa il tuo abbonamento</h1>
           <p className="text-xl text-muted-foreground max-w-3xl">
-            Scegli il piano più adatto alle tue esigenze e inizia a semplificare la gestione dei tuoi affitti con Tenoris360.
+            Benvenuto, {user?.name}! Per iniziare a utilizzare tutte le funzionalità di Tenoris360, scegli il piano più adatto alle tue esigenze.
           </p>
         </div>
         
@@ -164,7 +171,7 @@ const Pricing: React.FC = () => {
               <CardHeader>
                 <CardTitle className="text-2xl">Piano Mensile</CardTitle>
                 <CardDescription>Flessibilità massima</CardDescription>
-            </CardHeader>
+              </CardHeader>
               <CardContent className="flex-grow">
                 <div className="mb-6">
                   <p className="text-3xl font-bold">€19,99<span className="text-lg font-normal text-muted-foreground">/mese</span></p>
@@ -196,19 +203,10 @@ const Pricing: React.FC = () => {
                 <Button 
                   className="w-full"
                   onClick={() => {
-                    // Recupera gli ID aggiornati dai piani
-                    const monthlyPlan = plans.find(p => p.id === "plan-monthly") || defaultPlans[0];
-                    // Salva i dettagli completi del piano
-                    const planDetails = {
-                      id: monthlyPlan.id,
-                      variantId: monthlyPlan.variantId, // Usa l'ID variante reale se disponibile
-                      name: monthlyPlan.name
-                    };
-                    localStorage.setItem('selectedPlan', JSON.stringify(planDetails));
-                    navigate('/register');
+                    window.location.href = "https://tenoris360.lemonsqueezy.com/buy/1101e76e-e411-41d1-832b-d1fd5f534775";
                   }}
                 >
-                  Inizia Ora
+                  Abbonati Ora
                 </Button>
               </CardFooter>
             </Card>
@@ -227,50 +225,41 @@ const Pricing: React.FC = () => {
                 <div className="mb-6">
                   <p className="text-3xl font-bold">€199,90<span className="text-lg font-normal text-muted-foreground">/anno</span></p>
                   <p className="text-sm text-muted-foreground">Equivalente a €16,66/mese</p>
-              </div>
-              <ul className="space-y-3">
-                <li className="flex items-center">
+                </div>
+                <ul className="space-y-3">
+                  <li className="flex items-center">
                     <Check className="h-5 w-5 text-primary mr-2" />
                     <span>Tutte le funzionalità del piano mensile</span>
-                </li>
-                <li className="flex items-center">
+                  </li>
+                  <li className="flex items-center">
                     <Check className="h-5 w-5 text-primary mr-2" />
                     <span>Risparmio di 2 mesi</span>
-                </li>
-                <li className="flex items-center">
+                  </li>
+                  <li className="flex items-center">
                     <Check className="h-5 w-5 text-primary mr-2" />
                     <span>Supporto prioritario</span>
-                </li>
-                <li className="flex items-center">
+                  </li>
+                  <li className="flex items-center">
                     <Check className="h-5 w-5 text-primary mr-2" />
                     <span>Backup settimanali</span>
-                </li>
-                <li className="flex items-center">
+                  </li>
+                  <li className="flex items-center">
                     <Check className="h-5 w-5 text-primary mr-2" />
                     <span>Report avanzati</span>
-                </li>
-              </ul>
-            </CardContent>
-            <CardFooter>
+                  </li>
+                </ul>
+              </CardContent>
+              <CardFooter>
                 <Button 
                   className="w-full bg-primary hover:bg-primary/90"
                   onClick={() => {
-                    // Recupera gli ID aggiornati dai piani
-                    const annualPlan = plans.find(p => p.id === "plan-annual") || defaultPlans[1];
-                    // Salva i dettagli completi del piano
-                    const planDetails = {
-                      id: annualPlan.id,
-                      variantId: annualPlan.variantId, // Usa l'ID variante reale se disponibile
-                      name: annualPlan.name
-                    };
-                    localStorage.setItem('selectedPlan', JSON.stringify(planDetails));
-                    navigate('/register');
+                    window.location.href = "https://tenoris360.lemonsqueezy.com/buy/1101e76e-e411-41d1-832b-d1fd5f534775";
                   }}
                 >
                   Abbonati ora
                 </Button>
-            </CardFooter>
-          </Card>
+              </CardFooter>
+            </Card>
           </div>
         )}
 
@@ -305,40 +294,9 @@ const Pricing: React.FC = () => {
             </p>
           </div>
         </section>
-
-        {/* Pulsante torna indietro */}
-        <section className="mt-12 text-center">
-          <Link to="/" className="inline-flex items-center text-primary hover:text-primary/80">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Torna alla Home
-          </Link>
-        </section>
-
-        {/* Aggiungi un pulsante diagnostico (visibile solo in sviluppo) */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="fixed bottom-4 right-4">
-            <Button 
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-1 bg-yellow-50 border-yellow-200 text-yellow-700"
-              onClick={async () => {
-                try {
-                  const testResult = await testLemonSqueezyConnection();
-                  console.log('Test connessione Lemon Squeezy:', testResult);
-                  alert(`Test connessione: ${testResult.success ? 'OK' : 'FALLITO'}\n${JSON.stringify(testResult, null, 2)}`);
-                } catch (error) {
-                  console.error('Errore nel test:', error);
-                  alert(`Errore test: ${error.message}`);
-                }
-              }}
-            >
-              <Bug className="w-4 h-4" /> Test Lemon
-            </Button>
-          </div>
-        )}
       </main>
-      </div>
+    </div>
   );
 };
 
-export default Pricing; 
+export default ProtectedPricing; 

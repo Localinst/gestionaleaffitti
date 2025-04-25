@@ -210,7 +210,92 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             description: `Benvenuto, ${userData.name}!`,
           });
           
-          navigate('/dashboard');
+          // Controlla se l'utente stava cercando di abbonarsi
+          const selectedPlanData = localStorage.getItem('selectedPlan');
+          if (selectedPlanData) {
+            try {
+              // Importa la funzione createCheckout direttamente qui
+              const { createCheckout } = await import('@/services/lemon-squeezy-api');
+              
+              // Ottieni i dettagli del piano dal localStorage
+              const planDetails = JSON.parse(selectedPlanData);
+              
+              // Log dettagliato per debug
+              console.log('Dettagli piano selezionato:', planDetails);
+              
+              // Valida l'ID della variante
+              if (!planDetails.variantId || 
+                  (planDetails.variantId === 'monthly-variant-id' || 
+                   planDetails.variantId === 'annual-variant-id') && 
+                   !planDetails.variantId.includes('lemonsqueezy.com/buy/')) {
+                console.error('ID variante non valido o placeholder:', planDetails.variantId);
+                toast.error('Configurazione piano non valida', { 
+                  description: 'Contatta l\'amministratore del sistema.' 
+                });
+                
+                // In caso di errore, reindirizza alla pagina di pricing
+                localStorage.removeItem('selectedPlan');
+                navigate('/pricing');
+                return;
+              }
+              
+              if (planDetails.variantId) {
+                toast.info('Inizializzazione del processo di pagamento...');
+                
+                try {
+                  // Crea il checkout direttamente
+                  const customData = {
+                    userId: userData.id,
+                    planName: planDetails.name,
+                  };
+                  
+                  console.log('Invio richiesta checkout con parametri:', {
+                    variantId: planDetails.variantId,
+                    email: userData.email,
+                    customData
+                  });
+                  
+                  const checkoutData = await createCheckout(
+                    planDetails.variantId,
+                    userData.email,
+                    customData
+                  );
+                  
+                  // Rimuovi l'informazione sul piano dal localStorage
+                  localStorage.removeItem('selectedPlan');
+                  
+                  // Redirect all'URL del checkout Lemon Squeezy
+                  if (checkoutData.data.attributes.url) {
+                    window.location.href = checkoutData.data.attributes.url;
+                    return; // Termina l'esecuzione qui
+                  } else {
+                    throw new Error('URL di checkout mancante nella risposta');
+                  }
+                } catch (checkoutError: any) {
+                  console.error('Dettaglio errore checkout:', checkoutError.response?.data || checkoutError);
+                  toast.error('Errore durante l\'avvio del checkout', { 
+                    description: 'Verrai reindirizzato alla pagina dei piani.' 
+                  });
+                  // In caso di errore, reindirizza alla pagina di pricing
+                  localStorage.removeItem('selectedPlan');
+                  navigate('/pricing');
+                  return;
+                }
+              }
+            } catch (error: any) {
+              console.error('Errore durante la creazione del checkout dopo registrazione:', error);
+              console.error('Dettaglio risposta:', error.response?.data);
+              
+              // In caso di errore, reindirizza alla pagina di pricing come fallback
+              localStorage.removeItem('selectedPlan');
+              navigate('/pricing');
+              return;
+            }
+          } else {
+            // Se l'utente non stava cercando di abbonarsi, reindirizza
+            // alla pagina di pricing protetta invece che alla dashboard
+            navigate('/subscribe');
+          }
         } else {
           throw new Error('Dati utente mancanti nella risposta');
         }

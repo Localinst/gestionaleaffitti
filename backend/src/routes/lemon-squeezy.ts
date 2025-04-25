@@ -227,13 +227,47 @@ router.get('/variants', async (req: Request, res: Response) => {
   }
 });
 
+// Endpoint di ping per test di connessione
+router.get('/ping', (req: Request, res: Response) => {
+  const config = {
+    apiKeyPresent: !!API_KEY,
+    storeIdPresent: !!STORE_ID,
+    webhookSecretPresent: !!WEBHOOK_SECRET,
+    environment: process.env.NODE_ENV || 'unknown',
+    timestamp: new Date().toISOString()
+  };
+  
+  debugLog('Richiesta ping ricevuta', { config });
+  
+  res.json({ 
+    status: 'success', 
+    message: 'Lemon Squeezy API è online',
+    config
+  });
+});
+
 // Crea un checkout
 router.post('/create-checkout', async (req: Request, res: Response) => {
   try {
     const { variantId, email, customData } = req.body;
     
+    debugLog('Richiesta create-checkout ricevuta', { 
+      variantId, 
+      email: email || 'non specificato',
+      customData
+    });
+    
     if (!variantId) {
+      debugLog('ID variante mancante', { body: req.body });
       return res.status(400).json({ error: 'ID variante mancante' });
+    }
+    
+    // Validazione per ID di variante
+    if (variantId === 'monthly-variant-id' || variantId === 'annual-variant-id') {
+      debugLog('ID variante non valido (placeholder)', { variantId });
+      return res.status(400).json({ 
+        error: 'ID variante non valido: viene utilizzato un placeholder invece di un ID reale'
+      });
     }
     
     const payload = {

@@ -63,6 +63,21 @@ export const createCheckout = async (
 ) => {
   try {
     console.log('Creazione checkout con dati:', { variantId, email: customerEmail, customData });
+    
+    // Se l'ID sembra essere un URL completo, redirectiamo direttamente
+    if (variantId.includes('lemonsqueezy.com/buy/')) {
+      const checkoutUrl = variantId.includes('https://') ? variantId : `https://${variantId}`;
+      console.log('Utilizzo URL di checkout diretto:', checkoutUrl);
+      return { 
+        data: { 
+          attributes: { 
+            url: checkoutUrl 
+          } 
+        } 
+      };
+    }
+    
+    // Altrimenti procedi con la creazione di un checkout tramite API
     const response = await lemonSqueezyClient.post(`/create-checkout`, {
       variantId,
       email: customerEmail,
@@ -154,5 +169,35 @@ export const cancelSubscription = async (subscriptionId: string) => {
   } catch (error) {
     console.error('Errore durante la cancellazione dell\'abbonamento:', error);
     throw error;
+  }
+};
+
+/**
+ * Test diagnostico per la connessione Lemon Squeezy
+ */
+export const testLemonSqueezyConnection = async () => {
+  try {
+    console.log('Test diagnostico connessione Lemon Squeezy');
+    // Prima verifica se il server è raggiungibile
+    const pingResponse = await lemonSqueezyClient.get('/ping');
+    console.log('Risposta ping:', pingResponse.data);
+    
+    // Prova a caricare i prodotti
+    const productsResponse = await getProducts();
+    console.log('Prodotti disponibili:', productsResponse);
+    
+    return {
+      success: true,
+      pingResponse: pingResponse.data,
+      productsResponse: productsResponse
+    };
+  } catch (error: any) {
+    console.error('Test diagnostico fallito:', error);
+    return {
+      success: false,
+      error: error.message,
+      response: error.response?.data,
+      status: error.response?.status
+    };
   }
 }; 

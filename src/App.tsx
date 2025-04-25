@@ -10,6 +10,7 @@ import { SubscriptionProvider } from './context/SubscriptionContext';
 import { SettingsProvider } from './context/SettingsContext';
 import { TourGuide } from "@/components/tour/TourGuide";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { SubscriptionRoute } from "@/components/auth/SubscriptionRoute";
 import CookieConsent from "@/components/CookieConsent";
 import AnalyticsWrapper from "@/components/AnalyticsWrapper";
 import LandingPage from "./pages/LandingPage";
@@ -42,6 +43,7 @@ import InfoPage from "./pages/InfoPage";
 import AdminUsers from './pages/AdminUsers';
 import AdminDashboard from './pages/AdminDashboard';
 import UpdatePasswordPage from "./pages/UpdatePasswordPage";
+import ProtectedPricing from './pages/ProtectedPricing';
 import { useEffect } from "react";
 
 // Configurazione avanzata di QueryClient con gestione della cache
@@ -123,73 +125,69 @@ function App() {
                         <Route path="/testimonials" element={<LandingPage />} />
                         
                         {/* Rotte protette */}
-                        <Route path="/dashboard" element={
+                        <Route path="/subscribe" element={
                           <ProtectedRoute>
-                            <DashboardPage />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/properties" element={
-                          <ProtectedRoute>
-                            <PropertiesPage />
-                          </ProtectedRoute>
-                        } />
-                        {/* 
-                         * TODO: Implementare le pagine di dettaglio mancanti:
-                         * - Dettaglio proprietà (/properties/:id)
-                         * - Dettaglio inquilino (/tenants/:id)
-                         * - Dettaglio transazione (/transactions/:id)
-                         * - Dettaglio contratto (/contracts/:id)
-                         *
-                         * Le rotte sono state temporaneamente rimosse per evitare errori
-                         * fino a quando i componenti corrispondenti non saranno creati.
-                         */}
-                        <Route path="/tenants" element={
-                          <ProtectedRoute>
-                            <TenantsPage />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/transactions" element={
-                          <ProtectedRoute>
-                            <TransactionsPage />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/contracts" element={
-                          <ProtectedRoute>
-                            <ContractsPage />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/reports" element={
-                          <ProtectedRoute>
-                            <ReportPage />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/activities" element={
-                          <ProtectedRoute>
-                            <ActivitiesPage />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/tourism/bookings" element={
-                          <ProtectedRoute>
-                            <BookingsPage />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/tourism/properties" element={
-                          <ProtectedRoute>
-                            <TourismPropertiesPage />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/tourism/property/:propertyId" element={
-                          <ProtectedRoute>
-                            <PropertyDetails />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/import" element={
-                          <ProtectedRoute>
-                            <ImportPage />
+                            <ProtectedPricing />
                           </ProtectedRoute>
                         } />
                         
-                        {/* Nuove pagine */}
+                        <Route path="/dashboard" element={
+                          <SubscriptionRoute>
+                            <DashboardPage />
+                          </SubscriptionRoute>
+                        } />
+                        <Route path="/properties" element={
+                          <SubscriptionRoute>
+                            <PropertiesPage />
+                          </SubscriptionRoute>
+                        } />
+                        <Route path="/tenants" element={
+                          <SubscriptionRoute>
+                            <TenantsPage />
+                          </SubscriptionRoute>
+                        } />
+                        <Route path="/transactions" element={
+                          <SubscriptionRoute>
+                            <TransactionsPage />
+                          </SubscriptionRoute>
+                        } />
+                        <Route path="/contracts" element={
+                          <SubscriptionRoute>
+                            <ContractsPage />
+                          </SubscriptionRoute>
+                        } />
+                        <Route path="/reports" element={
+                          <SubscriptionRoute>
+                            <ReportPage />
+                          </SubscriptionRoute>
+                        } />
+                        <Route path="/activities" element={
+                          <SubscriptionRoute>
+                            <ActivitiesPage />
+                          </SubscriptionRoute>
+                        } />
+                        <Route path="/tourism/bookings" element={
+                          <SubscriptionRoute>
+                            <BookingsPage />
+                          </SubscriptionRoute>
+                        } />
+                        <Route path="/tourism/properties" element={
+                          <SubscriptionRoute>
+                            <TourismPropertiesPage />
+                          </SubscriptionRoute>
+                        } />
+                        <Route path="/tourism/property/:propertyId" element={
+                          <SubscriptionRoute>
+                            <PropertyDetails />
+                          </SubscriptionRoute>
+                        } />
+                        <Route path="/import" element={
+                          <SubscriptionRoute>
+                            <ImportPage />
+                          </SubscriptionRoute>
+                        } />
+                        
+                        {/* Queste pagine potrebbero essere accessibili anche senza abbonamento, dipende dalle tue necessità */}
                         <Route path="/notifications" element={
                           <ProtectedRoute>
                             <NotificationsPage />

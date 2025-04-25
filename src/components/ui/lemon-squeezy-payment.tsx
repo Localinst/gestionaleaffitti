@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from './button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './card';
 import { createCheckout } from '@/services/lemon-squeezy-api';
@@ -40,15 +40,66 @@ export const LemonSqueezyPayment = ({
 }: LemonSqueezyPaymentProps) => {
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const { user } = useAuth();
+  
+  // Controlla se esiste un piano selezionato nel localStorage
+  useEffect(() => {
+    const selectedPlanData = localStorage.getItem('selectedPlan');
+    if (selectedPlanData && !isLoading) {
+      try {
+        // Ottieni i dettagli del piano dal localStorage
+        const planDetails = JSON.parse(selectedPlanData);
+        
+        // Trova il piano selezionato nelle opzioni disponibili
+        const selectedPlan = planOptions.find(plan => plan.id === planDetails.id);
+        
+        if (selectedPlan) {
+          // Avvia automaticamente il checkout per il piano selezionato
+          (async () => {
+            try {
+              localStorage.removeItem('selectedPlan'); // Rimuovi subito per evitare loop
+              await handleCheckout(selectedPlan);
+            } catch (error) {
+              console.error('Errore durante il checkout automatico:', error);
+            }
+          })();
+        }
+      } catch (error) {
+        console.error('Errore nel parsing dei dati del piano:', error);
+        localStorage.removeItem('selectedPlan');
+      }
+    }
+  }, [planOptions, isLoading]);
 
   const handleCheckout = async (plan: PlanOption) => {
     try {
       setIsLoading(plan.variantId);
+      
+      console.log('Avvio checkout per piano:', {
+        id: plan.id,
+        name: plan.name,
+        variantId: plan.variantId,
+        price: plan.price
+      });
+
+      if (!plan.variantId || plan.variantId === 'monthly-variant-id' || plan.variantId === 'annual-variant-id') {
+        console.error('ID variante non valido o placeholder:', plan.variantId);
+        toast.error('Configurazione piano non valida', { 
+          description: 'Contatta l\'amministratore del sistema.' 
+        });
+        setIsLoading(null);
+        return;
+      }
 
       const customData = {
         userId: user?.id,
         planName: plan.name,
       };
+
+      console.log('Invio richiesta checkout con parametri:', {
+        variantId: plan.variantId,
+        email: user?.email,
+        customData
+      });
 
       const checkoutData = await createCheckout(
         plan.variantId,
@@ -56,14 +107,18 @@ export const LemonSqueezyPayment = ({
         customData
       );
 
+      console.log('Risposta checkout:', checkoutData);
+
       // Redirect all'URL del checkout Lemon Squeezy
-      if (checkoutData.data.attributes.url) {
+      if (checkoutData.data?.attributes?.url) {
         window.location.href = checkoutData.data.attributes.url;
       } else {
-        throw new Error('URL di checkout mancante');
+        console.error('URL checkout mancante nella risposta:', checkoutData);
+        throw new Error('URL di checkout mancante nella risposta');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Errore durante la creazione del checkout:', error);
+      console.error('Dettaglio risposta:', error.response?.data);
       toast.error('Si è verificato un errore durante l\'avvio del pagamento');
       setIsLoading(null);
     }
