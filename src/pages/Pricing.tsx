@@ -103,16 +103,16 @@ const Pricing: React.FC = () => {
 
   const planOptions = [
     {
-      id: "basic-plan",
-      name: "Piano Base",
-      description: "Ideale per piccoli proprietari",
-      price: "€39/mese",
+      id: "plan-monthly",
+      name: "Piano Mensile",
+      description: "Ideale per chi inizia",
+      price: "€19,99/mese",
       features: [
-        "Fino a 10 proprietà",
-        "Gestione contratti",
-        "Gestione incassi",
-        "Dashboard semplificata",
-        "Email di supporto"
+        "Gestione completa delle proprietà",
+        "Gestione inquilini illimitati",
+        "Tracciamento pagamenti automatico",
+        "Dashboard analitica",
+        "Supporto email"
       ],
       // Vecchio LemonSqueezy
       variantId: "https://tenoris360.lemonsqueezy.com/buy/1101e76e-e411-41d1-832b-d1fd5f534775",
@@ -120,42 +120,23 @@ const Pricing: React.FC = () => {
       priceId: "pri_01hqwertyuiopasdfghjklzx", // Sostituisci con il tuo ID Paddle reale
     },
     {
-      id: "pro-plan",
-      name: "Piano Pro",
-      description: "Ideale per gestori immobiliari",
-      price: "€79/mese",
+      id: "plan-annual",
+      name: "Piano Annuale",
+      description: "La soluzione più conveniente",
+      price: "€199,99/anno",
       features: [
-        "Proprietà illimitate",
-        "Gestione avanzata contratti",
-        "Gestione completa incassi e spese",
-        "Dashboard analitica",
-        "Reportistica dettagliata",
-        "Supporto prioritario"
+        "Tutte le funzionalità del piano mensile",
+        "Risparmio di 2 mesi",
+        "Supporto prioritario",
+        "Backup settimanali",
+        "Report avanzati"
       ],
       isPopular: true,
       // Vecchio LemonSqueezy
       variantId: "https://tenoris360.lemonsqueezy.com/buy/34ba8568-c3af-42d2-9d64-052f90879543",
       // Nuovo Paddle
       priceId: "pri_02hqwertyuiopasdfghjklzx", // Sostituisci con il tuo ID Paddle reale
-    },
-    {
-      id: "enterprise-plan",
-      name: "Piano Enterprise",
-      description: "Per agenzie immobiliari e grandi gestori",
-      price: "Contattaci",
-      features: [
-        "Tutte le funzionalità Pro",
-        "API personalizzata",
-        "Integrazioni su misura",
-        "Onboarding dedicato",
-        "Account manager dedicato",
-        "SLA garantito"
-      ],
-      // Vecchio LemonSqueezy
-      variantId: "contattaci",
-      // Nuovo Paddle
-      priceId: "", // Per questo piano si contatta direttamente
-    },
+    }
   ];
 
   return (
