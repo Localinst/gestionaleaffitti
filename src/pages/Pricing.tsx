@@ -57,7 +57,7 @@ const Pricing: React.FC = () => {
       id: "plan-annual",
       name: "Piano Annuale",
       description: "La soluzione più conveniente",
-      price: "€199,90/anno",
+      price: "€199,99/anno",
       features: [
         "Tutte le funzionalità del piano mensile",
         "Risparmio di 2 mesi",
@@ -74,71 +74,6 @@ const Pricing: React.FC = () => {
 
   const [plans, setPlans] = useState(defaultPlans);
   const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    const fetchPlansData = async () => {
-      try {
-        setIsLoading(true);
-        // Carica i prodotti da Lemon Squeezy
-        const productsResponse = await getProducts();
-        console.log('Prodotti caricati da Lemon Squeezy:', productsResponse);
-        const products = productsResponse.data || [];
-
-        if (products.length === 0) {
-          console.log('Nessun prodotto trovato, uso i piani predefiniti');
-          setIsLoading(false);
-          return;
-        }
-
-        // Per ogni prodotto, carica le sue varianti
-        const updatedPlans = await Promise.all(
-          products.map(async (product: any) => {
-            console.log('Elaborazione prodotto:', product.id, product.attributes?.name);
-            const variantsResponse = await getProductVariants(product.id);
-            console.log('Varianti prodotto:', variantsResponse);
-            const variants = variantsResponse.data || [];
-
-            // Se il prodotto ha varianti, usa la prima
-            const variant = variants.length > 0 ? variants[0] : null;
-            console.log('Variante selezionata:', variant?.id, variant?.attributes?.name);
-
-            // Trova il piano corrispondente nei default plans
-            const matchingPlan = defaultPlans.find(
-              (plan) => plan.name.toLowerCase().includes(product.attributes.name.toLowerCase())
-            );
-
-            if (!matchingPlan) return null;
-
-            // Estrai il prezzo dalla variante
-            const price = variant
-              ? `€${(variant.attributes.price / 100).toFixed(2)}/${
-                  variant.attributes.interval === "month" ? "mese" : "anno"
-                }`
-              : matchingPlan.price;
-
-            return {
-              ...matchingPlan,
-              name: product.attributes.name,
-              description: product.attributes.description || matchingPlan.description,
-              price,
-              variantId: variant ? variant.id : matchingPlan.variantId,
-            };
-          })
-        );
-
-        console.log('Piani aggiornati:', updatedPlans);
-
-        // Filtra i piani nulli e aggiorna lo stato
-        setPlans(updatedPlans.filter(Boolean));
-        setIsLoading(false);
-      } catch (error) {
-        console.error("Errore nel caricamento dei piani:", error);
-        setIsLoading(false);
-      }
-    };
-
-    fetchPlansData();
-  }, []);
 
   useEffect(() => {
     const testConnection = async () => {

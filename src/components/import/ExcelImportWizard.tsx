@@ -21,11 +21,11 @@ const entitySchemas: Record<EntityType, string[]> = {
   property: ["name", "address", "city", "postal_code", "type", "rooms", "bathrooms", "area", "price"],
   tenant: ["name", "email", "phone", "fiscal_code", "address", "city", "postal_code", "property_id"],
   contract: ["property_id", "tenant_id", "start_date", "end_date", "rent_amount", "deposit_amount", "status"],
-  transaction: ["date", "amount", "type", "category", "description", "property_id", "tenant_id"]
+  transaction: ["date", "amount", "type", "category", "description", "property_id", "tenant_id", "income_column", "expense_column"]
 };
 
 // Tipo per il metodo di formattazione delle transazioni
-type TransactionFormattingMethod = 'sign' | 'label';
+type TransactionFormattingMethod = 'sign' | 'label' | 'separate_columns';
 
 export function ExcelImportWizard() {
   const [step, setStep] = useState(1);
@@ -43,6 +43,10 @@ export function ExcelImportWizard() {
   const [expenseLabel, setExpenseLabel] = useState('Uscite'); // Valore predefinito
   const [isImporting, setIsImporting] = useState(false); // Stato per indicare l'importazione
   const [parsedCsvData, setParsedCsvData] = useState<any[]>([]); // Stato per dati CSV parsati
+  
+  // Nuovi stati per la gestione dei fogli Excel
+  const [worksheets, setWorksheets] = useState<string[]>([]);
+  const [selectedWorksheet, setSelectedWorksheet] = useState<string>("");
 
   // Carica il file Excel/CSV e leggi le intestazioni + anteprima
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,6 +59,8 @@ export function ExcelImportWizard() {
     setParsedCsvData([]); // Resetta dati CSV precedenti
     setHeaders([]);
     setPreview([]);
+    setWorksheets([]); // Resetta l'elenco dei fogli
+    setSelectedWorksheet(""); // Resetta il foglio selezionato
     setMappings(savedMappings[entityType] || {}); // Carica mappatura salvata se esiste
 
     try {
@@ -65,29 +71,47 @@ export function ExcelImportWizard() {
          console.log("Rilevato file .xlsx, uso ExcelJS");
          const workbook = new ExcelJS.Workbook();
          await workbook.xlsx.load(await selectedFile.arrayBuffer());
-         const worksheet = workbook.worksheets[0];
-         if (!worksheet) throw new Error("Foglio di lavoro Excel non trovato.");
+         
+         // Estrai i nomi dei fogli di lavoro
+         const worksheetNames = workbook.worksheets.map(ws => ws.name);
+         setWorksheets(worksheetNames);
+         
+         if (worksheetNames.length === 0) {
+           throw new Error("Nessun foglio di lavoro trovato nel file Excel.");
+         }
+         
+         // Seleziona automaticamente il primo foglio
+         const firstWorksheet = workbook.worksheets[0];
+         setSelectedWorksheet(firstWorksheet.name);
+         
+         // Se c'è un solo foglio, procedi con la lettura
+         if (worksheetNames.length === 1) {
+           // Leggi headers da ExcelJS
+           const headerRow = firstWorksheet.getRow(1);
+           headerRow.eachCell({ includeEmpty: false }, (cell) => {
+             const value = cell.value?.toString()?.trim();
+             if (value) columnHeaders.push(value);
+           });
 
-         // Leggi headers da ExcelJS
-         const headerRow = worksheet.getRow(1);
-         headerRow.eachCell({ includeEmpty: false }, (cell) => {
-           const value = cell.value?.toString()?.trim();
-           if (value) columnHeaders.push(value);
-         });
-
-         // Leggi anteprima da ExcelJS
-         let rowCount = 0;
-         worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => { 
-           if (rowNumber > 1 && rowCount < 5) { 
-             const rowData: Record<string, any> = {};
-             columnHeaders.forEach((header, index) => {
-               const cell = row.getCell(index + 1); 
-               rowData[header] = formatPreviewValue(cell?.value);
-             });
-             previewData.push(rowData);
-             rowCount++;
-           }
-         });
+           // Leggi anteprima da ExcelJS
+           let rowCount = 0;
+           firstWorksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => { 
+             if (rowNumber > 1 && rowCount < 5) { 
+               const rowData: Record<string, any> = {};
+               columnHeaders.forEach((header, index) => {
+                 const cell = row.getCell(index + 1); 
+                 rowData[header] = formatPreviewValue(cell?.value);
+               });
+               previewData.push(rowData);
+               rowCount++;
+             }
+           });
+         } else {
+           // Se ci sono più fogli, mostra un messaggio e attendi la selezione dell'utente
+           toast.info(`Il file contiene ${worksheetNames.length} fogli. Seleziona un foglio per continuare.`);
+           setStep(1.5); // Usa uno step intermedio per la selezione del foglio
+           return;
+         }
 
       } else if (fileExtension === 'csv') {
          console.log("Rilevato file .csv, uso PapaParse");
@@ -152,6 +176,54 @@ export function ExcelImportWizard() {
       setHeaders([]);
       setMappings({});
       setPreview([]);
+    }
+  };
+  
+  // Funzione per gestire la selezione del foglio di lavoro
+  const handleWorksheetSelect = async () => {
+    if (!file || !selectedWorksheet) return;
+    
+    try {
+      console.log(`Lettura del foglio di lavoro: ${selectedWorksheet}`);
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(await file.arrayBuffer());
+      const worksheet = workbook.getWorksheet(selectedWorksheet);
+      
+      if (!worksheet) {
+        throw new Error(`Foglio di lavoro '${selectedWorksheet}' non trovato.`);
+      }
+      
+      // Leggi le intestazioni
+      const columnHeaders: string[] = [];
+      const headerRow = worksheet.getRow(1);
+      headerRow.eachCell({ includeEmpty: false }, (cell) => {
+        const value = cell.value?.toString()?.trim();
+        if (value) columnHeaders.push(value);
+      });
+      
+      // Leggi l'anteprima
+      let previewData: any[] = [];
+      let rowCount = 0;
+      worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => { 
+        if (rowNumber > 1 && rowCount < 5) { 
+          const rowData: Record<string, any> = {};
+          columnHeaders.forEach((header, index) => {
+            const cell = row.getCell(index + 1); 
+            rowData[header] = formatPreviewValue(cell?.value);
+          });
+          previewData.push(rowData);
+          rowCount++;
+        }
+      });
+      
+      setHeaders(columnHeaders);
+      setPreview(previewData);
+      setValidationErrors([]);
+      setStep(2);
+      
+    } catch (error: any) {
+      toast.error(`Errore nella lettura del foglio di lavoro: ${error.message || 'Errore sconosciuto'}`);
+      console.error(`Errore nella lettura del foglio:`, error);
     }
   };
 
@@ -219,36 +291,79 @@ export function ExcelImportWizard() {
     return rawData.map((transaction, index) => {
       const normalizedTransaction = { ...transaction }; // Crea una copia
 
-      // Assicurati che amount sia un numero, prendi il valore assoluto
-      let amount = 0;
-      if (transaction.amount !== null && transaction.amount !== undefined) {
-        const amountString = transaction.amount.toString().replace(/,/g, '.').replace(/[^0-9.-]/g, ''); // Sostituisci virgola con punto e rimuovi altri caratteri non numerici
-        const parsedAmount = parseFloat(amountString);
-        if (!isNaN(parsedAmount)) {
-          amount = Math.abs(parsedAmount); // Usa sempre il valore assoluto
+      if (transactionFormattingMethod === 'separate_columns') {
+        // Gestione delle colonne separate per entrate e uscite
+        const incomeValue = transaction.income_column !== undefined ? transaction.income_column : null;
+        const expenseValue = transaction.expense_column !== undefined ? transaction.expense_column : null;
+        
+        // Determina se è un'entrata o un'uscita e imposta l'importo
+        if (incomeValue !== null && incomeValue !== undefined && incomeValue !== '') {
+          // È un'entrata
+          const amountString = incomeValue.toString().replace(/,/g, '.').replace(/[^0-9.-]/g, '');
+          const parsedAmount = parseFloat(amountString);
+          
+          if (!isNaN(parsedAmount)) {
+            normalizedTransaction.amount = Math.abs(parsedAmount);
+            normalizedTransaction.type = 'income';
+          } else {
+            normalizedTransaction.amount = 0;
+            normalizedTransaction.type = 'income';
+          }
+        } else if (expenseValue !== null && expenseValue !== undefined && expenseValue !== '') {
+          // È un'uscita
+          const amountString = expenseValue.toString().replace(/,/g, '.').replace(/[^0-9.-]/g, '');
+          const parsedAmount = parseFloat(amountString);
+          
+          if (!isNaN(parsedAmount)) {
+            normalizedTransaction.amount = Math.abs(parsedAmount);
+            normalizedTransaction.type = 'expense';
+          } else {
+            normalizedTransaction.amount = 0;
+            normalizedTransaction.type = 'expense';
+          }
+        } else {
+          // Nessuno dei due valori presente (non dovrebbe accadere, ma gestiamolo)
+          normalizedTransaction.amount = 0;
+          normalizedTransaction.type = 'expense'; // Default
+          console.warn(`Riga ${index + 2}: Nessun valore trovato nelle colonne di entrata/uscita.`);
         }
-      }
-      normalizedTransaction.amount = amount;
+        
+        // Rimuovi i campi di supporto che non servono più
+        delete normalizedTransaction.income_column;
+        delete normalizedTransaction.expense_column;
+      } else {
+        // Gestione esistente per sign e label
+        // Assicurati che amount sia un numero, prendi il valore assoluto
+        let amount = 0;
+        if (transaction.amount !== null && transaction.amount !== undefined) {
+          const amountString = transaction.amount.toString().replace(/,/g, '.').replace(/[^0-9.-]/g, '');
+          const parsedAmount = parseFloat(amountString);
+          if (!isNaN(parsedAmount)) {
+            amount = Math.abs(parsedAmount); // Usa sempre il valore assoluto
+          }
+        }
+        normalizedTransaction.amount = amount;
 
-      // Determina il tipo (income/expense)
-      if (transactionFormattingMethod === 'sign') {
-        const originalAmountString = transaction.amount?.toString() ?? '0';
-        const originalParsedAmount = parseFloat(originalAmountString.replace(/,/g, '.').replace(/[^0-9.-]/g, ''));
-        if (!isNaN(originalParsedAmount) && originalParsedAmount < 0) {
-          normalizedTransaction.type = 'expense';
-        } else {
-          normalizedTransaction.type = 'income'; // Positivo o zero è income
-        }
-      } else { // Metodo 'label'
-        const typeString = transaction.type?.toString().trim().toLowerCase() ?? '';
-        if (typeString === incomeLblLower) {
-          normalizedTransaction.type = 'income';
-        } else if (typeString === expenseLblLower) {
-          normalizedTransaction.type = 'expense';
-        } else {
-          // Se l'etichetta non corrisponde, cosa fare?
-          console.warn(`Riga ${index + 2}: Etichetta tipo transazione non riconosciuta '${transaction.type}'. Impostata come 'expense' per default.`);
-          normalizedTransaction.type = 'expense'; // Imposta un default o gestisci come errore
+        // Determina il tipo (income/expense)
+        if (transactionFormattingMethod === 'sign') {
+          const originalAmountString = transaction.amount?.toString() ?? '0';
+          const originalParsedAmount = parseFloat(originalAmountString.replace(/,/g, '.').replace(/[^0-9.-]/g, ''));
+          if (!isNaN(originalParsedAmount) && originalParsedAmount < 0) {
+            normalizedTransaction.type = 'expense';
+          } else {
+            normalizedTransaction.type = 'income'; // Positivo o zero è income
+          }
+        } else { // Metodo 'label'
+          const typeString = transaction.type?.toString().trim().toLowerCase() ?? '';
+          if (typeString === incomeLblLower) {
+            normalizedTransaction.type = 'income';
+          } else if (typeString === expenseLblLower) {
+            normalizedTransaction.type = 'expense';
+          } else {
+            // Se l'etichetta non corrisponde, cosa fare?
+            console.warn(`Riga ${index + 2}: Etichetta tipo transazione non riconosciuta '${transaction.type}'. Impostata come 'expense' per default.`);
+            normalizedTransaction.type = 'expense'; // Imposta un default o gestisci come errore
+          }
         }
       }
 
@@ -282,9 +397,13 @@ export function ExcelImportWizard() {
       if (fileExtension === 'xlsx') {
           const workbook = new ExcelJS.Workbook();
           await workbook.xlsx.load(await file.arrayBuffer());
-          const worksheet = workbook.worksheets[0];
-          if (!worksheet) throw new Error("Foglio di lavoro Excel non trovato.");
-          console.log(`[Import Step 4/5] File XLSX riletto. Righe: ${worksheet.rowCount}`);
+          
+          // Usa il foglio selezionato o il primo se non specificato
+          const worksheetToUse = selectedWorksheet || workbook.worksheets[0].name;
+          const worksheet = workbook.getWorksheet(worksheetToUse);
+          
+          if (!worksheet) throw new Error(`Foglio di lavoro Excel "${worksheetToUse}" non trovato.`);
+          console.log(`[Import Step 4/5] File XLSX riletto. Foglio: ${worksheetToUse}, Righe: ${worksheet.rowCount}`);
 
           // Ottieni gli indici delle colonne Excel basati sugli headers letti
           const headerIndexMap: Record<string, number> = {};
@@ -514,7 +633,12 @@ export function ExcelImportWizard() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Step {step}: {step === 1 ? 'Seleziona File e Tipo Entità' : step === 2 ? 'Mappa Colonne' : 'Risultato Importazione'}</CardTitle>
+          <CardTitle>
+            {step === 1 ? 'Step 1: Seleziona File e Tipo Entità' : 
+             step === 1.5 ? 'Step 1.5: Seleziona Foglio di Lavoro' :
+             step === 2 ? 'Step 2: Mappa Colonne' : 
+             'Step 3: Risultato Importazione'}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {/* Step 1: Selezione File */}
@@ -553,6 +677,33 @@ export function ExcelImportWizard() {
               </div>
             </div>
           )}
+          
+          {/* Step 1.5: Selezione Foglio di Lavoro */}
+          {step === 1.5 && (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="worksheetSelect">Seleziona il foglio di lavoro</Label>
+                <Select value={selectedWorksheet} onValueChange={setSelectedWorksheet}>
+                  <SelectTrigger id="worksheetSelect">
+                    <SelectValue placeholder="Seleziona foglio" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {worksheets.map(name => (
+                      <SelectItem key={name} value={name}>{name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">Il file Excel contiene più fogli di lavoro. Seleziona quello da importare.</p>
+              </div>
+              
+              <div className="flex justify-between mt-4">
+                <Button variant="outline" onClick={() => setStep(1)}>Indietro</Button>
+                <Button onClick={handleWorksheetSelect} disabled={!selectedWorksheet}>
+                  Continua
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* Step 2: Mappatura Colonne */}
           {step === 2 && (
@@ -583,7 +734,9 @@ export function ExcelImportWizard() {
                   Associa ogni campo richiesto per "{entityType}" a una colonna del tuo file. Seleziona "Ignora" se una colonna non deve essere importata.
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {entitySchemas[entityType].map(field => (
+                  {entitySchemas[entityType]
+                    .filter(field => !(entityType === 'transaction' && transactionFormattingMethod !== 'separate_columns' && ['income_column', 'expense_column'].includes(field)))
+                    .map(field => (
                     <div key={field}>
                       <Label htmlFor={`map-${field}`}>{field.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase())}</Label>
                       <Select value={mappings[field] || 'none'} onValueChange={(value) => setMappings({...mappings, [field]: value === 'none' ? '' : value })}>
@@ -622,6 +775,10 @@ export function ExcelImportWizard() {
                       <RadioGroupItem value="label" id="r-label" />
                       <Label htmlFor="r-label">Usa etichette di testo nella colonna "Tipo"</Label>
                     </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="separate_columns" id="r-columns" />
+                      <Label htmlFor="r-columns">Usa colonne separate per entrate e uscite</Label>
+                    </div>
                   </RadioGroup>
 
                   {/* Input per etichette personalizzate */}
@@ -644,6 +801,44 @@ export function ExcelImportWizard() {
                           onChange={(e) => setExpenseLabel(e.target.value)}
                           placeholder="Es: Uscite, Spesa, U, expense"
                         />
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Input per mappatura colonne separate */}
+                  {transactionFormattingMethod === 'separate_columns' && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pl-6">
+                      <div>
+                        <Label htmlFor="map-income_column">Colonna Entrate</Label>
+                        <Select 
+                          value={mappings['income_column'] || 'none'} 
+                          onValueChange={(value) => setMappings({...mappings, ['income_column']: value === 'none' ? '' : value })}>
+                          <SelectTrigger id="map-income_column">
+                            <SelectValue placeholder="Seleziona colonna entrate" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Ignora questo campo</SelectItem>
+                            {headers.map(header => (
+                              <SelectItem key={header} value={header}>{header}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="map-expense_column">Colonna Uscite</Label>
+                        <Select 
+                          value={mappings['expense_column'] || 'none'} 
+                          onValueChange={(value) => setMappings({...mappings, ['expense_column']: value === 'none' ? '' : value })}>
+                          <SelectTrigger id="map-expense_column">
+                            <SelectValue placeholder="Seleziona colonna uscite" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Ignora questo campo</SelectItem>
+                            {headers.map(header => (
+                              <SelectItem key={header} value={header}>{header}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                   )}

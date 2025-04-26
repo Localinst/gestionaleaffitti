@@ -37,36 +37,35 @@ const ProtectedPricing: React.FC = () => {
 
   const planOptions = [
     {
-      id: "basic-plan",
-      name: "Piano Base",
-      description: "Ideale per piccoli proprietari",
-      price: "€39/mese",
+      id: "plan-monthly",
+      name: "Piano Mensile",
+      description: "Ideale per chi inizia",
+      price: "€19,99/mese",
       features: [
-        "Fino a 10 proprietà",
-        "Gestione contratti",
-        "Gestione incassi",
-        "Dashboard semplificata",
-        "Email di supporto"
+        "Gestione completa delle proprietà",
+        "Gestione inquilini illimitati",
+        "Tracciamento pagamenti automatico",
+        "Dashboard analitica",
+        "Supporto email"
       ],
       variantId: "https://tenoris360.lemonsqueezy.com/buy/1101e76e-e411-41d1-832b-d1fd5f534775",
-      priceId: "pri_01hqwertyuiopasdfghjklzx", // Sostituisci con il tuo ID Paddle reale
+      priceId: "pri_01hqwertyuiopasdfghjklzx",
     },
     {
-      id: "pro-plan",
-      name: "Piano Pro",
-      description: "Ideale per gestori immobiliari",
-      price: "€79/mese",
+      id: "plan-annual",
+      name: "Piano Annuale",
+      description: "La soluzione più conveniente",
+      price: "€199,99/anno",
       features: [
-        "Proprietà illimitate",
-        "Gestione avanzata contratti",
-        "Gestione completa incassi e spese",
-        "Dashboard analitica",
-        "Reportistica dettagliata",
-        "Supporto prioritario"
+        "Tutte le funzionalità del piano mensile",
+        "Risparmio di 2 mesi",
+        "Supporto prioritario",
+        "Backup settimanali",
+        "Report avanzati"
       ],
       isPopular: true,
-      variantId: "https://tenoris360.lemonsqueezy.com/buy/1101e76e-e411-41d1-832b-d1fd5f534775",
-      priceId: "pri_02hqwertyuiopasdfghjklzx", // Sostituisci con il tuo ID Paddle reale
+      variantId: "https://tenoris360.lemonsqueezy.com/buy/34ba8568-c3af-42d2-9d64-052f90879543",
+      priceId: "pri_02hqwertyuiopasdfghjklzx",
     },
   ];
 
@@ -80,6 +79,7 @@ const ProtectedPricing: React.FC = () => {
       description: "Per iniziare a utilizzare l'app, seleziona un piano di abbonamento.",
     });
 
+    /* Rimuovo il caricamento dei piani dal backend
     const fetchPlansData = async () => {
       try {
         setIsLoading(true);
@@ -142,6 +142,7 @@ const ProtectedPricing: React.FC = () => {
     };
 
     fetchPlansData();
+    */
   }, [toast]);
 
   return (
