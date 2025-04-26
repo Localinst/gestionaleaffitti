@@ -136,7 +136,34 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             description: `Benvenuto, ${userData.name}!`,
           });
           
-          navigate('/dashboard');
+          // Verifica lo stato dell'abbonamento dell'utente prima di reindirizzare
+          try {
+            // Importa direttamente la funzione getUserSubscriptions
+            const { getUserSubscriptions } = await import('@/services/lemon-squeezy-api');
+            const subscriptionsResponse = await getUserSubscriptions(userData.id);
+            const subscriptions = subscriptionsResponse?.data || [];
+            
+            // Controlla se c'è almeno una sottoscrizione attiva
+            const hasActiveSubscription = subscriptions.some(
+              (subscription: any) => 
+                subscription.attributes?.status === 'active' || 
+                subscription.attributes?.status === 'on_trial'
+            );
+            
+            console.log('Stato abbonamento:', hasActiveSubscription ? 'Attivo' : 'Non attivo');
+            
+            // Reindirizza in base allo stato dell'abbonamento
+            if (hasActiveSubscription) {
+              navigate('/dashboard');
+            } else {
+              // Se non ha un abbonamento attivo, reindirizza alla pagina di abbonamento protetta
+              navigate('/subscribe');
+            }
+          } catch (subscriptionError) {
+            console.error('Errore nel controllo dello stato dell\'abbonamento:', subscriptionError);
+            // In caso di errore nella verifica, reindirizza comunque alla dashboard
+            navigate('/dashboard');
+          }
         } else {
           // Se non ci sono dati utente nella risposta, decodifica dal token
           const userData = decodeJwtToken(response.token);
@@ -145,7 +172,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             toast.success('Login effettuato con successo', {
               description: `Benvenuto, ${userData.name}!`,
             });
-            navigate('/dashboard');
+            
+            // Anche qui, verifica lo stato dell'abbonamento
+            try {
+              const { getUserSubscriptions } = await import('@/services/lemon-squeezy-api');
+              const subscriptionsResponse = await getUserSubscriptions(userData.id);
+              const subscriptions = subscriptionsResponse?.data || [];
+              
+              const hasActiveSubscription = subscriptions.some(
+                (subscription: any) => 
+                  subscription.attributes?.status === 'active' || 
+                  subscription.attributes?.status === 'on_trial'
+              );
+              
+              console.log('Stato abbonamento:', hasActiveSubscription ? 'Attivo' : 'Non attivo');
+              
+              if (hasActiveSubscription) {
+                navigate('/dashboard');
+              } else {
+                navigate('/subscribe');
+              }
+            } catch (subscriptionError) {
+              console.error('Errore nel controllo dello stato dell\'abbonamento:', subscriptionError);
+              navigate('/dashboard');
+            }
           } else {
             throw new Error('Dati utente non validi');
           }

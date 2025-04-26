@@ -34,7 +34,7 @@ import BlogDetail from './pages/BlogDetail';
 import Guides from './pages/Guides';
 import GuideDetail from './pages/GuideDetail';
 import SupportoPage from './pages/Supporto';
-import { PrivacyPolicy, TerminiServizio, CookiePolicy } from './pages/Legali';
+import { PrivacyPolicy, TerminiServizio, CookiePolicy, RefundPolicy } from './pages/Legali';
 import ImportPage from './pages/ImportPage';
 import NotificationsPage from "./pages/NotificationsPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -121,6 +121,7 @@ function App() {
                         <Route path="/privacy" element={<PrivacyPolicy />} />
                         <Route path="/termini" element={<TerminiServizio />} />
                         <Route path="/cookie" element={<CookiePolicy />} />
+                        <Route path="/rimborsi" element={<RefundPolicy />} />
                         <Route path="/features" element={<LandingPage />} />
                         <Route path="/testimonials" element={<LandingPage />} />
                         

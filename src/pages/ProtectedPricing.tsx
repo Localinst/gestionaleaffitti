@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Header } from "@/components/layout/Header";
 import { LemonSqueezyPayment } from "@/components/ui/lemon-squeezy-payment";
+import { PaddlePayment } from "@/components/ui/paddle-payment";
 import { getProducts, getProductVariants } from "@/services/lemon-squeezy-api";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/context/AuthContext";
@@ -34,43 +35,43 @@ const ProtectedPricing: React.FC = () => {
     }
   ];
 
-  // Definizione dei piani standard con URL di checkout diretto
-  const defaultPlans = [
+  const planOptions = [
     {
-      id: "plan-monthly",
-      name: "Piano Mensile",
-      description: "Ideale per chi inizia",
-      price: "€19,99/mese",
+      id: "basic-plan",
+      name: "Piano Base",
+      description: "Ideale per piccoli proprietari",
+      price: "€39/mese",
       features: [
-        "Gestione completa delle proprietà",
-        "Gestione inquilini illimitati",
-        "Tracciamento pagamenti automatico",
-        "Dashboard analitica",
-        "Supporto email"
+        "Fino a 10 proprietà",
+        "Gestione contratti",
+        "Gestione incassi",
+        "Dashboard semplificata",
+        "Email di supporto"
       ],
-      // URL completo di checkout
       variantId: "https://tenoris360.lemonsqueezy.com/buy/1101e76e-e411-41d1-832b-d1fd5f534775",
+      priceId: "pri_01hqwertyuiopasdfghjklzx", // Sostituisci con il tuo ID Paddle reale
     },
     {
-      id: "plan-annual",
-      name: "Piano Annuale",
-      description: "La soluzione più conveniente",
-      price: "€199,90/anno",
+      id: "pro-plan",
+      name: "Piano Pro",
+      description: "Ideale per gestori immobiliari",
+      price: "€79/mese",
       features: [
-        "Tutte le funzionalità del piano mensile",
-        "Risparmio di 2 mesi",
-        "Supporto prioritario",
-        "Backup settimanali",
-        "Report avanzati"
+        "Proprietà illimitate",
+        "Gestione avanzata contratti",
+        "Gestione completa incassi e spese",
+        "Dashboard analitica",
+        "Reportistica dettagliata",
+        "Supporto prioritario"
       ],
-      // Per il piano annuale, userai un URL simile a quello mensile
-      variantId: "https://tenoris360.lemonsqueezy.com/buy/1101e76e-e411-41d1-832b-d1fd5f534775",
       isPopular: true,
-    }
+      variantId: "https://tenoris360.lemonsqueezy.com/buy/1101e76e-e411-41d1-832b-d1fd5f534775",
+      priceId: "pri_02hqwertyuiopasdfghjklzx", // Sostituisci con il tuo ID Paddle reale
+    },
   ];
 
-  const [plans, setPlans] = useState(defaultPlans);
-  const [isLoading, setIsLoading] = useState(true);
+  const [plans, setPlans] = useState(planOptions);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     // Messaggio di benvenuto
@@ -81,6 +82,7 @@ const ProtectedPricing: React.FC = () => {
 
     const fetchPlansData = async () => {
       try {
+        setIsLoading(true);
         // Carica i prodotti da Lemon Squeezy
         const productsResponse = await getProducts();
         console.log('Prodotti caricati da Lemon Squeezy:', productsResponse);
@@ -105,7 +107,7 @@ const ProtectedPricing: React.FC = () => {
             console.log('Variante selezionata:', variant?.id, variant?.attributes?.name);
 
             // Trova il piano corrispondente nei default plans
-            const matchingPlan = defaultPlans.find(
+            const matchingPlan = planOptions.find(
               (plan) => plan.name.toLowerCase().includes(product.attributes.name.toLowerCase())
             );
 
@@ -155,113 +157,26 @@ const ProtectedPricing: React.FC = () => {
         </div>
         
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center min-h-[400px]">
-            <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
-            <p className="text-lg text-muted-foreground">Caricamento piani in corso...</p>
+          <div className="absolute top-4 right-4">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
-        ) : plans.length > 0 ? (
-          <LemonSqueezyPayment
-            planOptions={plans}
-            title="Scegli il tuo piano"
-            subtitle="Tutti i piani includono accesso completo a tutte le funzionalità"
+        ) : null}
+        
+        <section className="container py-8 md:py-12 lg:py-24">
+          <PaddlePayment 
+            planOptions={planOptions}
+            title="Aggiorna il tuo abbonamento"
+            subtitle="Hai bisogno di un piano più potente? Scegli l'opzione migliore per le tue esigenze."
           />
-        ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-8">
-            <Card className="flex flex-col border-2 border-primary/20 shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-2xl">Piano Mensile</CardTitle>
-                <CardDescription>Flessibilità massima</CardDescription>
-              </CardHeader>
-              <CardContent className="flex-grow">
-                <div className="mb-6">
-                  <p className="text-3xl font-bold">€19,99<span className="text-lg font-normal text-muted-foreground">/mese</span></p>
-                </div>
-                <ul className="space-y-3">
-                  <li className="flex items-center">
-                    <Check className="h-5 w-5 text-primary mr-2" />
-                    <span>Gestione completa delle proprietà</span>
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="h-5 w-5 text-primary mr-2" />
-                    <span>Gestione inquilini illimitati</span>
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="h-5 w-5 text-primary mr-2" />
-                    <span>Tracciamento pagamenti automatico</span>
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="h-5 w-5 text-primary mr-2" />
-                    <span>Dashboard analitica</span>
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="h-5 w-5 text-primary mr-2" />
-                    <span>Supporto email</span>
-                  </li>
-                </ul>
-              </CardContent>
-              <CardFooter>
-                <Button 
-                  className="w-full"
-                  onClick={() => {
-                    window.location.href = "https://tenoris360.lemonsqueezy.com/buy/1101e76e-e411-41d1-832b-d1fd5f534775";
-                  }}
-                >
-                  Abbonati Ora
-                </Button>
-              </CardFooter>
-            </Card>
-
-            <Card className="flex flex-col border-2 border-primary shadow-lg relative">
-              <div className="absolute -top-4 left-0 right-0 flex justify-center">
-                <div className="bg-primary text-white text-xs font-medium px-3 py-1 rounded-full">
-                  Piano più popolare
-                </div>
-              </div>
-              <CardHeader>
-                <CardTitle className="text-2xl">Piano Annuale</CardTitle>
-                <CardDescription>Risparmia 2 mesi</CardDescription>
-              </CardHeader>
-              <CardContent className="flex-grow">
-                <div className="mb-6">
-                  <p className="text-3xl font-bold">€199,90<span className="text-lg font-normal text-muted-foreground">/anno</span></p>
-                  <p className="text-sm text-muted-foreground">Equivalente a €16,66/mese</p>
-                </div>
-                <ul className="space-y-3">
-                  <li className="flex items-center">
-                    <Check className="h-5 w-5 text-primary mr-2" />
-                    <span>Tutte le funzionalità del piano mensile</span>
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="h-5 w-5 text-primary mr-2" />
-                    <span>Risparmio di 2 mesi</span>
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="h-5 w-5 text-primary mr-2" />
-                    <span>Supporto prioritario</span>
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="h-5 w-5 text-primary mr-2" />
-                    <span>Backup settimanali</span>
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="h-5 w-5 text-primary mr-2" />
-                    <span>Report avanzati</span>
-                  </li>
-                </ul>
-              </CardContent>
-              <CardFooter>
-                <Button 
-                  className="w-full bg-primary hover:bg-primary/90"
-                  onClick={() => {
-                    window.location.href = "https://tenoris360.lemonsqueezy.com/buy/1101e76e-e411-41d1-832b-d1fd5f534775";
-                  }}
-                >
-                  Abbonati ora
-                </Button>
-              </CardFooter>
-            </Card>
+          
+          <div style={{ display: 'none' }}>
+            <LemonSqueezyPayment 
+              planOptions={planOptions}
+              title="Aggiorna il tuo abbonamento"
+              subtitle="Hai bisogno di un piano più potente? Scegli l'opzione migliore per le tue esigenze."
+            />
           </div>
-        )}
+        </section>
 
         {/* FAQ con accordion */}
         <section className="mt-20">

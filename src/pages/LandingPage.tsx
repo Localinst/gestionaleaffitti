@@ -72,7 +72,7 @@ const LandingPage = () => {
     <>
       <SEO 
         title="Software Gestionale Premium per Affitti e Immobili"
-        description="Tenoris360: il software gestionale professionale per affitti e immobili. Semplifica la gestione di proprietà, inquilini, B&B, contratti, pagamenti e report. Ottimizza i rendimenti a soli 19,99€ al mese."
+        description="Tenoris360: il software gestionale professionale per affitti e immobili. Semplifica la gestione di proprietà, inquilini, B&B, contratti, pagamenti e report."
         keywords={[
           "software gestione affitti", 
           "gestionale immobiliare", 
@@ -89,7 +89,7 @@ const LandingPage = () => {
         <LandingNav />
 
         {/* Hero Section */}
-        <section className="relative py-10 lg:py-36 overflow-hidden bg-gradient-to-b from-background to-muted/30">
+        <section className="relative py-10 lg:py-24 overflow-hidden bg-gradient-to-b from-background to-muted/30">
           <div className="container px-4 md:px-6">
             <div className="grid gap-8 lg:grid-cols-2 lg:gap-16 items-center">
               <div className="flex flex-col gap-4">
@@ -99,9 +99,7 @@ const LandingPage = () => {
                 <p className="text-muted-foreground text-lg md:text-xl">
                   {t("landing.hero.description")}
                 </p>
-                <p className="text-primary font-bold text-lg">
-                  Solo 19,99€ al mese
-                </p>
+                
                 <div className="flex flex-col sm:flex-row gap-4 mt-8">
                   <Link to="/register">
                     <Button size="lg" className="gap-2 w-full sm:w-auto">
@@ -142,7 +140,6 @@ const LandingPage = () => {
               Accedi a tutte le potenti funzionalità del nostro software per migliorare la gestione dei tuoi immobili.
             </p>
             <div className="flex flex-col items-center">
-              <div className="text-4xl font-bold">19,99€<span className="text-xl font-normal text-muted-foreground">/mese</span></div>
               <Link to="/pricing" className="mt-6">
                 <Button size="lg">Vedi tutti i dettagli</Button>
               </Link>
@@ -473,7 +470,12 @@ const LandingPage = () => {
                   </li>
                   <li>
                     <Link to="/cookie" className="text-muted-foreground hover:text-foreground transition-colors">
-                      {t("footer.cookieSettings")}
+                      Cookie Policy
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/rimborsi" className="text-muted-foreground hover:text-foreground transition-colors">
+                      Politica di Rimborso
                     </Link>
                   </li>
                 </ul>

@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { supabase } from '../lib/supabase';
 import { createClient } from '@supabase/supabase-js';
+import axios from 'axios';
 
 // Estendi l'interfaccia Request per includere l'utente
 declare global {
@@ -32,6 +33,10 @@ const supabaseClient = createClient(
     }
   }
 );
+
+// Costanti per Lemon Squeezy API
+const API_URL = process.env.LEMON_SQUEEZY_API_URL || 'https://api.lemonsqueezy.com/v1';
+const API_KEY = process.env.LEMON_SQUEEZY_API_KEY;
 
 /**
  * Middleware per verificare l'autenticazione tramite JWT
@@ -116,10 +121,95 @@ export const generateToken = (userId: string, email: string, name: string, role:
 };
 
 /**
- * Middleware per verificare lo stato dell'abbonamento dell'utente
- * Ora restituisce sempre true per rendere il servizio gratuito per tutti
+ * Middleware per verificare che l'utente ha un abbonamento attivo
  */
-export const isSubscribed = (req: Request, res: Response, next: NextFunction) => {
-  // Ora tutti gli utenti sono considerati abbonati, quindi passiamo sempre al next middleware
-  next();
+export const isSubscribed = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // Verifica se esiste l'utente nella richiesta
+    if (!req.user) {
+      return res.status(401).json({ message: 'Utente non autenticato' });
+    }
+
+    const userId = req.user.id;
+    const userEmail = req.user.email;
+    
+    console.log(`Verifica abbonamento per utente: ID=${userId}, Email=${userEmail}`);
+
+    // Effettua la chiamata API a Lemon Squeezy 
+    const response = await axios.get(`${API_URL}/subscriptions`, {
+      headers: {
+        'Accept': 'application/vnd.api+json',
+        'Content-Type': 'application/vnd.api+json',
+        'Authorization': `Bearer ${API_KEY}`
+      },
+      params: {
+        'filter[user_email]': userEmail,
+        'include': 'order'
+      }
+    });
+
+    // Estrazione delle sottoscrizioni dalla risposta
+    const subscriptions = response.data?.data || [];
+    console.log(`Numero totale di sottoscrizioni trovate: ${subscriptions.length}`);
+
+    // Filtra le sottoscrizioni dell'utente corrente basate su ID utente o email
+    const userSubscriptions = subscriptions.filter(subscription => {
+      const customData = subscription.attributes?.custom_data || {};
+      const subscriptionEmail = subscription.attributes?.user_email;
+      
+      // Verifica se la sottoscrizione appartiene all'utente tramite ID o email
+      const matchUserId = customData.userId && customData.userId === userId;
+      const matchEmailInCustomData = customData.email && customData.email === userEmail;
+      const matchSubscriptionEmail = subscriptionEmail && subscriptionEmail === userEmail;
+      
+      // Loghiamo i dettagli per debug
+      if (IS_DEV) {
+        console.log(`Analisi sottoscrizione ID: ${subscription.id}`);
+        console.log(`- Email nella sottoscrizione: ${subscriptionEmail}`);
+        console.log(`- Custom data: ${JSON.stringify(customData)}`);
+        console.log(`- Match su userId: ${matchUserId}`);
+        console.log(`- Match su email in customData: ${matchEmailInCustomData}`);
+        console.log(`- Match su email di sottoscrizione: ${matchSubscriptionEmail}`);
+      }
+      
+      return matchUserId || matchEmailInCustomData || matchSubscriptionEmail;
+    });
+
+    console.log(`Sottoscrizioni filtrate per l'utente corrente: ${userSubscriptions.length}`);
+
+    // Se l'utente non ha sottoscrizioni, nega l'accesso
+    if (userSubscriptions.length === 0) {
+      console.log(`Nessun abbonamento trovato per l'utente ${userId} (${userEmail})`);
+      return res.status(403).json({ 
+        message: 'Accesso negato: non hai un abbonamento attivo',
+        subscribed: false 
+      });
+    }
+
+    // Verifica se c'è almeno una sottoscrizione attiva
+    const hasActiveSubscription = userSubscriptions.some(subscription => {
+      const status = subscription.attributes?.status;
+      console.log(`Stato abbonamento: ${status}`);
+      
+      // Considera attivi gli abbonamenti con status: active, past_due, on_trial, paused
+      return ['active', 'past_due', 'on_trial', 'paused'].includes(status);
+    });
+
+    if (!hasActiveSubscription) {
+      console.log(`Nessun abbonamento attivo per l'utente ${userId}`);
+      return res.status(403).json({ 
+        message: 'Accesso negato: il tuo abbonamento non è attivo',
+        subscribed: false 
+      });
+    }
+
+    console.log(`Utente ${userId} ha un abbonamento attivo`);
+    next();
+  } catch (error) {
+    console.error('Errore nella verifica dell\'abbonamento:', error);
+    return res.status(500).json({ 
+      message: 'Errore durante la verifica dell\'abbonamento',
+      error: error.message
+    });
+  }
 }; 

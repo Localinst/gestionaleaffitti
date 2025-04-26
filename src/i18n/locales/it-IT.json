@@ -304,6 +304,9 @@
     "legal": "Legale",
     "cookieSettings": "Impostazioni Cookie",
     "termsOfService": "Termini di Servizio",
+    "refundPolicy": "Politica di Rimborso",
+    "otherInfo": "Altre Info",
+    "legal2": "Legale 2",
     "companyDescription": "La soluzione completa per la gestione degli affitti e delle proprietà immobiliari.",
     "allRightsReserved": "Tutti i diritti riservati."
   },
@@ -1404,7 +1407,7 @@
     "hero": {
       "title": "Semplifica la gestione dei tuoi affitti con Tenoris360",
       "highlight": "PREMIUM",
-      "description": "La piattaforma completa e GRATUITA per proprietari e amministratori immobiliari che desiderano gestire contratti, inquilini e pagamenti in modo efficiente.",
+      "description": "La piattaforma completa per proprietari e amministratori immobiliari che desiderano gestire contratti, inquilini e pagamenti in modo efficiente.",
       "cta": {
         "register": "Inizia Gratuitamente",
         "learnMore": "Scopri di più"

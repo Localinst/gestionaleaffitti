@@ -183,8 +183,8 @@ export const PrivacyPolicy = () => {
             Se hai domande su questa Privacy Policy, contattaci:
           </p>
           <ul>
-            <li>Via email: privacy@tenoris360.it</li>
-            <li>Visitando questa pagina sul nostro sito web: www.tenoris360.it/contatti</li>
+            <li>Via email: tenoris360help@gmail.com</li>
+            <li>Visitando questa pagina sul nostro sito web: www.tenoris360.it/supporto</li>
           </ul>
         </section>
       </div>
@@ -294,8 +294,8 @@ export const TerminiServizio = () => {
             Se hai domande su questi Termini, contattaci:
           </p>
           <ul>
-            <li>Via email: info@tenoris360.it</li>
-            <li>Visitando questa pagina sul nostro sito web: www.tenoris360.it/contatti</li>
+            <li>Via email: tenoris360help@gmail.com</li>
+            <li>Visitando questa pagina sul nostro sito web: www.tenoris360.it/supporto</li>
           </ul>
         </section>
       </div>
@@ -379,6 +379,126 @@ export const CookiePolicy = () => {
           <p>
             La presente Cookie Policy potrebbe essere soggetta a modifiche nel tempo, anche connesse all'eventuale entrata in vigore di nuove normative di settore, all'aggiornamento o erogazione di nuovi servizi ovvero ad intervenute innovazioni tecnologiche, pertanto ti invitiamo a consultare periodicamente questa pagina.
           </p>
+        </section>
+      </div>
+    </LegalPageLayout>
+  );
+};
+
+// Pagina Politica di Rimborso
+export const RefundPolicy = () => {
+  return (
+    <LegalPageLayout
+      title="Politica di Rimborso"
+      description="Informazioni sui rimborsi e le cancellazioni degli abbonamenti Tenoris360."
+    >
+      <div className="space-y-6">
+        <section>
+          <h2>1. Introduzione</h2>
+          <p>
+            La presente Politica di Rimborso definisce le condizioni e le procedure secondo le quali Tenoris360 ("noi", "nostro", "la Società") gestisce l'annullamento degli abbonamenti e le eventuali richieste di rimborso per i servizi acquistati tramite il nostro sito web tenoris360.com.
+          </p>
+        </section>
+
+        <section>
+          <h2>2. Periodo di Prova Gratuito</h2>
+          <p>
+            Offriamo un periodo di prova gratuito di 7 giorni per tutti i nuovi abbonamenti, sia mensili (19,99€/mese) che annuali (199,99€/anno). Durante questi 7 giorni, potrai testare completamente tutte le funzionalità del servizio senza alcun addebito.
+          </p>
+          <p>
+            <strong>Importante</strong>: È responsabilità dell'utente annullare l'abbonamento entro il periodo di prova di 7 giorni per evitare qualsiasi addebito. Al termine dei 7 giorni, se l'abbonamento non viene annullato, verrà automaticamente addebitato il costo del piano scelto.
+          </p>
+        </section>
+
+        <section>
+          <h2>3. Annullamento durante il Periodo di Prova</h2>
+          <p>
+            Per annullare durante il periodo di prova di 7 giorni:
+          </p>
+          <ol>
+            <li>Accedi al tuo account Tenoris360</li>
+            <li>Vai alla sezione "Il Mio Account" o "Abbonamento"</li>
+            <li>Seleziona "Annulla Abbonamento"</li>
+            <li>Segui le istruzioni per completare l'annullamento</li>
+          </ol>
+          <p>
+            L'annullamento durante il periodo di prova di 7 giorni comporta la cessazione immediata dell'accesso al servizio senza alcun addebito.
+          </p>
+        </section>
+
+        <section>
+          <h2>4. Politica di Rimborso dopo il Periodo di Prova</h2>
+          <h3>4.1 Principio Generale</h3>
+          <p>
+            Poiché offriamo un periodo di prova gratuito di 7 giorni, non prevediamo rimborsi dopo l'addebito effettivo.
+          </p>
+          
+          <h3>4.2 Abbonamenti Mensili (19,99€/mese)</h3>
+          <p>
+            Non sono previsti rimborsi per gli abbonamenti mensili dopo il periodo di prova.
+            La cancellazione dell'abbonamento impedirà addebiti futuri, ma non comporterà il rimborso del mese in corso.
+          </p>
+          
+          <h3>4.3 Abbonamenti Annuali (199,99€/anno)</h3>
+          <p>
+            Non sono previsti rimborsi per gli abbonamenti annuali dopo il periodo di prova.
+            La cancellazione dell'abbonamento annuale impedirà il rinnovo automatico alla scadenza, ma non comporterà alcun rimborso parziale per il periodo non utilizzato.
+          </p>
+        </section>
+
+        <section>
+          <h2>5. Casi Eccezionali</h2>
+          <p>
+            In circostanze davvero eccezionali, Tenoris360 può, a sua esclusiva discrezione, considerare richieste di rimborso nei seguenti casi:
+          </p>
+          <ul>
+            <li>Problemi tecnici significativi che impediscono completamente l'uso del servizio e non possono essere risolti dal nostro team di supporto.</li>
+            <li>Addebiti errati o duplicati dimostrabili.</li>
+            <li>Altre circostanze eccezionali valutate caso per caso.</li>
+          </ul>
+          <p>
+            Tali richieste devono essere presentate entro 14 giorni dall'addebito contestato.
+          </p>
+        </section>
+
+        <section>
+          <h2>6. Procedura di Annullamento e Richiesta di Rimborso</h2>
+          <p>
+            Per annullare l'abbonamento o richiedere un rimborso in casi eccezionali:
+          </p>
+          <ol>
+            <li>Accedi al tuo account Tenoris360</li>
+            <li>Naviga alla sezione "Supporto" o "Il Mio Account"</li>
+            <li>Seleziona "Annulla Abbonamento" o "Contatta Supporto"</li>
+            <li>In alternativa, invia un'email a tenoris360help@gmail.com con oggetto "Annullamento Abbonamento" o "Richiesta di Rimborso"</li>
+          </ol>
+          <p>
+            La richiesta deve includere:
+          </p>
+          <ul>
+            <li>Nome e cognome</li>
+            <li>Email associata all'account</li>
+            <li>Data di acquisto</li>
+            <li>Motivo dettagliato della richiesta (in caso di rimborso eccezionale)</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>7. Modifiche alla Politica</h2>
+          <p>
+            Ci riserviamo il diritto di modificare la presente Politica di Rimborso in qualsiasi momento. Le modifiche avranno effetto immediato dalla pubblicazione sul nostro sito web, ma non si applicheranno retroattivamente agli acquisti effettuati prima della modifica.
+          </p>
+        </section>
+
+        <section>
+          <h2>8. Contattaci</h2>
+          <p>
+            Per qualsiasi domanda o chiarimento sulla nostra Politica di Rimborso o sulla procedura di annullamento, non esitare a contattarci:
+          </p>
+          <ul>
+            <li>Via email: tenoris360help@gmail.com</li>
+            <li>Visitando questa pagina sul nostro sito web: www.tenoris360.it/supporto</li>
+          </ul>
         </section>
       </div>
     </LegalPageLayout>

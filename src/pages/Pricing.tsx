@@ -10,6 +10,10 @@ import { LemonSqueezyPayment } from "@/components/ui/lemon-squeezy-payment";
 import { getProducts, getProductVariants, testLemonSqueezyConnection } from "@/services/lemon-squeezy-api";
 import { useToast } from "@/components/ui/use-toast";
 
+// Importo i nuovi componenti Paddle
+import { PaddlePayment } from "@/components/ui/paddle-payment";
+import { getProducts as getPaddleProducts, getProductVariants as getPaddlePrices, testPaddleConnection } from "@/services/paddle-api";
+
 const Pricing: React.FC = () => {
   const navigate = useNavigate();
 
@@ -69,11 +73,12 @@ const Pricing: React.FC = () => {
   ];
 
   const [plans, setPlans] = useState(defaultPlans);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const fetchPlansData = async () => {
       try {
+        setIsLoading(true);
         // Carica i prodotti da Lemon Squeezy
         const productsResponse = await getProducts();
         console.log('Prodotti caricati da Lemon Squeezy:', productsResponse);
@@ -135,6 +140,89 @@ const Pricing: React.FC = () => {
     fetchPlansData();
   }, []);
 
+  useEffect(() => {
+    const testConnection = async () => {
+      try {
+        // Testiamo la nuova connessione Paddle
+        const testResult = await testPaddleConnection();
+        console.log('Test connessione Paddle:', testResult);
+        
+        // Teniamo il test LemonSqueezy per retrocompatibilità durante la migrazione
+        const lemonSqueezyTestResult = await testLemonSqueezyConnection();
+        console.log('Test connessione LemonSqueezy:', lemonSqueezyTestResult);
+        
+        // Solo per debug
+        if (testResult.success) {
+          console.log('Connessione a Paddle riuscita!');
+        } else {
+          console.warn('La connessione a Paddle ha fallito, consulta i log per dettagli.');
+        }
+        
+      } catch (error) {
+        console.error('Errore durante il test di connessione:', error);
+      }
+    };
+    
+    testConnection();
+  }, []);
+
+  const planOptions = [
+    {
+      id: "basic-plan",
+      name: "Piano Base",
+      description: "Ideale per piccoli proprietari",
+      price: "€39/mese",
+      features: [
+        "Fino a 10 proprietà",
+        "Gestione contratti",
+        "Gestione incassi",
+        "Dashboard semplificata",
+        "Email di supporto"
+      ],
+      // Vecchio LemonSqueezy
+      variantId: "https://tenoris360.lemonsqueezy.com/buy/1101e76e-e411-41d1-832b-d1fd5f534775",
+      // Nuovo Paddle
+      priceId: "pri_01hqwertyuiopasdfghjklzx", // Sostituisci con il tuo ID Paddle reale
+    },
+    {
+      id: "pro-plan",
+      name: "Piano Pro",
+      description: "Ideale per gestori immobiliari",
+      price: "€79/mese",
+      features: [
+        "Proprietà illimitate",
+        "Gestione avanzata contratti",
+        "Gestione completa incassi e spese",
+        "Dashboard analitica",
+        "Reportistica dettagliata",
+        "Supporto prioritario"
+      ],
+      isPopular: true,
+      // Vecchio LemonSqueezy
+      variantId: "https://tenoris360.lemonsqueezy.com/buy/34ba8568-c3af-42d2-9d64-052f90879543",
+      // Nuovo Paddle
+      priceId: "pri_02hqwertyuiopasdfghjklzx", // Sostituisci con il tuo ID Paddle reale
+    },
+    {
+      id: "enterprise-plan",
+      name: "Piano Enterprise",
+      description: "Per agenzie immobiliari e grandi gestori",
+      price: "Contattaci",
+      features: [
+        "Tutte le funzionalità Pro",
+        "API personalizzata",
+        "Integrazioni su misura",
+        "Onboarding dedicato",
+        "Account manager dedicato",
+        "SLA garantito"
+      ],
+      // Vecchio LemonSqueezy
+      variantId: "contattaci",
+      // Nuovo Paddle
+      priceId: "", // Per questo piano si contatta direttamente
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       <LandingNav />
@@ -148,131 +236,20 @@ const Pricing: React.FC = () => {
         </div>
         
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center min-h-[400px]">
-            <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
-            <p className="text-lg text-muted-foreground">Caricamento piani in corso...</p>
+          <div className="absolute top-4 right-4">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
-        ) : plans.length > 0 ? (
-          <LemonSqueezyPayment
-            planOptions={plans}
-            title="Scegli il tuo piano"
-            subtitle="Tutti i piani includono accesso completo a tutte le funzionalità"
-          />
-        ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-8">
-            <Card className="flex flex-col border-2 border-primary/20 shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-2xl">Piano Mensile</CardTitle>
-                <CardDescription>Flessibilità massima</CardDescription>
-            </CardHeader>
-              <CardContent className="flex-grow">
-                <div className="mb-6">
-                  <p className="text-3xl font-bold">€19,99<span className="text-lg font-normal text-muted-foreground">/mese</span></p>
-                </div>
-                <ul className="space-y-3">
-                  <li className="flex items-center">
-                    <Check className="h-5 w-5 text-primary mr-2" />
-                    <span>Gestione completa delle proprietà</span>
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="h-5 w-5 text-primary mr-2" />
-                    <span>Gestione inquilini illimitati</span>
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="h-5 w-5 text-primary mr-2" />
-                    <span>Tracciamento pagamenti automatico</span>
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="h-5 w-5 text-primary mr-2" />
-                    <span>Dashboard analitica</span>
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="h-5 w-5 text-primary mr-2" />
-                    <span>Supporto email</span>
-                  </li>
-                </ul>
-              </CardContent>
-              <CardFooter>
-                <Button 
-                  className="w-full"
-                  onClick={() => {
-                    // Recupera gli ID aggiornati dai piani
-                    const monthlyPlan = plans.find(p => p.id === "plan-monthly") || defaultPlans[0];
-                    // Salva i dettagli completi del piano
-                    const planDetails = {
-                      id: monthlyPlan.id,
-                      variantId: monthlyPlan.variantId, // Usa l'ID variante reale se disponibile
-                      name: monthlyPlan.name
-                    };
-                    localStorage.setItem('selectedPlan', JSON.stringify(planDetails));
-                    navigate('/register');
-                  }}
-                >
-                  Inizia Ora
-                </Button>
-              </CardFooter>
-            </Card>
-
-            <Card className="flex flex-col border-2 border-primary shadow-lg relative">
-              <div className="absolute -top-4 left-0 right-0 flex justify-center">
-                <div className="bg-primary text-white text-xs font-medium px-3 py-1 rounded-full">
-                  Piano più popolare
-                </div>
-              </div>
-              <CardHeader>
-                <CardTitle className="text-2xl">Piano Annuale</CardTitle>
-                <CardDescription>Risparmia 2 mesi</CardDescription>
-              </CardHeader>
-              <CardContent className="flex-grow">
-                <div className="mb-6">
-                  <p className="text-3xl font-bold">€199,90<span className="text-lg font-normal text-muted-foreground">/anno</span></p>
-                  <p className="text-sm text-muted-foreground">Equivalente a €16,66/mese</p>
-              </div>
-              <ul className="space-y-3">
-                <li className="flex items-center">
-                    <Check className="h-5 w-5 text-primary mr-2" />
-                    <span>Tutte le funzionalità del piano mensile</span>
-                </li>
-                <li className="flex items-center">
-                    <Check className="h-5 w-5 text-primary mr-2" />
-                    <span>Risparmio di 2 mesi</span>
-                </li>
-                <li className="flex items-center">
-                    <Check className="h-5 w-5 text-primary mr-2" />
-                    <span>Supporto prioritario</span>
-                </li>
-                <li className="flex items-center">
-                    <Check className="h-5 w-5 text-primary mr-2" />
-                    <span>Backup settimanali</span>
-                </li>
-                <li className="flex items-center">
-                    <Check className="h-5 w-5 text-primary mr-2" />
-                    <span>Report avanzati</span>
-                </li>
-              </ul>
-            </CardContent>
-            <CardFooter>
-                <Button 
-                  className="w-full bg-primary hover:bg-primary/90"
-                  onClick={() => {
-                    // Recupera gli ID aggiornati dai piani
-                    const annualPlan = plans.find(p => p.id === "plan-annual") || defaultPlans[1];
-                    // Salva i dettagli completi del piano
-                    const planDetails = {
-                      id: annualPlan.id,
-                      variantId: annualPlan.variantId, // Usa l'ID variante reale se disponibile
-                      name: annualPlan.name
-                    };
-                    localStorage.setItem('selectedPlan', JSON.stringify(planDetails));
-                    navigate('/register');
-                  }}
-                >
-                  Abbonati ora
-                </Button>
-            </CardFooter>
-          </Card>
+        ) : null}
+        
+        <section className="container py-8 md:py-12 lg:py-24">
+          {/* Usa PaddlePayment invece di LemonSqueezyPayment */}
+          <PaddlePayment planOptions={planOptions} />
+          
+          {/* Mantieni temporaneamente anche LemonSqueezyPayment nascosto per garantire compatibilità durante la transizione */}
+          <div style={{ display: 'none' }}>
+            <LemonSqueezyPayment planOptions={planOptions} />
           </div>
-        )}
+        </section>
 
         {/* FAQ con accordion */}
         <section className="mt-20">

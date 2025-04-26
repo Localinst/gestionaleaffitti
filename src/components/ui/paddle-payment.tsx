@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from './button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './card';
-import { createCheckout } from '@/services/lemon-squeezy-api';
+import { createCheckout } from '@/services/paddle-api';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
@@ -13,11 +13,11 @@ interface PlanOption {
   description: string;
   price: string;
   features: string[];
-  variantId: string;
+  priceId: string;
   isPopular?: boolean;
 }
 
-interface LemonSqueezyPaymentProps {
+interface PaddlePaymentProps {
   planOptions: PlanOption[];
   title?: string;
   subtitle?: string;
@@ -25,22 +25,18 @@ interface LemonSqueezyPaymentProps {
 }
 
 /**
- * Questo componente gestisce l'integrazione con Lemon Squeezy.
+ * Questo componente gestisce l'integrazione con Paddle.
  * 
  * NOTA IMPORTANTE:
- * Tutte le richieste a Lemon Squeezy seguono lo standard JSON:API e devono includere:
- * - Header 'Accept: application/vnd.api+json'
- * - Header 'Content-Type: application/vnd.api+json'
- * - Formato query params conforme a JSON:API (es. ?filter[parameter]=value)
- * - Supporto per include di risorse correlate tramite ?include=resource1,resource2
+ * Paddle.js deve essere incluso nella pagina HTML principale
+ * per permettere l'apertura del checkout
  */
-
-export const LemonSqueezyPayment = ({
+export const PaddlePayment = ({
   planOptions,
   title = 'Scegli il tuo piano',
   subtitle = 'Inizia subito a utilizzare tutte le funzionalità del gestionale',
   redirectToRegistration = false,
-}: LemonSqueezyPaymentProps) => {
+}: PaddlePaymentProps) => {
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -76,18 +72,18 @@ export const LemonSqueezyPayment = ({
 
   const handleCheckout = async (plan: PlanOption) => {
     try {
-      setIsLoading(plan.variantId);
+      setIsLoading(plan.priceId);
       
       console.log('Avvio checkout per piano:', {
         id: plan.id,
         name: plan.name,
-        variantId: plan.variantId,
+        priceId: plan.priceId,
         price: plan.price,
         userAuthenticated: !!user
       });
 
-      if (!plan.variantId || plan.variantId === 'monthly-variant-id' || plan.variantId === 'annual-variant-id') {
-        console.error('ID variante non valido o placeholder:', plan.variantId);
+      if (!plan.priceId) {
+        console.error('ID prezzo non valido:', plan.priceId);
         toast.error('Configurazione piano non valida', { 
           description: 'Contatta l\'amministratore del sistema.' 
         });
@@ -107,20 +103,34 @@ export const LemonSqueezyPayment = ({
 
       console.log('Dati custom per checkout:', customData);
 
-      const checkoutData = await createCheckout(
-        plan.variantId,
-        user?.email || '', // Email vuota se l'utente non è autenticato, verrà richiesta nel checkout
-        customData
-      );
-
-      console.log('Risposta checkout:', checkoutData);
-
-      // Redirect all'URL del checkout Lemon Squeezy
-      if (checkoutData.data?.attributes?.url) {
-        window.location.href = checkoutData.data.attributes.url;
+      // Se Paddle.js è disponibile globalmente e l'utente è autenticato
+      if (window.Paddle && user?.email) {
+        // Metodo 1: Apertura checkout diretto tramite Paddle.js
+        window.Paddle.Checkout.open({
+          items: [{ priceId: plan.priceId, quantity: 1 }],
+          customer: { email: user.email },
+          customData: customData,
+          successURL: `${window.location.origin}/abbonamento-confermato`,
+          passthrough: JSON.stringify(customData)
+        });
+        setIsLoading(null);
       } else {
-        console.error('URL checkout mancante nella risposta:', checkoutData);
-        throw new Error('URL di checkout mancante nella risposta');
+        // Metodo 2: Utilizzo del nostro backend come intermediario
+        const checkoutData = await createCheckout(
+          plan.priceId,
+          user?.email || '', 
+          customData
+        );
+
+        console.log('Risposta checkout:', checkoutData);
+
+        // Redirect all'URL del checkout Paddle
+        if (checkoutData?.url) {
+          window.location.href = checkoutData.url;
+        } else {
+          console.error('URL checkout mancante nella risposta:', checkoutData);
+          throw new Error('URL di checkout mancante nella risposta');
+        }
       }
     } catch (error: any) {
       console.error('Errore durante la creazione del checkout:', error);
@@ -195,7 +205,7 @@ export const LemonSqueezyPayment = ({
                 onClick={() => handleCheckout(plan)}
                 disabled={!!isLoading}
               >
-                {isLoading === plan.variantId ? (
+                {isLoading === plan.priceId ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Attendere...

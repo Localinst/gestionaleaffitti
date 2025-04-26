@@ -1,23 +1,23 @@
 import axios from 'axios';
 
-const BASE_URL = '/api/lemon-squeezy';
+const BASE_URL = '/api/paddle';
 
-// Client API configurato secondo lo standard JSON:API
-const lemonSqueezyClient = axios.create({
+// Client API configurato secondo le specifiche di Paddle
+const paddleClient = axios.create({
   baseURL: BASE_URL,
   headers: {
-    'Accept': 'application/vnd.api+json',
-    'Content-Type': 'application/vnd.api+json'
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
   }
 });
 
 /**
- * Ottiene un prodotto Lemon Squeezy tramite il suo ID
+ * Ottiene un prodotto Paddle tramite il suo ID
  */
 export const getProduct = async (productId: string, include?: string[]) => {
   try {
     const includeParam = include?.length ? `?include=${include.join(',')}` : '';
-    const response = await lemonSqueezyClient.get(`/products/${productId}${includeParam}`);
+    const response = await paddleClient.get(`/products/${productId}${includeParam}`);
     return response.data;
   } catch (error) {
     console.error('Errore durante il recupero del prodotto:', error);
@@ -32,7 +32,7 @@ export const getProducts = async (include?: string[]) => {
   try {
     const includeParam = include?.length ? `?include=${include.join(',')}` : '';
     console.log('Chiamata API a:', `${BASE_URL}/products${includeParam}`);
-    const response = await lemonSqueezyClient.get(`/products${includeParam}`);
+    const response = await paddleClient.get(`/products${includeParam}`);
     return response.data;
   } catch (error) {
     console.error('Errore durante il recupero dei prodotti:', error);
@@ -41,14 +41,14 @@ export const getProducts = async (include?: string[]) => {
 };
 
 /**
- * Ottiene tutte le varianti di un prodotto
+ * Ottiene tutte le varianti di un prodotto (prezzi in Paddle)
  */
 export const getProductVariants = async (productId: string) => {
   try {
-    const response = await lemonSqueezyClient.get(`/variants?filter[product_id]=${productId}`);
+    const response = await paddleClient.get(`/prices?filter[product_id]=${productId}`);
     return response.data;
   } catch (error) {
-    console.error('Errore durante il recupero delle varianti del prodotto:', error);
+    console.error('Errore durante il recupero dei prezzi del prodotto:', error);
     throw error;
   }
 };
@@ -57,55 +57,16 @@ export const getProductVariants = async (productId: string) => {
  * Crea un checkout per un prodotto specifico
  */
 export const createCheckout = async (
-  variantId: string, 
+  priceId: string, 
   customerEmail?: string, 
   customData?: Record<string, any>
 ) => {
   try {
-    console.log('Creazione checkout con dati:', { variantId, email: customerEmail, customData });
+    console.log('Creazione checkout con dati:', { priceId, email: customerEmail, customData });
     
-    // Se l'ID sembra essere un URL completo, dobbiamo comunque passare i dati custom
-    if (variantId.includes('lemonsqueezy.com/buy/')) {
-      const checkoutUrl = variantId.includes('https://') ? variantId : `https://${variantId}`;
-      
-      // Quando abbiamo un URL diretto, dobbiamo usare l'API di checkout di Lemon Squeezy
-      // con i parametri passati nell'URL per preservare i dati custom
-      let finalUrl = checkoutUrl;
-      
-      try {
-        // Tenta di aggiungere i parametri come query string
-        const url = new URL(finalUrl);
-        
-        // Aggiungi l'email se fornita
-        if (customerEmail) {
-          url.searchParams.append('checkout[email]', customerEmail);
-        }
-        
-        // Aggiungi i dati custom come JSON encoded
-        if (customData && Object.keys(customData).length > 0) {
-          const customDataEncoded = encodeURIComponent(JSON.stringify(customData));
-          url.searchParams.append('checkout[custom]', customDataEncoded);
-          console.log('URL di checkout con dati custom:', url.toString());
-        }
-        
-        finalUrl = url.toString();
-      } catch (urlError) {
-        console.error('Errore nella costruzione URL di checkout:', urlError);
-      }
-      
-      console.log('Utilizzo URL di checkout diretto con parametri:', finalUrl);
-      return { 
-        data: { 
-          attributes: { 
-            url: finalUrl 
-          } 
-        } 
-      };
-    }
-    
-    // Altrimenti procedi con la creazione di un checkout tramite API
-    const response = await lemonSqueezyClient.post(`/create-checkout`, {
-      variantId,
+    // Inviamo la richiesta al backend per creare un checkout
+    const response = await paddleClient.post(`/create-checkout`, {
+      priceId,
       email: customerEmail,
       customData
     });
@@ -119,13 +80,13 @@ export const createCheckout = async (
 /**
  * Ottiene i dettagli di un ordine
  */
-export const getOrder = async (orderId: string, include?: string[]) => {
+export const getTransaction = async (transactionId: string, include?: string[]) => {
   try {
     const includeParam = include?.length ? `?include=${include.join(',')}` : '';
-    const response = await lemonSqueezyClient.get(`/orders/${orderId}${includeParam}`);
+    const response = await paddleClient.get(`/transactions/${transactionId}${includeParam}`);
     return response.data;
   } catch (error) {
-    console.error('Errore durante il recupero dell\'ordine:', error);
+    console.error('Errore durante il recupero della transazione:', error);
     throw error;
   }
 };
@@ -136,11 +97,11 @@ export const getOrder = async (orderId: string, include?: string[]) => {
 export const getUserSubscriptions = async (userId: string, include?: string[]) => {
   try {
     const params = new URLSearchParams();
-    if (userId) params.append('filter[user_id]', userId);
+    if (userId) params.append('filter[customer_id]', userId);
     if (include?.length) params.append('include', include.join(','));
     
     const queryString = params.toString() ? `?${params.toString()}` : '';
-    const response = await lemonSqueezyClient.get(`/subscriptions${queryString}`);
+    const response = await paddleClient.get(`/subscriptions${queryString}`);
     return response.data;
   } catch (error) {
     console.error('Errore durante il recupero degli abbonamenti dell\'utente:', error);
@@ -154,7 +115,7 @@ export const getUserSubscriptions = async (userId: string, include?: string[]) =
 export const getSubscription = async (subscriptionId: string, include?: string[]) => {
   try {
     const includeParam = include?.length ? `?include=${include.join(',')}` : '';
-    const response = await lemonSqueezyClient.get(`/subscriptions/${subscriptionId}${includeParam}`);
+    const response = await paddleClient.get(`/subscriptions/${subscriptionId}${includeParam}`);
     return response.data;
   } catch (error) {
     console.error('Errore durante il recupero dell\'abbonamento:', error);
@@ -165,19 +126,19 @@ export const getSubscription = async (subscriptionId: string, include?: string[]
 /**
  * Aggiorna una sottoscrizione (ad es. upgrade/downgrade)
  */
-export const updateSubscription = async (subscriptionId: string, variantId: string) => {
+export const updateSubscription = async (subscriptionId: string, priceId: string) => {
   try {
     const payload = {
-      data: {
-        type: 'subscriptions',
-        id: subscriptionId,
-        attributes: {
-          variant_id: variantId
+      items: [
+        { 
+          priceId: priceId,
+          quantity: 1 
         }
-      }
+      ],
+      prorationBillingMode: "prorated_immediately"
     };
     
-    const response = await lemonSqueezyClient.patch(`/subscriptions/${subscriptionId}`, payload);
+    const response = await paddleClient.patch(`/subscriptions/${subscriptionId}`, payload);
     return response.data;
   } catch (error) {
     console.error('Errore durante l\'aggiornamento dell\'abbonamento:', error);
@@ -190,7 +151,7 @@ export const updateSubscription = async (subscriptionId: string, variantId: stri
  */
 export const cancelSubscription = async (subscriptionId: string) => {
   try {
-    const response = await lemonSqueezyClient.delete(`/subscriptions/${subscriptionId}`);
+    const response = await paddleClient.delete(`/subscriptions/${subscriptionId}`);
     return response.data;
   } catch (error) {
     console.error('Errore durante la cancellazione dell\'abbonamento:', error);
@@ -199,13 +160,13 @@ export const cancelSubscription = async (subscriptionId: string) => {
 };
 
 /**
- * Test diagnostico per la connessione Lemon Squeezy
+ * Test diagnostico per la connessione Paddle
  */
-export const testLemonSqueezyConnection = async () => {
+export const testPaddleConnection = async () => {
   try {
-    console.log('Test diagnostico connessione Lemon Squeezy');
+    console.log('Test diagnostico connessione Paddle');
     // Prima verifica se il server è raggiungibile
-    const pingResponse = await lemonSqueezyClient.get('/ping');
+    const pingResponse = await paddleClient.get('/ping');
     console.log('Risposta ping:', pingResponse.data);
     
     // Prova a caricare i prodotti

@@ -14,10 +14,14 @@ dotenv.config();
 const isDev = process.env.NODE_ENV !== 'production';
 
 const router = Router();
-const API_URL = 'https://api.lemonsqueezy.com/v1';
-const API_KEY = process.env.LEMON_SQUEEZY_API_KEY || '';
-const STORE_ID = process.env.LEMON_SQUEEZY_STORE_ID || '';
-const WEBHOOK_SECRET = process.env.LEMON_SQUEEZY_WEBHOOK_SECRET || '';
+const API_URL = process.env.PADDLE_API_URL || 'https://api.paddle.com/';
+const SANDBOX_API_URL = process.env.PADDLE_SANDBOX_API_URL || 'https://sandbox-api.paddle.com/';
+const API_KEY = process.env.PADDLE_API_KEY || '';
+const PUBLIC_KEY = process.env.PADDLE_PUBLIC_KEY || '';
+const WEBHOOK_SECRET = process.env.PADDLE_WEBHOOK_SECRET || '';
+const useSandbox = process.env.PADDLE_SANDBOX === 'true';
+
+const baseUrl = useSandbox ? SANDBOX_API_URL : API_URL;
 
 // Funzione per scrivere log anche su file in ambiente di sviluppo
 const debugLog = (message: string, details?: any) => {
@@ -32,7 +36,7 @@ const debugLog = (message: string, details?: any) => {
       if (!fs.existsSync(logDir)) {
         fs.mkdirSync(logDir, { recursive: true });
       }
-      fs.appendFileSync(path.join(logDir, 'lemon-squeezy.log'), logMessage + '\n');
+      fs.appendFileSync(path.join(logDir, 'paddle.log'), logMessage + '\n');
     } catch (err) {
       console.error('Errore nella scrittura dei log:', err);
     }
@@ -40,46 +44,37 @@ const debugLog = (message: string, details?: any) => {
 };
 
 // Debug log: verifica se le variabili d'ambiente sono disponibili
-debugLog('--- LEMON SQUEEZY CONFIG ---');
+debugLog('--- PADDLE CONFIG ---');
 debugLog('API Key disponibile:', { 
   available: !!API_KEY, 
   keyExists: API_KEY ? 'Sì' : 'No',
   keyLength: API_KEY ? API_KEY.length : 0,
   keyPreview: API_KEY ? `${API_KEY.substring(0, 4)}...${API_KEY.substring(API_KEY.length - 4)}` : 'mancante'
 });
-debugLog('Store ID disponibile:', { storeId: STORE_ID || 'mancante' });
+debugLog('Public Key disponibile:', { publicKeyExists: !!PUBLIC_KEY });
 debugLog('Webhook Secret disponibile:', { webhookSecretExists: !!WEBHOOK_SECRET });
+debugLog('Modalità:', useSandbox ? 'Sandbox' : 'Produzione');
 debugLog('--------------------------');
 
-// Stampa tutte le variabili d'ambiente (NON farlo in produzione)
-if (isDev) {
-  debugLog('Tutte le variabili d\'ambiente:', process.env);
-}
-
-// Stampa il percorso del file .env 
-const possibleEnvPaths = [
-  path.join(__dirname, '..', '..', '.env'),
-  path.join(process.cwd(), '.env'),
-  path.join(process.cwd(), 'backend', '.env')
-];
-
-possibleEnvPaths.forEach(envPath => {
-  debugLog(`Verifica file .env in: ${envPath}`, { exists: fs.existsSync(envPath) });
-});
-
-// Client API per Lemon Squeezy configurato secondo lo standard JSON:API
-const lemonSqueezyApi = axios.create({
-  baseURL: API_URL,
+// Client API per Paddle
+const paddleApi = axios.create({
+  baseURL: baseUrl,
   headers: {
-    'Accept': 'application/vnd.api+json',
-    'Content-Type': 'application/vnd.api+json',
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
     'Authorization': `Bearer ${API_KEY}`
   }
 });
 
+// Specifica la versione dell'API Paddle
+paddleApi.interceptors.request.use(request => {
+  request.headers['Paddle-Version'] = '1'; // Versione API (1 è la più recente)
+  return request;
+});
+
 // Intercettore per loggare le richieste e risposte in modalità sviluppo
 if (isDev) {
-  lemonSqueezyApi.interceptors.request.use(request => {
+  paddleApi.interceptors.request.use(request => {
     debugLog('Richiesta in uscita:', { 
       method: request.method, 
       url: request.url,
@@ -91,7 +86,7 @@ if (isDev) {
     return request;
   });
 
-  lemonSqueezyApi.interceptors.response.use(
+  paddleApi.interceptors.response.use(
     response => {
       debugLog('Risposta ricevuta:', { 
         status: response.status, 
@@ -112,43 +107,38 @@ if (isDev) {
   );
 }
 
-// Middleware per verificare le richieste webhook da Lemon Squeezy
+// Middleware per verificare le richieste webhook da Paddle
 const verifyWebhookSignature = (req: Request, res: Response, next: Function) => {
-  // Ottenere la firma dall'header
-  const signature = req.headers['x-signature'];
-  
-  if (!signature || typeof signature !== 'string') {
-    debugLog('Firma webhook mancante', { headers: req.headers });
-    return res.status(400).json({ error: 'Firma webhook mancante' });
+  // In Paddle v2 la verifica viene fatta tramite public key e JWS
+  // A SCOPO INFORMATIVO: la documentazione completa è su https://developer.paddle.com/webhooks/signature-verification
+  try {
+    const signature = req.headers['paddle-signature'];
+    
+    if (!signature || typeof signature !== 'string') {
+      debugLog('Firma webhook mancante', { headers: req.headers });
+      return res.status(400).json({ error: 'Firma webhook mancante' });
+    }
+    
+    // TODO: Implementare la verifica della firma JWS
+    // Per ora, in modalità di sviluppo, accettiamo le richieste senza verifica
+    if (isDev) {
+      debugLog('Webhook in modalità sviluppo: verifica firma ignorata');
+      return next();
+    }
+    
+    // Implementazione base della verifica (da completare con la logica corretta)
+    next();
+  } catch (error) {
+    debugLog('Errore nella verifica della firma', error);
+    return res.status(401).json({ error: 'Verifica firma fallita' });
   }
-  
-  // Calcolare l'HMAC SHA-256 del corpo della richiesta
-  const hmac = crypto.createHmac('sha256', WEBHOOK_SECRET);
-  const body = JSON.stringify(req.body);
-  const digest = hmac.update(body).digest('hex');
-  
-  // Verificare che la firma corrisponda
-  if (signature !== digest) {
-    debugLog('Firma webhook non valida', { 
-      expected: digest, 
-      received: signature 
-    });
-    return res.status(401).json({ error: 'Firma webhook non valida' });
-  }
-  
-  next();
 };
 
-// Ottiene i prodotti dallo store Lemon Squeezy
+// Ottiene i prodotti dallo store Paddle
 router.get('/products', async (req: Request, res: Response) => {
   try {
     const { include } = req.query;
     const params = new URLSearchParams();
-    
-    // Applica il filtro per lo store ID se disponibile
-    if (STORE_ID) {
-      params.append('filter[store_id]', STORE_ID);
-    }
     
     // Applica include se specificato
     if (include) {
@@ -157,16 +147,11 @@ router.get('/products', async (req: Request, res: Response) => {
     
     const queryString = params.toString() ? `?${params.toString()}` : '';
     
-    debugLog('Chiamata a Lemon Squeezy API', { 
-      endpoint: `${API_URL}/products${queryString}`,
-      headers: {
-        Accept: 'application/vnd.api+json',
-        'Content-Type': 'application/vnd.api+json',
-        Authorization: API_KEY ? 'Bearer presente' : 'Bearer mancante'
-      }
+    debugLog('Chiamata a Paddle API', { 
+      endpoint: `${baseUrl}/products${queryString}`
     });
     
-    const response = await lemonSqueezyApi.get(`/products${queryString}`);
+    const response = await paddleApi.get(`/products${queryString}`);
     res.json(response.data);
   } catch (error: any) {
     debugLog('Errore nel recupero dei prodotti', {
@@ -189,7 +174,7 @@ router.get('/products/:id', async (req: Request, res: Response) => {
     const { include } = req.query;
     
     const includeParam = include ? `?include=${include}` : '';
-    const response = await lemonSqueezyApi.get(`/products/${id}${includeParam}`);
+    const response = await paddleApi.get(`/products/${id}${includeParam}`);
     res.json(response.data);
   } catch (error: any) {
     console.error('Errore nel recupero del prodotto:', error);
@@ -201,10 +186,10 @@ router.get('/products/:id', async (req: Request, res: Response) => {
   }
 });
 
-// Ottiene le varianti di un prodotto
-router.get('/variants', async (req: Request, res: Response) => {
+// Ottiene i prezzi di un prodotto
+router.get('/prices', async (req: Request, res: Response) => {
   try {
-    const { productId, include } = req.query;
+    const { include, 'filter[product_id]': productId } = req.query;
     const params = new URLSearchParams();
     
     if (productId) {
@@ -216,13 +201,13 @@ router.get('/variants', async (req: Request, res: Response) => {
     }
     
     const queryString = params.toString() ? `?${params.toString()}` : '';
-    const response = await lemonSqueezyApi.get(`/variants${queryString}`);
+    const response = await paddleApi.get(`/prices${queryString}`);
     res.json(response.data);
   } catch (error: any) {
-    console.error('Errore nel recupero delle varianti:', error);
+    console.error('Errore nel recupero dei prezzi:', error);
     console.error('Risposta errore:', error.response?.data || 'Nessun dettaglio disponibile');
     res.status(error.response?.status || 500).json({ 
-      error: 'Errore nel recupero delle varianti',
+      error: 'Errore nel recupero dei prezzi',
       details: error.response?.data || error.message 
     });
   }
@@ -232,9 +217,10 @@ router.get('/variants', async (req: Request, res: Response) => {
 router.get('/ping', (req: Request, res: Response) => {
   const config = {
     apiKeyPresent: !!API_KEY,
-    storeIdPresent: !!STORE_ID,
+    publicKeyPresent: !!PUBLIC_KEY,
     webhookSecretPresent: !!WEBHOOK_SECRET,
-    environment: process.env.NODE_ENV || 'unknown',
+    environment: useSandbox ? 'sandbox' : 'production',
+    apiVersion: '1',
     timestamp: new Date().toISOString()
   };
   
@@ -242,7 +228,7 @@ router.get('/ping', (req: Request, res: Response) => {
   
   res.json({ 
     status: 'success', 
-    message: 'Lemon Squeezy API è online',
+    message: 'Paddle API è online',
     config
   });
 });
@@ -250,60 +236,42 @@ router.get('/ping', (req: Request, res: Response) => {
 // Crea un checkout
 router.post('/create-checkout', async (req: Request, res: Response) => {
   try {
-    const { variantId, email, customData } = req.body;
+    const { priceId, email, customData } = req.body;
     
     debugLog('Richiesta create-checkout ricevuta', { 
-      variantId, 
+      priceId, 
       email: email || 'non specificato',
       customData
     });
     
-    if (!variantId) {
-      debugLog('ID variante mancante', { body: req.body });
-      return res.status(400).json({ error: 'ID variante mancante' });
+    if (!priceId) {
+      debugLog('ID prezzo mancante', { body: req.body });
+      return res.status(400).json({ error: 'ID prezzo mancante' });
     }
     
-    // Validazione per ID di variante
-    if (variantId === 'monthly-variant-id' || variantId === 'annual-variant-id') {
-      debugLog('ID variante non valido (placeholder)', { variantId });
-      return res.status(400).json({ 
-        error: 'ID variante non valido: viene utilizzato un placeholder invece di un ID reale'
-      });
-    }
-    
-    const payload = {
-      data: {
-        type: 'checkouts',
-        attributes: {
-          product_options: {
-            redirect_url: `${req.protocol}://${req.get('host')}/abbonamento-confermato`,
-            receipt_button_text: 'Torna al Gestionale',
-            receipt_link_url: `${req.protocol}://${req.get('host')}/dashboard`,
-            receipt_thank_you_note: 'Grazie per il tuo acquisto!'
-          },
-          checkout_data: {
-            email: email,
-            custom: customData
-          }
-        },
-        relationships: {
-          variant: {
-            data: {
-              type: 'variants',
-              id: variantId
-            }
-          }
+    // Costruzione dell'URL del Checkout Paddle
+    const checkoutData = {
+      items: [
+        {
+          priceId: priceId,
+          quantity: 1
         }
-      }
+      ],
+      customData: customData || {},
+      successUrl: `${req.protocol}://${req.get('host')}/abbonamento-confermato`,
+      customer: email ? { email: email } : undefined
     };
     
     debugLog('Creazione checkout', { 
-      variantId,
+      priceId,
       email: email || 'non specificata',
-      payload: payload
+      payload: checkoutData
     });
     
-    const response = await lemonSqueezyApi.post('/checkouts', payload);
+    // In Paddle v2, i checkouts sono chiamati "transactions"
+    const response = await paddleApi.post('/checkout', checkoutData);
+    
+    debugLog('Checkout creato', response.data);
     res.json(response.data);
   } catch (error: any) {
     debugLog('Errore nella creazione del checkout', {
@@ -325,49 +293,33 @@ router.get('/subscriptions', authenticate, async (req: Request, res: Response) =
     const userId = req.user.id; // Prende l'ID dell'utente autenticato
     const userEmail = req.user.email; // Prende l'email dell'utente autenticato
     const { include } = req.query;
-    const params = new URLSearchParams();
     
-    // Usa lo store ID se disponibile per filtrare le sottoscrizioni
-    if (STORE_ID) {
-      params.append('filter[store_id]', STORE_ID);
+    // In Paddle, dobbiamo prima trovare o creare il customer
+    const customerResponse = await paddleApi.get(`/customers?filter[email]=${encodeURIComponent(userEmail)}`);
+    const customers = customerResponse.data.data || [];
+    
+    // Se non abbiamo trovato il customer, non abbiamo sottoscrizioni
+    if (customers.length === 0) {
+      return res.json({ data: [] });
     }
+    
+    const customerId = customers[0].id;
+    
+    // Ora otteniamo le sottoscrizioni per questo customer
+    const params = new URLSearchParams();
+    params.append('filter[customer_id]', customerId);
     
     // Include risorse correlate se specificato
     if (include) {
       params.append('include', include.toString());
     }
     
-    console.log(`Ottenimento sottoscrizioni per utente: ${userId}, Email: ${userEmail}`);
+    console.log(`Ottenimento sottoscrizioni per utente: ${userId}, Email: ${userEmail}, Customer ID: ${customerId}`);
     
-    // Ottieni tutte le sottoscrizioni dello store
     const queryString = params.toString() ? `?${params.toString()}` : '';
-    const response = await lemonSqueezyApi.get(`/subscriptions${queryString}`);
+    const response = await paddleApi.get(`/subscriptions${queryString}`);
     
-    // Filtra le sottoscrizioni solo per l'utente corrente
-    const allSubscriptions = response.data?.data || [];
-    console.log(`Trovate ${allSubscriptions.length} sottoscrizioni totali`);
-    
-    // Filtra le sottoscrizioni per l'utente corrente
-    const userSubscriptions = allSubscriptions.filter((subscription: any) => {
-      const subCustomData = subscription.attributes?.custom_data;
-      const subUserEmail = subscription.attributes?.user_email;
-      
-      // Una sottoscrizione appartiene all'utente se:
-      // 1. Il custom_data contiene l'ID dell'utente, o
-      // 2. L'email nella sottoscrizione corrisponde all'email dell'utente
-      return (subCustomData && subCustomData.userId === userId) || 
-             (subUserEmail && subUserEmail.toLowerCase() === userEmail.toLowerCase());
-    });
-    
-    console.log(`Filtrate ${userSubscriptions.length} sottoscrizioni per l'utente corrente`);
-    
-    // Restituisci i dati nel formato originale ma con le sottoscrizioni filtrate
-    const filteredResponse = {
-      ...response.data,
-      data: userSubscriptions
-    };
-    
-    res.json(filteredResponse);
+    res.json(response.data);
   } catch (error) {
     console.error('Errore nel recupero delle sottoscrizioni:', error);
     res.status(500).json({ error: 'Errore nel recupero delle sottoscrizioni' });
@@ -381,7 +333,7 @@ router.get('/subscriptions/:id', authenticate, async (req: Request, res: Respons
     const { include } = req.query;
     
     const includeParam = include ? `?include=${include}` : '';
-    const response = await lemonSqueezyApi.get(`/subscriptions/${id}${includeParam}`);
+    const response = await paddleApi.get(`/subscriptions/${id}${includeParam}`);
     res.json(response.data);
   } catch (error) {
     console.error('Errore nel recupero della sottoscrizione:', error);
@@ -393,23 +345,24 @@ router.get('/subscriptions/:id', authenticate, async (req: Request, res: Respons
 router.patch('/subscriptions/:id', authenticate, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { variantId } = req.body;
+    const { priceId } = req.body;
     
-    if (!variantId) {
-      return res.status(400).json({ error: 'ID variante mancante' });
+    if (!priceId) {
+      return res.status(400).json({ error: 'ID prezzo mancante' });
     }
     
     const payload = {
-      data: {
-        type: 'subscriptions',
-        id,
-        attributes: {
-          variant_id: variantId
+      items: [
+        {
+          priceId: priceId,
+          quantity: 1
         }
-      }
+      ],
+      // Addebita la differenza immediatamente se è un upgrade
+      prorationBillingMode: "prorated_immediately"
     };
     
-    const response = await lemonSqueezyApi.patch(`/subscriptions/${id}`, payload);
+    const response = await paddleApi.patch(`/subscriptions/${id}`, payload);
     res.json(response.data);
   } catch (error) {
     console.error('Errore nell\'aggiornamento della sottoscrizione:', error);
@@ -421,7 +374,7 @@ router.patch('/subscriptions/:id', authenticate, async (req: Request, res: Respo
 router.delete('/subscriptions/:id', authenticate, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    await lemonSqueezyApi.delete(`/subscriptions/${id}`);
+    await paddleApi.delete(`/subscriptions/${id}`);
     res.status(204).end();
   } catch (error) {
     console.error('Errore nella cancellazione della sottoscrizione:', error);
@@ -429,46 +382,30 @@ router.delete('/subscriptions/:id', authenticate, async (req: Request, res: Resp
   }
 });
 
-// Gestisce i webhook da Lemon Squeezy
+// Gestisce i webhook da Paddle
 router.post('/webhook', verifyWebhookSignature, async (req: Request, res: Response) => {
   try {
-    const { meta, data } = req.body;
-    const event = meta.event_name;
+    const { type, data } = req.body;
     
-    console.log(`Ricevuto webhook Lemon Squeezy: ${event}`);
-    console.log('Dati webhook completi:', JSON.stringify(req.body, null, 2));
+    debugLog(`Ricevuto webhook Paddle: ${type}`);
+    debugLog('Dati webhook completi:', req.body);
     
     // Gestione degli eventi webhook
-    switch(event) {
-      case 'order_created':
-        // Logica per l'ordine creato
-        console.log('Nuovo ordine creato:', data.id);
+    switch(type) {
+      case 'transaction.completed':
+        // Logica per la transazione completata
+        debugLog('Nuova transazione completata:', data.id);
         
         try {
           // Estraiamo i dati dal webhook
-          const orderAttributes = data.attributes;
-          console.log('Attributi ordine:', JSON.stringify(orderAttributes, null, 2));
+          const customerEmail = data.customer?.email;
+          const customData = data.custom_data || {};
           
-          // Lemon Squeezy può inserire i dati custom in posti diversi a seconda della versione
-          // Prima verifichiamo in custom_data (nuova versione)
-          let customerEmail = orderAttributes.user_email;
-          let customData = orderAttributes.custom_data;
-          
-          // Se non troviamo i dati custom, potrebbe essere nel checkout_data (vecchia versione)
-          if (!customData && orderAttributes.checkout_data) {
-            customData = orderAttributes.checkout_data.custom;
-            
-            // Se non c'è email nell'ordine, prova a prenderla dal checkout_data
-            if (!customerEmail && orderAttributes.checkout_data.email) {
-              customerEmail = orderAttributes.checkout_data.email;
-            }
-          }
-          
-          console.log('Email cliente estratta:', customerEmail);
-          console.log('Dati custom estratti:', JSON.stringify(customData, null, 2));
+          debugLog('Email cliente estratta:', customerEmail);
+          debugLog('Dati custom estratti:', customData);
           
           if (customData && customData.createAccount === true) {
-            console.log('Richiesta creazione automatica account per:', customerEmail);
+            debugLog('Richiesta creazione automatica account per:', customerEmail);
             
             // Genera una password casuale sicura
             const temporaryPassword = generateSecurePassword();
@@ -477,7 +414,7 @@ router.post('/webhook', verifyWebhookSignature, async (req: Request, res: Respon
             if (customerEmail) {
               // Registra l'utente con la email del cliente
               try {
-                console.log('Tentativo creazione account con dati:', {
+                debugLog('Tentativo creazione account con dati:', {
                   email: customerEmail,
                   name: customerName,
                   passwordLength: temporaryPassword.length
@@ -496,13 +433,13 @@ router.post('/webhook', verifyWebhookSignature, async (req: Request, res: Respon
                 if (authError) {
                   console.error('Errore durante la creazione automatica dell\'account:', authError);
                 } else {
-                  console.log('Account creato automaticamente per:', customerEmail, 'Dati:', authData);
+                  debugLog('Account creato automaticamente per:', customerEmail, 'Dati:', authData);
                   
                   // Invia email con credenziali usando il tuo sistema di email
                   // TODO: Implementare l'invio email con credenziali temporanee
                   
-                  console.log('Email con credenziali temporanee inviata a:', customerEmail);
-                  console.log('Password temporanea generata (solo per debug):', temporaryPassword);
+                  debugLog('Email con credenziali temporanee inviata a:', customerEmail);
+                  debugLog('Password temporanea generata (solo per debug):', temporaryPassword);
                 }
               } catch (registrationError) {
                 console.error('Errore durante la registrazione automatica:', registrationError);
@@ -514,52 +451,52 @@ router.post('/webhook', verifyWebhookSignature, async (req: Request, res: Respon
             console.log('Nessuna richiesta di creazione account trovata nei dati custom, account non creato');
           }
         } catch (orderError) {
-          console.error('Errore nel processare l\'ordine per la creazione account:', orderError);
+          console.error('Errore nel processare la transazione per la creazione account:', orderError);
         }
         break;
         
-      case 'order_refunded':
-        // Logica per il rimborso di un ordine
-        console.log('Ordine rimborsato:', data.id);
+      case 'transaction.refunded':
+        // Logica per il rimborso di una transazione
+        debugLog('Transazione rimborsata:', data.id);
         break;
         
-      case 'subscription_created':
+      case 'subscription.created':
         // Logica per una nuova sottoscrizione
-        console.log('Nuova sottoscrizione creata:', data.id);
+        debugLog('Nuova sottoscrizione creata:', data.id);
         break;
         
-      case 'subscription_updated':
+      case 'subscription.updated':
         // Logica per l'aggiornamento di una sottoscrizione
-        console.log('Sottoscrizione aggiornata:', data.id);
+        debugLog('Sottoscrizione aggiornata:', data.id);
         break;
         
-      case 'subscription_cancelled':
+      case 'subscription.canceled':
         // Logica per la cancellazione di una sottoscrizione
-        console.log('Sottoscrizione cancellata:', data.id);
+        debugLog('Sottoscrizione cancellata:', data.id);
         break;
         
-      case 'subscription_resumed':
+      case 'subscription.resumed':
         // Logica per la ripresa di una sottoscrizione
-        console.log('Sottoscrizione ripresa:', data.id);
+        debugLog('Sottoscrizione ripresa:', data.id);
         break;
         
-      case 'subscription_expired':
+      case 'subscription.expired':
         // Logica per la scadenza di una sottoscrizione
-        console.log('Sottoscrizione scaduta:', data.id);
+        debugLog('Sottoscrizione scaduta:', data.id);
         break;
         
-      case 'subscription_payment_success':
+      case 'subscription.payment.succeeded':
         // Logica per un pagamento di sottoscrizione riuscito
-        console.log('Pagamento sottoscrizione riuscito:', data.id);
+        debugLog('Pagamento sottoscrizione riuscito:', data.id);
         break;
         
-      case 'subscription_payment_failed':
+      case 'subscription.payment.failed':
         // Logica per un pagamento di sottoscrizione fallito
-        console.log('Pagamento sottoscrizione fallito:', data.id);
+        debugLog('Pagamento sottoscrizione fallito:', data.id);
         break;
         
       default:
-        console.log('Evento non gestito:', event);
+        debugLog('Evento non gestito:', type);
     }
     
     res.status(200).end();

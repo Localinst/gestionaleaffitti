@@ -14,12 +14,13 @@ import activitiesRouter from './routes/activities';
 import { tourismRouter } from './routes/tourism';
 import integrationsRouter from './routes/integrations';
 import { importRouter } from './routes/import';
-import { authenticate } from './middleware/auth';
+import { authenticate, authorize, isSubscribed } from './middleware/auth';
 import { startSyncService } from './services/sync-service';
 import paymentsRouter from './routes/payments';
 import adminRouter from './routes/admin';
 import analyticsRoutes from './routes/analytics';
 import lemonSqueezyRouter from './routes/lemon-squeezy';
+import paddleRouter from './routes/paddle';
 
 // Definisci solo requestId, timedout è già definito da connect-timeout
 declare global {
@@ -171,7 +172,8 @@ app.get('/api/cors-test', (req, res) => {
 // Rotte pubbliche
 app.use('/api/auth', authRouter);
 app.use('/api/payments', paymentsRouter);
-app.use('/api/lemon-squeezy/webhook', lemonSqueezyRouter);
+app.use('/api/paddle/webhook', paddleRouter);
+app.use('/api/paddle', authenticate, paddleRouter);
 
 // Rotte specifiche (mettere prima quelle più specifiche se ci sono overlap)
 // Esempio: app.use('/api/integrations', integrationsRouter);
@@ -179,20 +181,22 @@ app.use('/api/lemon-squeezy/webhook', lemonSqueezyRouter);
 // ROTTE ADMIN (protette da middleware interni al router)
 app.use('/api/admin', adminRouter);
 
-// Rotte protette
-app.use('/api/properties', authenticate, propertiesRouter);
-app.use('/api/tenants', authenticate, tenantsRouter);
-app.use('/api/transactions', authenticate, transactionsRouter);
-app.use('/api/dashboard', authenticate, dashboardRouter);
-app.use('/api/reports', authenticate, reportsRouter);
-app.use('/api/contracts', authenticate, contractsRouter);
-app.use('/api/activities', authenticate, activitiesRouter);
-app.use('/api/tourism', authenticate, tourismRouter);
-app.use('/api/integrations', authenticate, integrationsRouter);
-app.use('/api/import', authenticate, importRouter);
+// Rotte protette solo dall'autenticazione (non richiedono abbonamento)
+app.use('/api/lemon-squeezy/webhook', lemonSqueezyRouter);
+app.use('/api/lemon-squeezy', authenticate, lemonSqueezyRouter);
+
+// Rotte protette dall'autenticazione e dall'abbonamento
+app.use('/api/properties', authenticate, isSubscribed, propertiesRouter);
+app.use('/api/tenants', authenticate, isSubscribed, tenantsRouter);
+app.use('/api/transactions', authenticate, isSubscribed, transactionsRouter);
+app.use('/api/dashboard', authenticate, isSubscribed, dashboardRouter);
+app.use('/api/reports', authenticate, isSubscribed, reportsRouter);
+app.use('/api/contracts', authenticate, isSubscribed, contractsRouter);
+app.use('/api/activities', authenticate, isSubscribed, activitiesRouter);
+app.use('/api/tourism', authenticate, isSubscribed, tourismRouter);
+app.use('/api/integrations', authenticate, isSubscribed, integrationsRouter);
+app.use('/api/import', authenticate, isSubscribed, importRouter);
 app.use('/api/analytics', analyticsRoutes);
-// Rotta per Lemon Squeezy ma senza autenticazione per il test iniziale
-app.use('/api/lemon-squeezy', lemonSqueezyRouter);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
