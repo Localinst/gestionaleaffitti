@@ -182,14 +182,14 @@ export const isSubscribed = async (req: Request, res: Response, next: NextFuncti
       console.error('Errore nella verifica dell\'abbonamento:', error);
       return res.status(500).json({ 
         message: 'Errore durante la verifica dell\'abbonamento',
-        error: error.message
+        error: error instanceof Error ? error.message : 'Errore sconosciuto'
       });
     }
   } catch (error) {
     console.error('Errore nella verifica dell\'abbonamento:', error);
     return res.status(500).json({ 
       message: 'Errore durante la verifica dell\'abbonamento',
-      error: error.message
+      error: error instanceof Error ? error.message : 'Errore sconosciuto'
     });
   }
 }; 
