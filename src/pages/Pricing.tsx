@@ -1,21 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Check, ArrowLeft, Loader2, Bug } from 'lucide-react';
+import { Check, ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PageBreadcrumb } from '@/components/layout/PageBreadcrumb';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { LandingNav } from "@/components/layout/LandingNav";
-import { LemonSqueezyPayment } from "@/components/ui/lemon-squeezy-payment";
-import { getProducts, getProductVariants, testLemonSqueezyConnection } from "@/services/lemon-squeezy-api";
 import { useToast } from "@/components/ui/use-toast";
 
-// Importo i nuovi componenti Paddle
-import { PaddlePayment } from "@/components/ui/paddle-payment";
-import { getProducts as getPaddleProducts, getProductVariants as getPaddlePrices, testPaddleConnection } from "@/services/paddle-api";
+// Importo Stripe
+import { StripePayment } from "@/components/ui/stripe-payment";
 
 const Pricing: React.FC = () => {
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
 
   const faqs = [
     {
@@ -36,71 +34,6 @@ const Pricing: React.FC = () => {
     }
   ];
 
-  // Definizione dei piani standard con URL di checkout diretto
-  const defaultPlans = [
-    {
-      id: "plan-monthly",
-      name: "Piano Mensile",
-      description: "Ideale per chi inizia",
-      price: "€19,99/mese",
-      features: [
-        "Gestione completa delle proprietà",
-        "Gestione inquilini illimitati",
-        "Tracciamento pagamenti automatico",
-        "Dashboard analitica",
-        "Supporto email"
-      ],
-      // URL completo di checkout
-      variantId: "https://tenoris360.lemonsqueezy.com/buy/1101e76e-e411-41d1-832b-d1fd5f534775",
-    },
-    {
-      id: "plan-annual",
-      name: "Piano Annuale",
-      description: "La soluzione più conveniente",
-      price: "€199,99/anno",
-      features: [
-        "Tutte le funzionalità del piano mensile",
-        "Risparmio di 2 mesi",
-        "Supporto prioritario",
-        "Backup settimanali",
-        "Report avanzati"
-      ],
-      // Per il piano annuale, dovrai ottenere il suo ID specifico in modo simile
-      // Nota: Per ora, utilizziamo lo stesso ID del piano mensile per test
-      variantId: "https://tenoris360.lemonsqueezy.com/buy/34ba8568-c3af-42d2-9d64-052f90879543",
-      isPopular: true,
-    }
-  ];
-
-  const [plans, setPlans] = useState(defaultPlans);
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    const testConnection = async () => {
-      try {
-        // Testiamo la nuova connessione Paddle
-        const testResult = await testPaddleConnection();
-        console.log('Test connessione Paddle:', testResult);
-        
-        // Teniamo il test LemonSqueezy per retrocompatibilità durante la migrazione
-        const lemonSqueezyTestResult = await testLemonSqueezyConnection();
-        console.log('Test connessione LemonSqueezy:', lemonSqueezyTestResult);
-        
-        // Solo per debug
-        if (testResult.success) {
-          console.log('Connessione a Paddle riuscita!');
-        } else {
-          console.warn('La connessione a Paddle ha fallito, consulta i log per dettagli.');
-        }
-        
-      } catch (error) {
-        console.error('Errore durante il test di connessione:', error);
-      }
-    };
-    
-    testConnection();
-  }, []);
-
   const planOptions = [
     {
       id: "plan-monthly",
@@ -114,10 +47,8 @@ const Pricing: React.FC = () => {
         "Dashboard analitica",
         "Supporto email"
       ],
-      // Vecchio LemonSqueezy
-      variantId: "https://tenoris360.lemonsqueezy.com/buy/1101e76e-e411-41d1-832b-d1fd5f534775",
-      // Nuovo Paddle
-      priceId: "pri_01hqwertyuiopasdfghjklzx", // Sostituisci con il tuo ID Paddle reale
+      // ID prezzo Stripe per il piano mensile
+      priceId: "price_monthly",
     },
     {
       id: "plan-annual",
@@ -132,10 +63,8 @@ const Pricing: React.FC = () => {
         "Report avanzati"
       ],
       isPopular: true,
-      // Vecchio LemonSqueezy
-      variantId: "https://tenoris360.lemonsqueezy.com/buy/34ba8568-c3af-42d2-9d64-052f90879543",
-      // Nuovo Paddle
-      priceId: "pri_02hqwertyuiopasdfghjklzx", // Sostituisci con il tuo ID Paddle reale
+      // ID prezzo Stripe per il piano annuale
+      priceId: "price_annual",
     }
   ];
 
@@ -157,14 +86,8 @@ const Pricing: React.FC = () => {
           </div>
         ) : null}
         
-        <section className="container py-8 md:py-12 lg:py-24">
-          {/* Usa PaddlePayment invece di LemonSqueezyPayment */}
-          <PaddlePayment planOptions={planOptions} />
-          
-          {/* Mantieni temporaneamente anche LemonSqueezyPayment nascosto per garantire compatibilità durante la transizione */}
-          <div style={{ display: 'none' }}>
-            <LemonSqueezyPayment planOptions={planOptions} />
-          </div>
+        <section className="container ">
+          <StripePayment planOptions={planOptions} />
         </section>
 
         {/* FAQ con accordion */}
@@ -206,29 +129,6 @@ const Pricing: React.FC = () => {
             Torna alla Home
           </Link>
         </section>
-
-        {/* Aggiungi un pulsante diagnostico (visibile solo in sviluppo) */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="fixed bottom-4 right-4">
-            <Button 
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-1 bg-yellow-50 border-yellow-200 text-yellow-700"
-              onClick={async () => {
-                try {
-                  const testResult = await testLemonSqueezyConnection();
-                  console.log('Test connessione Lemon Squeezy:', testResult);
-                  alert(`Test connessione: ${testResult.success ? 'OK' : 'FALLITO'}\n${JSON.stringify(testResult, null, 2)}`);
-                } catch (error) {
-                  console.error('Errore nel test:', error);
-                  alert(`Errore test: ${error.message}`);
-                }
-              }}
-            >
-              <Bug className="w-4 h-4" /> Test Lemon
-            </Button>
-          </div>
-        )}
       </main>
       </div>
   );

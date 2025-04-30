@@ -19,8 +19,6 @@ import { startSyncService } from './services/sync-service';
 import paymentsRouter from './routes/payments';
 import adminRouter from './routes/admin';
 import analyticsRoutes from './routes/analytics';
-import lemonSqueezyRouter from './routes/lemon-squeezy';
-import paddleRouter from './routes/paddle';
 
 // Definisci solo requestId, timedout è già definito da connect-timeout
 declare global {
@@ -172,8 +170,6 @@ app.get('/api/cors-test', (req, res) => {
 // Rotte pubbliche
 app.use('/api/auth', authRouter);
 app.use('/api/payments', paymentsRouter);
-app.use('/api/paddle/webhook', paddleRouter);
-app.use('/api/paddle', authenticate, paddleRouter);
 
 // Rotte specifiche (mettere prima quelle più specifiche se ci sono overlap)
 // Esempio: app.use('/api/integrations', integrationsRouter);
@@ -182,8 +178,6 @@ app.use('/api/paddle', authenticate, paddleRouter);
 app.use('/api/admin', adminRouter);
 
 // Rotte protette solo dall'autenticazione (non richiedono abbonamento)
-app.use('/api/lemon-squeezy/webhook', lemonSqueezyRouter);
-app.use('/api/lemon-squeezy', authenticate, lemonSqueezyRouter);
 
 // Rotte protette dall'autenticazione e dall'abbonamento
 app.use('/api/properties', authenticate, isSubscribed, propertiesRouter);

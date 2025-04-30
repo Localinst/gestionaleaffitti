@@ -4,6 +4,8 @@ import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { User } from '@supabase/supabase-js';
 import { login as apiLogin, register as apiRegister, logout as apiLogout } from '@/services/api';
+import axios from 'axios';
+import { getAPIBaseUrl } from '@/services/api';
 
 // Interfaccia per i dati dell'utente
 interface UserData {
@@ -21,6 +23,7 @@ interface AuthContextProps {
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  autoLogin: () => Promise<boolean>;
 }
 
 // Creazione del contesto
@@ -31,6 +34,7 @@ const AuthContext = createContext<AuthContextProps>({
   login: async () => {},
   register: async () => {},
   logout: async () => {},
+  autoLogin: async () => false,
 });
 
 // Hook per utilizzare il contesto
@@ -59,10 +63,38 @@ const decodeJwtToken = (token: string): UserData | null => {
   }
 };
 
+// Funzione per verificare lo stato dell'abbonamento di un utente
+const checkSubscriptionStatus = async (userEmail: string): Promise<boolean> => {
+  try {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      console.error('Token di autenticazione mancante');
+      return false;
+    }
+
+    const apiBaseUrl = getAPIBaseUrl();
+    console.log(`Verifica abbonamento per email: ${userEmail}`);
+
+    // Verifica lo stato dell'abbonamento con Stripe
+    const response = await axios.get(`${apiBaseUrl}/payments/check-subscription-status?userEmail=${encodeURIComponent(userEmail)}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    return response.data?.active === true;
+  } catch (error) {
+    console.error('Errore durante la verifica dell\'abbonamento:', error);
+    return false;
+  }
+};
+
 // Provider del contesto
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
 
   // Recupera l'utente corrente all'avvio
@@ -87,15 +119,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (userData) {
           console.log('Utente autenticato dal token JWT:', userData);
           setUser(userData);
+          setIsAuthenticated(true);
         } else {
           // Token non valido
           localStorage.removeItem('authToken');
           setUser(null);
+          setIsAuthenticated(false);
         }
       } catch (error) {
         console.error('Errore durante il recupero dell\'utente:', error);
         localStorage.removeItem('authToken');
         setUser(null);
+        setIsAuthenticated(false);
       } finally {
         setIsLoading(false);
       }
@@ -103,6 +138,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     // Recupera l'utente all'avvio
     fetchUser();
+  }, []);
+
+  // Gestisce l'autologin tramite localStorage quando l'app viene ricaricata
+  useEffect(() => {
+    const storedUserData = localStorage.getItem('userData');
+    const storedAuthToken = localStorage.getItem('authToken');
+    
+    if (storedUserData && storedAuthToken) {
+      try {
+        const userData = JSON.parse(storedUserData);
+        setUser(userData);
+        setIsAuthenticated(true);
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Errore durante il parsing dei dati utente:', error);
+        handleLogout();
+      }
+    } else {
+      setIsLoading(false);
+    }
+    
+    // Rimuovi eventuali dati di piano salvati, non necessari dopo il login
+    localStorage.removeItem('selectedPlan');
   }, []);
 
   // Funzione di login
@@ -130,6 +188,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           };
           
           setUser(userData);
+          setIsAuthenticated(true);
           console.log('Login effettuato con successo per:', userData.name);
           
           toast.success('Login effettuato con successo', {
@@ -138,17 +197,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           
           // Verifica lo stato dell'abbonamento dell'utente prima di reindirizzare
           try {
-            // Importa direttamente la funzione getUserSubscriptions
-            const { getUserSubscriptions } = await import('@/services/lemon-squeezy-api');
-            const subscriptionsResponse = await getUserSubscriptions(userData.id);
-            const subscriptions = subscriptionsResponse?.data || [];
-            
-            // Controlla se c'è almeno una sottoscrizione attiva
-            const hasActiveSubscription = subscriptions.some(
-              (subscription: any) => 
-                subscription.attributes?.status === 'active' || 
-                subscription.attributes?.status === 'on_trial'
-            );
+            const hasActiveSubscription = await checkSubscriptionStatus(userData.email);
             
             console.log('Stato abbonamento:', hasActiveSubscription ? 'Attivo' : 'Non attivo');
             
@@ -169,21 +218,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           const userData = decodeJwtToken(response.token);
           if (userData) {
             setUser(userData);
+            setIsAuthenticated(true);
             toast.success('Login effettuato con successo', {
               description: `Benvenuto, ${userData.name}!`,
             });
             
             // Anche qui, verifica lo stato dell'abbonamento
             try {
-              const { getUserSubscriptions } = await import('@/services/lemon-squeezy-api');
-              const subscriptionsResponse = await getUserSubscriptions(userData.id);
-              const subscriptions = subscriptionsResponse?.data || [];
-              
-              const hasActiveSubscription = subscriptions.some(
-                (subscription: any) => 
-                  subscription.attributes?.status === 'active' || 
-                  subscription.attributes?.status === 'on_trial'
-              );
+              const hasActiveSubscription = await checkSubscriptionStatus(userData.email);
               
               console.log('Stato abbonamento:', hasActiveSubscription ? 'Attivo' : 'Non attivo');
               
@@ -254,6 +296,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           };
           
           setUser(userData);
+          setIsAuthenticated(true);
           console.log('Registrazione completata con successo per:', userData.name);
           
           toast.success('Registrazione completata con successo', {
@@ -264,77 +307,88 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           const selectedPlanData = localStorage.getItem('selectedPlan');
           if (selectedPlanData) {
             try {
-              // Importa la funzione createCheckout direttamente qui
-              const { createCheckout } = await import('@/services/lemon-squeezy-api');
-              
-              // Ottieni i dettagli del piano dal localStorage
-              const planDetails = JSON.parse(selectedPlanData);
-              
               // Log dettagliato per debug
-              console.log('Dettagli piano selezionato:', planDetails);
+              console.log('Dettagli piano selezionato:', selectedPlanData);
               
-              // Valida l'ID della variante
-              if (!planDetails.variantId || 
-                  (planDetails.variantId === 'monthly-variant-id' || 
-                   planDetails.variantId === 'annual-variant-id') && 
-                   !planDetails.variantId.includes('lemonsqueezy.com/buy/')) {
-                console.error('ID variante non valido o placeholder:', planDetails.variantId);
-                toast.error('Configurazione piano non valida', { 
-                  description: 'Contatta l\'amministratore del sistema.' 
+              // Valida il formato del piano selezionato (ora è un oggetto JSON string)
+              let planObj;
+              try {
+                planObj = JSON.parse(selectedPlanData);
+              } catch (e) {
+                console.error('Formato piano non valido:', selectedPlanData);
+                toast.error('Formato piano non valido', {
+                  description: 'Riprova la selezione del piano'
                 });
-                
-                // In caso di errore, reindirizza alla pagina di pricing
                 localStorage.removeItem('selectedPlan');
                 navigate('/pricing');
                 return;
               }
               
-              if (planDetails.variantId) {
-                toast.info('Inizializzazione del processo di pagamento...');
-                
-                try {
-                  // Crea il checkout direttamente
-                  const customData = {
-                    userId: userData.id,
-                    planName: planDetails.name,
-                  };
-                  
-                  console.log('Invio richiesta checkout con parametri:', {
-                    variantId: planDetails.variantId,
-                    email: userData.email,
-                    customData
-                  });
-                  
-                  const checkoutData = await createCheckout(
-                    planDetails.variantId,
-                    userData.email,
-                    customData
-                  );
-                  
-                  // Rimuovi l'informazione sul piano dal localStorage
-                  localStorage.removeItem('selectedPlan');
-                  
-                  // Redirect all'URL del checkout Lemon Squeezy
-                  if (checkoutData.data.attributes.url) {
-                    window.location.href = checkoutData.data.attributes.url;
-                    return; // Termina l'esecuzione qui
-                  } else {
-                    throw new Error('URL di checkout mancante nella risposta');
-                  }
-                } catch (checkoutError: any) {
-                  console.error('Dettaglio errore checkout:', checkoutError.response?.data || checkoutError);
-                  toast.error('Errore durante l\'avvio del checkout', { 
-                    description: 'Verrai reindirizzato alla pagina dei piani.' 
-                  });
-                  // In caso di errore, reindirizza alla pagina di pricing
-                  localStorage.removeItem('selectedPlan');
-                  navigate('/pricing');
-                  return;
-                }
+              // Verifica che ci siano le informazioni necessarie nel piano
+              if (!planObj || !planObj.id || !planObj.priceId) {
+                console.error('Informazioni piano incomplete:', planObj);
+                toast.error('Informazioni piano incomplete', {
+                  description: 'Riprova la selezione del piano'
+                });
+                localStorage.removeItem('selectedPlan');
+                navigate('/pricing');
+                return;
               }
-            } catch (error: any) {
+              
+              toast.info('Inizializzazione del processo di pagamento...');
+              
+              try {
+                // Determina l'endpoint in base al piano selezionato
+                const endpoint = planObj.id === 'plan-monthly'
+                  ? '/payments/create-checkout-session/monthly'
+                  : '/payments/create-checkout-session/annual';
+                
+                const apiUrl = getAPIBaseUrl();
+                  
+                // Crea il checkout con Stripe
+                const response = await fetch(`${apiUrl}${endpoint}`, {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    email: userData.email,
+                    customData: {
+                      userId: userData.id,
+                      planName: planObj.id
+                    }
+                  }),
+                });
+                
+                if (!response.ok) {
+                  throw new Error(`Errore HTTP: ${response.status}`);
+                }
+                
+                const checkoutData = await response.json();
+                
+                // Rimuovi l'informazione sul piano dal localStorage
+                localStorage.removeItem('selectedPlan');
+                
+                // Redirect all'URL del checkout Stripe
+                if (checkoutData?.url) {
+                  window.location.href = checkoutData.url;
+                  return; // Termina l'esecuzione qui
+                } else {
+                  throw new Error('URL di checkout mancante nella risposta');
+                }
+              } catch (checkoutError) {
+                console.error('Dettaglio errore checkout:', checkoutError);
+                toast.error('Errore durante l\'avvio del checkout', { 
+                  description: 'Verrai reindirizzato alla pagina dei piani.' 
+                });
+                // In caso di errore, reindirizza alla pagina di pricing
+                localStorage.removeItem('selectedPlan');
+                navigate('/pricing');
+                return;
+              }
+            } catch (error) {
               console.error('Errore durante la creazione del checkout dopo registrazione:', error);
-              console.error('Dettaglio risposta:', error.response?.data);
               
               // In caso di errore, reindirizza alla pagina di pricing come fallback
               localStorage.removeItem('selectedPlan');
@@ -352,7 +406,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } else {
         throw new Error('Token mancante nella risposta');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Errore durante la registrazione:', error);
       
       if (error?.message?.includes('already registered')) {
@@ -387,6 +441,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Pulisci il localStorage e lo stato
       localStorage.removeItem('authToken');
       setUser(null);
+      setIsAuthenticated(false);
       
       toast.success('Logout effettuato con successo');
       navigate('/login');
@@ -398,15 +453,63 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  // Funzione per verificare automaticamente l'autenticazione e reindirizzare
+  const autoLogin = async (): Promise<boolean> => {
+    try {
+      // Controlla se c'è un token nel localStorage
+      const token = localStorage.getItem('authToken');
+      
+      if (!token) {
+        console.log('Nessun token trovato per autologin');
+        return false;
+      }
+      
+      // Decodifica il token per ottenere i dati utente
+      const userData = decodeJwtToken(token);
+      
+      if (!userData) {
+        console.log('Token non valido per autologin');
+        localStorage.removeItem('authToken');
+        return false;
+      }
+      
+      // Se siamo già autenticati, restituisce true
+      if (isAuthenticated && user) {
+        console.log('Utente già autenticato:', user.name);
+        return true;
+      }
+      
+      // Aggiorna lo stato con i dati dell'utente
+      setUser(userData);
+      setIsAuthenticated(true);
+      
+      // Verifica opzionalmente lo stato dell'abbonamento
+      try {
+        await checkSubscriptionStatus(userData.email);
+        // Non facciamo reindirizzamenti qui, lasciamo al chiamante decidere
+      } catch (error) {
+        console.warn('Errore nella verifica abbonamento durante autologin:', error);
+        // Non blocchiamo il processo per questo errore
+      }
+      
+      console.log('Autologin completato con successo per:', userData.name);
+      return true;
+    } catch (error) {
+      console.error('Errore durante autologin:', error);
+      return false;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
         user,
         isLoading,
-        isAuthenticated: !!user,
+        isAuthenticated,
         login,
         register,
         logout,
+        autoLogin,
       }}
     >
       {children}

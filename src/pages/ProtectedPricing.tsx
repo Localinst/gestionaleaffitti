@@ -5,8 +5,7 @@ import { Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Header } from "@/components/layout/Header";
-import { LemonSqueezyPayment } from "@/components/ui/lemon-squeezy-payment";
-import { PaddlePayment } from "@/components/ui/paddle-payment";
+import { StripePayment } from "@/components/ui/stripe-payment";
 import { getProducts, getProductVariants } from "@/services/lemon-squeezy-api";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/context/AuthContext";
@@ -39,14 +38,16 @@ const ProtectedPricing: React.FC = () => {
     {
       id: "plan-monthly",
       name: "Piano Mensile",
-      description: "Ideale per chi inizia",
+      description: "Pagamento mensile flessibile",
       price: "€19,99/mese",
       features: [
         "Gestione completa delle proprietà",
         "Gestione inquilini illimitati",
         "Tracciamento pagamenti automatico",
         "Dashboard analitica",
-        "Supporto email"
+        "Supporto email prioritario",
+        "Backup settimanali",
+        "Report avanzati"
       ],
       variantId: "https://tenoris360.lemonsqueezy.com/buy/1101e76e-e411-41d1-832b-d1fd5f534775",
       priceId: "pri_01hqwertyuiopasdfghjklzx",
@@ -54,12 +55,14 @@ const ProtectedPricing: React.FC = () => {
     {
       id: "plan-annual",
       name: "Piano Annuale",
-      description: "La soluzione più conveniente",
+      description: "Risparmio del 16% sul pagamento annuale",
       price: "€199,99/anno",
       features: [
-        "Tutte le funzionalità del piano mensile",
-        "Risparmio di 2 mesi",
-        "Supporto prioritario",
+        "Gestione completa delle proprietà",
+        "Gestione inquilini illimitati",
+        "Tracciamento pagamenti automatico",
+        "Dashboard analitica",
+        "Supporto email prioritario",
         "Backup settimanali",
         "Report avanzati"
       ],
@@ -163,20 +166,12 @@ const ProtectedPricing: React.FC = () => {
           </div>
         ) : null}
         
-        <section className="container py-8 md:py-12 lg:py-24">
-          <PaddlePayment 
+        <section className="container  md:py-12 lg:py-24">
+          <StripePayment 
             planOptions={planOptions}
-            title="Aggiorna il tuo abbonamento"
-            subtitle="Hai bisogno di un piano più potente? Scegli l'opzione migliore per le tue esigenze."
+            title="Scegli il tuo piano"
+            subtitle="Entrambe le opzioni includono tutte le funzionalità. Scegli la durata che preferisci."
           />
-          
-          <div style={{ display: 'none' }}>
-            <LemonSqueezyPayment 
-              planOptions={planOptions}
-              title="Aggiorna il tuo abbonamento"
-              subtitle="Hai bisogno di un piano più potente? Scegli l'opzione migliore per le tue esigenze."
-            />
-          </div>
         </section>
 
         {/* FAQ con accordion */}

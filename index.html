@@ -254,15 +254,6 @@
         <li><a href="/cookie">Cookie</a></li>
       </ul>
     </div>
-    <!-- Paddle.js per la gestione dei pagamenti -->
-    <script type="text/javascript" src="https://cdn.paddle.com/paddle/paddle.js"></script>
-    <script type="text/javascript">
-      // Inizializza Paddle con il vendor ID
-      // Usa l'ambiente sandbox in sviluppo e test
-      Paddle.Environment.set('sandbox');  // Rimuovere questa riga in produzione
-      Paddle.Setup({ vendor: 12345 });    // Sostituire con il tuo Paddle Vendor ID reale
-    </script>
-
     <!-- Bundle React dell'applicazione -->
     <script type="module" src="/src/main.tsx"></script>
     <script>

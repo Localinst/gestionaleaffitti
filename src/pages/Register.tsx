@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -79,7 +79,7 @@ export default function Register() {
         description: "Il tuo account è stato creato con successo",
       });
       
-      navigate("/login");
+      onRegisterSuccess();
     } catch (error) {
       console.error("Registration error:", error);
       toast({
@@ -89,6 +89,30 @@ export default function Register() {
       });
     }
   };
+
+  const onRegisterSuccess = () => {
+    const params = new URLSearchParams(location.search);
+    const isCheckout = params.get('checkout') === 'true';
+    
+    if (isCheckout) {
+      navigate('/pricing');
+    } else {
+      navigate('/dashboard');
+    }
+  };
+
+  useEffect(() => {
+    // Controlla se veniamo dal flusso di checkout
+    const params = new URLSearchParams(location.search);
+    const isCheckout = params.get('checkout') === 'true';
+    
+    if (isCheckout) {
+      toast({
+        title: "Registrazione richiesta",
+        description: "Completa la registrazione per procedere con l'acquisto"
+      });
+    }
+  }, [toast]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,14 +14,42 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [autoLoginChecked, setAutoLoginChecked] = useState(false);
   const [showWaitMessage, setShowWaitMessage] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isForgotPasswordLoading, setIsForgotPasswordLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, isAuthenticated, user, autoLogin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const from = location.state?.from || "/dashboard";
+
+  // Controllo se esiste già un token nel localStorage e se l'utente è autenticato
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      try {
+        // Utilizziamo autoLogin già estratto dal hook a livello di componente
+        const isAutoLoggedIn = await autoLogin();
+        
+        if (isAutoLoggedIn) {
+          // Se l'utente è stato autenticato automaticamente, mostra un messaggio
+          toast.success('Login automatico effettuato', {
+            description: `Bentornato!`,
+          });
+          
+          // Reindirizza alla dashboard o alla pagina precedente
+          navigate(from, { replace: true });
+        }
+      } catch (error) {
+        console.error('Errore durante il controllo dello stato di autenticazione:', error);
+      } finally {
+        // Indipendentemente dal risultato, segna il check come completato
+        setAutoLoginChecked(true);
+      }
+    };
+    
+    checkAuthStatus();
+  }, [navigate, from, autoLogin]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,6 +112,18 @@ export default function LoginPage() {
       setIsForgotPasswordLoading(false);
     }
   };
+
+  // Mostra un indicatore di caricamento finché non abbiamo verificato lo stato di autenticazione
+  if (!autoLoginChecked) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Verifica autenticazione...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

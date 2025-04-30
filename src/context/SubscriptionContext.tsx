@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
 import { useAuth } from './AuthContext';
-import { getUserSubscriptions } from '@/services/lemon-squeezy-api';
 import axios from 'axios';
 
 // Interfaccia per il contesto dell'abbonamento
@@ -27,6 +26,16 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
   const { user } = useAuth();
   const checkedInSession = useRef(false);
 
+  // Funzione per ottenere la base URL dell'API
+  const getAPIBaseUrl = () => {
+    // In produzione usa l'URL corretto
+    if (window.location.hostname !== 'localhost') {
+      return 'https://gestionaleaffitti.onrender.com/api';
+    }
+    // In locale usa localhost:3000
+    return 'http://localhost:3000/api';
+  };
+
   const checkSubscriptionStatus = useCallback(async (force = false): Promise<boolean> => {
     // Se abbiamo già verificato in questa sessione e non è forzato, usiamo lo stato attuale
     if (checkedInSession.current && !force) {
@@ -45,8 +54,8 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
     try {
       setIsLoading(true);
       
-      if (user.id) {
-        console.log('SubscriptionContext: Verifica abbonamento per utente', user.id);
+      if (user.email) {
+        console.log('SubscriptionContext: Verifica abbonamento per utente', user.email);
         // Ottieni il token di autenticazione
         const token = localStorage.getItem('authToken');
         
@@ -56,34 +65,44 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
           return false;
         }
         
-        // Effettua una chiamata API diretta al backend con il token di autenticazione
-        const response = await axios.get(`/api/lemon-squeezy/subscriptions?filter[user_id]=${user.id}`, {
+        // Usa l'URL completo del backend
+        const apiBaseUrl = getAPIBaseUrl();
+        console.log(`SubscriptionContext: Usando base URL API: ${apiBaseUrl}`);
+        
+        // Effettua una chiamata API al backend per verificare lo stato dell'abbonamento con Stripe
+        // Usa l'email dell'utente invece dell'ID
+        const response = await axios.get(`${apiBaseUrl}/payments/check-subscription-status?userEmail=${encodeURIComponent(user.email)}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
         });
         
-        // Verifica se ci sono sottoscrizioni attive
-        const subscriptions = response.data?.data || [];
-        console.log('SubscriptionContext: Sottoscrizioni trovate:', subscriptions.length);
+        // Verifica lo stato dell'abbonamento
+        const isActive = response.data?.active === true;
+        console.log('SubscriptionContext: Abbonamento attivo?', isActive);
         
-        // Una sottoscrizione è attiva se è presente e il suo status è 'active' o 'on_trial'
-        const hasActiveSubscription = subscriptions.some(
-          (subscription: any) => {
-            const status = subscription.attributes?.status;
-            console.log('SubscriptionContext: Stato sottoscrizione:', status);
-            return status === 'active' || status === 'on_trial';
-          }
-        );
+        // Se stiamo forzando la verifica (dopo un pagamento) e l'abbonamento non è attivo
+        // potrebbe esserci un ritardo nella sincronizzazione con Stripe, ottimisticamente imposta a true
+        if (force && !isActive) {
+          console.log('SubscriptionContext: Forzatura verifica dopo pagamento, impostazione temporanea a true');
+          setHasActiveSubscription(true);
+          
+          // Riprova tra 5 secondi per verificare nuovamente lo stato reale
+          setTimeout(() => {
+            console.log('SubscriptionContext: Ri-verifica abbonamento dopo ritardo');
+            checkSubscriptionStatus(true);
+          }, 5000);
+          
+          return true;
+        }
         
-        console.log('SubscriptionContext: Abbonamento attivo?', hasActiveSubscription);
-        setHasActiveSubscription(hasActiveSubscription);
+        setHasActiveSubscription(isActive);
         checkedInSession.current = true; // Segna che abbiamo verificato in questa sessione
-        return hasActiveSubscription;
+        return isActive;
       }
       
-      console.log('SubscriptionContext: ID utente non valido');
+      console.log('SubscriptionContext: Email utente non valida');
       return false;
     } catch (error) {
       console.error('Errore durante la verifica dello stato dell\'abbonamento:', error);
@@ -95,6 +114,14 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
       if (serverIsDown) {
         // Se il server non è raggiungibile, potremmo permettere l'accesso temporaneo
         console.warn('Server non raggiungibile, accesso temporaneo consentito');
+        setHasActiveSubscription(true);
+        return true;
+      }
+      
+      // Se stiamo forzando la verifica dopo un pagamento e c'è un errore
+      // consideriamo l'abbonamento come valido temporaneamente
+      if (force) {
+        console.log('SubscriptionContext: Errore durante verifica forzata, impostazione temporanea a true');
         setHasActiveSubscription(true);
         return true;
       }

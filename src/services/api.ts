@@ -85,7 +85,7 @@ interface DashboardSummary {
 import { DashboardSummaryResponse } from '@/components/dashboard/DashboardPage';
 
 // Configurazione dell'URL API di base
-function getAPIBaseUrl() {
+export function getAPIBaseUrl() {
   // Per debugging, mostra sempre quale URL viene usato
   const result = getActualAPIBaseUrl();
   console.log('API Base URL configurato:', result);
@@ -93,14 +93,14 @@ function getAPIBaseUrl() {
 }
 
 // La funzione interna che determina l'URL effettivo
-function getActualAPIBaseUrl() {
+export function getActualAPIBaseUrl() {
   // In ambiente di produzione, usa l'URL diretto del backend
   if (window.location.hostname !== 'localhost') {
     return 'https://gestionaleaffitti.onrender.com/api';
   }
   
-  // In ambiente di sviluppo locale, usa localhost
-  return `${window.location.protocol}//${window.location.hostname}:3000/api`;
+  // In ambiente di sviluppo locale, usa localhost:3000
+  return 'http://localhost:3000/api';
 }
 
 // URL base dell'API

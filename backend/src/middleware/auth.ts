@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { supabase } from '../lib/supabase';
 import { createClient } from '@supabase/supabase-js';
 import axios from 'axios';
+import Stripe from 'stripe';
 
 // Estendi l'interfaccia Request per includere l'utente
 declare global {
@@ -117,7 +118,7 @@ export const generateToken = (userId: string, email: string, name: string, role:
   if (!JWT_SECRET) {
     throw new Error('JWT_SECRET non è definito nelle variabili d\'ambiente');
   }
-  return jwt.sign({ id: userId, email, name, role }, JWT_SECRET, { expiresIn: '1d' });
+  return jwt.sign({ id: userId, email, name, role }, JWT_SECRET, { expiresIn: '30d' });
 };
 
 /**
@@ -135,76 +136,55 @@ export const isSubscribed = async (req: Request, res: Response, next: NextFuncti
     
     console.log(`Verifica abbonamento per utente: ID=${userId}, Email=${userEmail}`);
 
-    // Effettua la chiamata API a Lemon Squeezy 
-    const response = await axios.get(`${API_URL}/subscriptions`, {
-      headers: {
-        'Accept': 'application/vnd.api+json',
-        'Content-Type': 'application/vnd.api+json',
-        'Authorization': `Bearer ${API_KEY}`
-      },
-      params: {
-        'filter[user_email]': userEmail,
-        'include': 'order'
-      }
-    });
-
-    // Estrazione delle sottoscrizioni dalla risposta
-    const subscriptions = response.data?.data || [];
-    console.log(`Numero totale di sottoscrizioni trovate: ${subscriptions.length}`);
-
-    // Filtra le sottoscrizioni dell'utente corrente basate su ID utente o email
-    const userSubscriptions = subscriptions.filter(subscription => {
-      const customData = subscription.attributes?.custom_data || {};
-      const subscriptionEmail = subscription.attributes?.user_email;
+    try {
+      // Cercare il customer in Stripe usando l'email
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+        apiVersion: '2025-03-31.basil',
+      });
       
-      // Verifica se la sottoscrizione appartiene all'utente tramite ID o email
-      const matchUserId = customData.userId && customData.userId === userId;
-      const matchEmailInCustomData = customData.email && customData.email === userEmail;
-      const matchSubscriptionEmail = subscriptionEmail && subscriptionEmail === userEmail;
+      // Cerca il customer in Stripe
+      const customers = await stripe.customers.list({
+        email: userEmail,
+        limit: 1,
+      });
       
-      // Loghiamo i dettagli per debug
-      if (IS_DEV) {
-        console.log(`Analisi sottoscrizione ID: ${subscription.id}`);
-        console.log(`- Email nella sottoscrizione: ${subscriptionEmail}`);
-        console.log(`- Custom data: ${JSON.stringify(customData)}`);
-        console.log(`- Match su userId: ${matchUserId}`);
-        console.log(`- Match su email in customData: ${matchEmailInCustomData}`);
-        console.log(`- Match su email di sottoscrizione: ${matchSubscriptionEmail}`);
+      // Se non troviamo il customer, l'utente non ha un abbonamento
+      if (customers.data.length === 0) {
+        console.log(`Nessun customer Stripe trovato per l'email ${userEmail}`);
+        return res.status(403).json({ 
+          message: 'Accesso negato: non hai un abbonamento attivo',
+          subscribed: false 
+        });
       }
       
-      return matchUserId || matchEmailInCustomData || matchSubscriptionEmail;
-    });
-
-    console.log(`Sottoscrizioni filtrate per l'utente corrente: ${userSubscriptions.length}`);
-
-    // Se l'utente non ha sottoscrizioni, nega l'accesso
-    if (userSubscriptions.length === 0) {
-      console.log(`Nessun abbonamento trovato per l'utente ${userId} (${userEmail})`);
-      return res.status(403).json({ 
-        message: 'Accesso negato: non hai un abbonamento attivo',
-        subscribed: false 
-      });
-    }
-
-    // Verifica se c'è almeno una sottoscrizione attiva
-    const hasActiveSubscription = userSubscriptions.some(subscription => {
-      const status = subscription.attributes?.status;
-      console.log(`Stato abbonamento: ${status}`);
+      const customerId = customers.data[0].id;
       
-      // Considera attivi gli abbonamenti con status: active, past_due, on_trial, paused
-      return ['active', 'past_due', 'on_trial', 'paused'].includes(status);
-    });
+      // Cerca le sottoscrizioni attive per questo customer
+      const subscriptions = await stripe.subscriptions.list({
+        customer: customerId,
+        status: 'active',
+      });
+      
+      console.log(`Trovate ${subscriptions.data.length} sottoscrizioni attive per il customer ${customerId}`);
+      
+      // Se l'utente non ha sottoscrizioni attive, nega l'accesso
+      if (subscriptions.data.length === 0) {
+        console.log(`Nessun abbonamento attivo trovato per l'utente ${userId} (${userEmail})`);
+        return res.status(403).json({ 
+          message: 'Accesso negato: non hai un abbonamento attivo',
+          subscribed: false 
+        });
+      }
 
-    if (!hasActiveSubscription) {
-      console.log(`Nessun abbonamento attivo per l'utente ${userId}`);
-      return res.status(403).json({ 
-        message: 'Accesso negato: il tuo abbonamento non è attivo',
-        subscribed: false 
+      console.log(`Utente ${userId} ha un abbonamento attivo`);
+      next();
+    } catch (error) {
+      console.error('Errore nella verifica dell\'abbonamento:', error);
+      return res.status(500).json({ 
+        message: 'Errore durante la verifica dell\'abbonamento',
+        error: error.message
       });
     }
-
-    console.log(`Utente ${userId} ha un abbonamento attivo`);
-    next();
   } catch (error) {
     console.error('Errore nella verifica dell\'abbonamento:', error);
     return res.status(500).json({ 
