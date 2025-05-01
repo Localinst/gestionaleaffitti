@@ -5,6 +5,7 @@ User-agent: *
 
 # Consenti l'accesso a tutte le pagine pubbliche e risorse statiche
 Allow: /
+Allow: /*.ico$
 Allow: /*.png$
 Allow: /*.jpg$
 Allow: /*.svg$
