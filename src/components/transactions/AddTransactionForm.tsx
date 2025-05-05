@@ -102,6 +102,7 @@ export function AddTransactionForm({
   const [tenants, setTenants] = useState([]);
   const [selectedType, setSelectedType] = useState<"income" | "expense">("income");
   const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
   
   // Determina se siamo in modalità modifica
   useEffect(() => {
@@ -182,7 +183,9 @@ export function AddTransactionForm({
   // Aggiorna valori del form in modalità modifica
   useEffect(() => {
     if (transaction && open) {
-      const unitId = `${transaction.propertyId || transaction.property_id}-${transaction.unit_index || '0'}`;
+      const propertyId = transaction.propertyId || transaction.property_id;
+      const unitIndex = transaction.unit_index || '0';
+      const unitId = `${propertyId}-${unitIndex}`;
       
       form.reset({
         unit_id: unitId,
@@ -196,8 +199,11 @@ export function AddTransactionForm({
       
       setSelectedType(transaction.type || "income");
       
+      // Imposta la proprietà selezionata
+      setSelectedPropertyId(propertyId);
+      
       // Carica gli inquilini per la proprietà
-      if (transaction.propertyId || transaction.property_id) {
+      if (propertyId) {
         loadTenants(unitId);
       }
     }
@@ -207,6 +213,7 @@ export function AddTransactionForm({
     if (!unitId || unitId === "") {
       console.log("UnitId vuoto o non definito, nessun inquilino da caricare");
       setTenants([]);
+      setSelectedPropertyId(null);
       return;
     }
   
@@ -220,6 +227,7 @@ export function AddTransactionForm({
       : unitId;  // Se non c'è un trattino, usa l'intero valore
     
     console.log("Tentativo di caricamento inquilini per proprietà ID:", propertyId);
+    setSelectedPropertyId(propertyId);
   
     try {
       console.log("Invio richiesta getTenantsByProperty con ID:", propertyId);
@@ -387,7 +395,7 @@ export function AddTransactionForm({
                   <Select 
                     value={field.value || "none"} 
                     onValueChange={field.onChange}
-                    disabled={!propertyId}
+                    disabled={!selectedPropertyId}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -397,7 +405,7 @@ export function AddTransactionForm({
                     <SelectContent>
                       <SelectItem value="none">{t("transactions.form.noTenant")}</SelectItem>
                       {tenants
-                        .filter(tenant => tenant.property_id === propertyId)
+                        .filter(tenant => tenant.property_id === selectedPropertyId)
                         .map((tenant) => (
                           <SelectItem key={tenant.id} value={tenant.id?.toString()}>
                             {tenant.name}

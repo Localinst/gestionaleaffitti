@@ -210,8 +210,8 @@ async function setupTransactionPooler() {
     host_type: 'ip4', // Forza il resolver DNS a usare IPv4
     ssl: { rejectUnauthorized: false },  // Potrebbe essere necessario per alcuni provider
     // Configurazione del pool
-    max: 5, // ridotto drasticamente per evitare troppe connessioni simultanee
-    min: 1,  // minimo di connessioni da mantenere
+    max: 20, // aumentato il numero massimo di connessioni
+    min: 1,  // aumentato il numero minimo di connessioni
     idleTimeoutMillis: 5000, // aumentato timeout di inattività a 5 secondi
     connectionTimeoutMillis: 10000, // aumentato timeout di connessione a 10 secondi
     maxUses: 500, // drasticamente ridotto il numero massimo di query per connessione

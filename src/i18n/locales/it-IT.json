@@ -147,14 +147,20 @@
       "refunded": "Rimborsata"
     },
     "categories": {
-      "rent": "Affitto",
-      "deposit": "Deposito",
-      "maintenance": "Manutenzione",
-      "utilities": "Utenze",
-      "taxes": "Tasse",
-      "insurance": "Assicurazione",
-      "management": "Gestione",
-      "other": "Altro"
+      "income": {
+        "rent": "Affitto",
+        "deposit": "Deposito",
+        "latePayment": "Pagamento in ritardo",
+        "other": "Altro"
+      },
+      "expense": {
+        "maintenance": "Manutenzione",
+        "utilities": "Utenze",
+        "tax": "Tasse",
+        "insurance": "Assicurazione", 
+        "mortgage": "Mutuo",
+        "other": "Altro"
+      }
     },
     "paymentMethods": {
       "cash": "Contanti",
@@ -184,7 +190,21 @@
       "attachments": "Allegati",
       "uploadAttachments": "Carica allegati",
       "submit": "Salva transazione",
-      "cancel": "Annulla"
+      "cancel": "Annulla",
+      "noProperties": "Nessuna proprietà trovata",
+      "addPropertyFirst": "Aggiungi prima una proprietà",
+      "updateSuccess": "Transazione aggiornata",
+      "createSuccess": "Transazione creata",
+      "updateError": "Errore durante l'aggiornamento della transazione",
+      "createError": "Errore durante la creazione della transazione",
+      "enterAmount": "Inserisci importo",
+      "enterDescription": "Inserisci descrizione",
+      "selectUnit": "Seleziona unità",
+      "noTenant": "Nessun inquilino",
+      "selectType": "Seleziona tipo",
+      "selectCategory": "Seleziona categoria",
+      "addTransactionDesc": "Aggiungi una nuova transazione",
+      "updateTransaction": "Aggiorna transazione"
     },
     "confirmation": {
       "deleteTitle": "Elimina transazione",
@@ -200,6 +220,38 @@
       "financialDetails": "Dettagli finanziari",
       "documents": "Documenti",
       "history": "Storico"
+    },
+    "transactionDetails": {
+      "date": "Data",
+      "amount": "Importo",
+      "description": "Descrizione",
+      "type": "Tipo",
+      "category": "Categoria",
+      "tenant": "Inquilino",
+      "property": "Proprietà"
+    },
+    "filterByType": "Filtra per tipo",
+    "filterByProperty": "Filtra per proprietà",
+    "allTypes": "Tutti i tipi",
+    "allProperties": "Tutte le proprietà",
+    "incomes": "Entrate",
+    "expenses": "Uscite",
+    "noTransactionsFound": "Nessuna transazione trovata",
+    "modifySearchOrAdd": "Modifica i criteri di ricerca o aggiungi una nuova transazione",
+    "tryAgain": "Riprova",
+    "connectionError": "Errore di connessione",
+    "menu": {
+      "open": "Apri menu",
+      "edit": "Modifica",
+      "delete": "Elimina"
+    },
+    "confirmDelete": {
+      "title": "Elimina transazione",
+      "message": "Sei sicuro di voler eliminare questa transazione? Questa azione non può essere annullata.",
+      "cancel": "Annulla",
+      "confirm": "Elimina",
+      "success": "Transazione eliminata con successo",
+      "error": "Errore durante l'eliminazione della transazione"
     }
   },
   "common": {

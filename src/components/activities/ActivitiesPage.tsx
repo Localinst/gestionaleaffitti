@@ -237,7 +237,7 @@ const ActivitiesPage = () => {
 
   return (
     <AppLayout>
-      <div className="container mx-auto py-6 space-y-6">
+      <div className="container mx-auto p-2 py-6 space-y-6">
         <PageHeader 
           title="Attività" 
           description="Gestisci e inserisci manualmente le attività del tuo immobile" 
@@ -392,7 +392,7 @@ const ActivitiesPage = () => {
                           <TableBody>
                             {pastPending.map((activity) => (
                               <TableRow key={activity.id} className="bg-yellow-50">
-                                <TableCell className="font-medium">{activity.description}</TableCell>
+                                <TableCell className="font-medium text-sm py-1">{activity.description}</TableCell>
                                 <TableCell>{activity.property_name || "N/A"}</TableCell>
                                 <TableCell>{new Date(activity.date).toLocaleDateString('it-IT')}</TableCell>
                                 <TableCell>
@@ -476,7 +476,7 @@ const ActivitiesPage = () => {
                           <TableBody>
                             {future.map((activity) => (
                               <TableRow key={activity.id}>
-                                <TableCell className="font-medium">{activity.description}</TableCell>
+                                <TableCell className="font-medium py-1">{activity.description}</TableCell>
                                 <TableCell>{activity.property_name || "N/A"}</TableCell>
                                 <TableCell>{new Date(activity.date).toLocaleDateString('it-IT')}</TableCell>
                                 <TableCell>
@@ -583,42 +583,58 @@ const ActivitiesPage = () => {
                           <TableBody>
                             {pastCompleted.map((activity) => (
                               <TableRow key={activity.id} className="text-muted-foreground">
-                                <TableCell className="font-medium">{activity.description}</TableCell>
+                                <TableCell className="text-xs text-muted-foreground py-1">{activity.description}</TableCell>
                                 <TableCell>{activity.property_name || "N/A"}</TableCell>
                                 <TableCell>{new Date(activity.date).toLocaleDateString('it-IT')}</TableCell>
                                 <TableCell>
-                                  <Badge className={`${getPriorityColor(activity.priority)} opacity-50`}>
+                                  <Badge className={getPriorityColor(activity.priority)}>
                                     {activity.priority === 'high' ? t("activities.priority.high") : 
                                      activity.priority === 'medium' ? t("activities.priority.medium") : t("activities.priority.low")}
                                   </Badge>
                                 </TableCell>
                                 <TableCell>
-                                  <Badge className={`${getStatusColor(activity.status)} whitespace-nowrap opacity-50`}>
+                                  <Badge className={`${getStatusColor(activity.status)} whitespace-nowrap`}>
                                     {activity.status === 'pending' ? t("activities.status.pending") : 
                                      activity.status === 'completed' ? t("activities.status.completed") : t("activities.status.dismissed")}
                                   </Badge>
                                 </TableCell>
                                 <TableCell>
-                                  <div className="flex space-x-1">
-                                    {activity.status !== 'pending' && (
-                                      <TooltipProvider>
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <Button
-                                              variant="ghost"
-                                              size="icon"
-                                              onClick={() => handleUpdateStatus(activity.id, 'pending')}
-                                              className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                                            >
-                                              <RotateCcw className="h-4 w-4" />
-                                            </Button>
-                                          </TooltipTrigger>
-                                          <TooltipContent>
-                                            <p>{t("activities.actions.reopen")}</p>
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      </TooltipProvider>
-                                    )}
+                                  <div className="flex space-x-2">
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => handleUpdateStatus(activity.id, 'completed')}
+                                            className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                          >
+                                            <Check className="h-5 w-5" />
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>{t("activities.actions.markCompleted")}</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                    
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => handleUpdateStatus(activity.id, 'dismissed')}
+                                            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                          >
+                                            <X className="h-5 w-5" />
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>{t("activities.actions.markDismissed")}</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
                                   </div>
                                 </TableCell>
                               </TableRow>
@@ -638,4 +654,4 @@ const ActivitiesPage = () => {
   );
 };
 
-export default ActivitiesPage; 
+export default ActivitiesPage;

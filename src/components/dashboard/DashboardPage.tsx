@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { usePageTutorial } from '@/hooks';
 import { useTranslation } from "react-i18next";
+import useOptimizedQuery from '@/hooks/useOptimizedQuery';
+import { api } from '@/services/api'; // utilizziamo l'import corretto
+import { queryKeys } from '@/lib/queryKeys';
 
 import { 
   AreaChart, 
@@ -38,7 +41,7 @@ import { getDashboardSummary } from "@/services/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Toggle } from "../ui/toggle";
 import { Skeleton } from "@/components/ui/skeleton";
-import { api, Transaction } from "@/services/api";
+import { Transaction } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableBody, TableCell, TableHead, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -896,6 +899,30 @@ export default function DashboardPage() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Utilizziamo il nostro hook ottimizzato con una strategia di caching aggressiva
+  // per i dati che non cambiano frequentemente
+  const { data: properties, isLoading: isLoadingProperties } = useOptimizedQuery(
+    queryKeys.properties.list, 
+    () => api.properties.getAll(),
+    { cachingStrategy: 'aggressive' }
+  );
+  
+  // Per i dati di riepilogo che possono cambiare più spesso
+  // usiamo una strategia normale
+  const { data: dashboardSummary, isLoading: isLoadingSummary } = useOptimizedQuery(
+    queryKeys.dashboard.summary, 
+    () => api.dashboard.getSummary(),
+    { cachingStrategy: 'normal' }
+  );
+  
+  // Per le transazioni, che possono cambiare più frequentemente
+  // usiamo una strategia di caching minima
+  const { data: transactions, isLoading: isLoadingTransactions } = useOptimizedQuery(
+    queryKeys.transactions.list, 
+    () => api.transactions.getAll(),
+    { cachingStrategy: 'minimal' }
+  );
+
   // Funzione per generare report
   const generateReport = () => {
     toast.success("Generazione report avviata", {
@@ -1390,7 +1417,7 @@ export default function DashboardPage() {
         </div>
         
         {/* Statistiche */}
-        <div className="grid gap-3 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 mb-4 sm:mb-8" data-tutorial="dashboard-stats">
+        <div className="grid gap-1 sm:gap-5 grid-cols-2 md:grid-cols-2 lg:grid-cols-4 mb-4 sm:mb-8" data-tutorial="dashboard-stats">
           <StatCard
             title={t("dashboard.stats.properties")}
             value={summary.totalProperties}
