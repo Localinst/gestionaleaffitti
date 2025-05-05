@@ -10,6 +10,7 @@ interface SEOProps {
   twitterCard?: 'summary' | 'summary_large_image'
   keywords?: string[]
   hreflang?: Array<{locale: string, url: string}>
+  jsonLd?: Record<string, any> // Schema JSON-LD personalizzato
 }
 
 /**
@@ -26,7 +27,8 @@ export function SEO({
   ogType = 'website',
   twitterCard = 'summary',
   keywords,
-  hreflang
+  hreflang,
+  jsonLd
 }: SEOProps) {
   const siteUrl = import.meta.env.VITE_SITE_URL || 'https://tenoris360.com'
   // Supporta sia canonical che canonicalUrl per retrocompatibilità
@@ -63,6 +65,13 @@ export function SEO({
       {hreflang && hreflang.map((item, index) => (
         <link key={index} rel="alternate" hrefLang={item.locale} href={item.url} />
       ))}
+
+      {/* JSON-LD strutturato per SEO */}
+      {jsonLd && (
+        <script type="application/ld+json">
+          {JSON.stringify(jsonLd)}
+        </script>
+      )}
 
       {/* Evento di completamento del rendering per SSR */}
       <script>
