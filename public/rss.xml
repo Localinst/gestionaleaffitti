@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0">
+    <channel>
+        <title>Tenoris360 - Software Gestione Affitti</title>
+        <link>https://tenoris360.com</link>
+        <description>Software gestione affitti e gestionale locazioni per proprietari e agenzie immobiliari. Programma gestione immobili in affitto, software contratti di locazione e sistema di gestione locativa completo.</description>
+        <lastBuildDate>Mon, 05 May 2025 15:05:16 GMT</lastBuildDate>
+        <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
+        <generator>https://github.com/jpmonette/feed</generator>
+        <language>it</language>
+        <copyright>Tutti i diritti riservati 2025, Tenoris360</copyright>
+        <item>
+            <title>Come massimizzare i rendimenti dai tuoi immobili in affitto</title>
+            <link>https://tenoris360.com/blog/come-massimizzare-i-rendimenti-dai-tuoi-immobili-in-affitto</link>
+            <guid>https://tenoris360.com/blog/come-massimizzare-i-rendimenti-dai-tuoi-immobili-in-affitto</guid>
+            <pubDate>Mon, 20 Mar 2025 10:00:00 GMT</pubDate>
+            <description>Scopri le strategie più efficaci per aumentare il rendimento dei tuoi immobili in locazione, dall'ottimizzazione dei costi alla gestione efficiente.</description>
+        </item>
+        <item>
+            <title>Guida completa ai contratti di locazione in Italia</title>
+            <link>https://tenoris360.com/blog/guida-completa-ai-contratti-di-locazione-in-italia</link>
+            <guid>https://tenoris360.com/blog/guida-completa-ai-contratti-di-locazione-in-italia</guid>
+            <pubDate>Thu, 15 Feb 2025 14:00:00 GMT</pubDate>
+            <description>Tutto quello che devi sapere sui contratti di locazione in Italia: tipologie, normative aggiornate e adempimenti fiscali per proprietari di immobili.</description>
+        </item>
+        <item>
+            <title>Le migliori pratiche per la gestione degli inquilini</title>
+            <link>https://tenoris360.com/blog/le-migliori-pratiche-per-la-gestione-degli-inquilini</link>
+            <guid>https://tenoris360.com/blog/le-migliori-pratiche-per-la-gestione-degli-inquilini</guid>
+            <pubDate>Thu, 18 Jan 2025 09:30:00 GMT</pubDate>
+            <description>Consigli pratici per stabilire relazioni positive con gli inquilini, prevenire i problemi più comuni e gestire efficacemente il rapporto locativo.</description>
+        </item>
+    </channel>
+</rss> 

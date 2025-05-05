@@ -1,28 +1,100 @@
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
   <meta charset="utf-8">
-  <title>Reindirizzamento SPA</title>
-  <script type="text/javascript">
-    // Soluzione corretta per Single Page Application
-    // Reindirizza tutte le richieste a index.html senza parametri speciali
-    var location = window.location;
-    
-    // Redirect semplice alla root con il percorso originale
-    var pathname = location.pathname;
-    
-    // Se siamo già in un percorso reindirizzato (inizia con /?/), non fare nulla
-    if (location.search.indexOf('?/') === 0) {
-      console.log('Già reindirizzato. Non fare nulla.');
-    } else {
-      // Altrimenti, reindirizza alla root
-      var newPath = location.origin + '/';
-      console.log('Reindirizzando a:', newPath);
-      window.location.href = newPath + '#' + pathname.substring(1);
+  <title>Pagina non trovata - Tenoris360</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Pagina non trovata sul sito Tenoris360 - Software gestione affitti e locazioni immobili.">
+  <link rel="canonical" href="https://tenoris360.com/404.html">
+  <meta name="robots" content="noindex,follow">
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+      text-align: center;
     }
+    h1 { color: #0066cc; margin-bottom: 1rem; }
+    p { margin-bottom: 1.5rem; }
+    a { color: #0066cc; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .btn {
+      display: inline-block;
+      background: #0066cc;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 4px;
+      font-weight: 500;
+      margin-top: 1rem;
+    }
+    .btn:hover { background: #0055aa; text-decoration: none; }
+    .logo { max-width: 180px; margin-bottom: 2rem; }
+  </style>
+  <script type="text/javascript">
+    // Script per gestire reindirizzamento
+    document.addEventListener('DOMContentLoaded', function() {
+      // Salva l'URL corrente per potenziale debugging
+      console.log('URL 404 richiesto:', window.location.href);
+      
+      // Controlla se l'URL contiene un percorso che potrebbe essere gestito dall'app
+      var path = window.location.pathname;
+      
+      // Reindirizza alla home con state per SPA router
+      var newPath = window.location.origin + '/';
+      
+      // Aggiungi parametro stato per far capire al router che è una pagina 404
+      window.history.replaceState(
+        { notFoundPath: path }, 
+        'Pagina non trovata', 
+        newPath
+      );
+      
+      // Aggiungi l'informazione all'evento di caricamento per SSR
+      if (typeof window.onRenderComplete === 'function') {
+        window.onRenderComplete({
+          type: '404',
+          path: path
+        });
+      }
+      
+      // Ritarda il reindirizzamento per dare tempo alla pagina di essere visualizzata
+      setTimeout(function() {
+        window.location.href = newPath + '#' + path.substring(1);
+      }, 3000); // 3 secondi
+    });
   </script>
 </head>
 <body>
-  Reindirizzamento alla homepage...
+  <img src="/simbolologo.png" alt="Tenoris360 Logo" class="logo">
+  <h1>Pagina non trovata</h1>
+  <p>Ci dispiace, ma la pagina che stai cercando non è disponibile o è stata spostata.</p>
+  <p>Verrai reindirizzato automaticamente alla homepage tra pochi secondi.</p>
+  <a href="https://tenoris360.com" class="btn">Torna alla homepage</a>
+  
+  <!-- Struttura dati per motori di ricerca -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://tenoris360.com/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Pagina non trovata",
+        "item": "https://tenoris360.com/404.html"
+      }
+    ]
+  }
+  </script>
 </body>
 </html> 

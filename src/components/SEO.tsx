@@ -28,7 +28,7 @@ export function SEO({
   keywords,
   hreflang
 }: SEOProps) {
-  const siteUrl = import.meta.env.VITE_SITE_URL || 'https://tuodominio.com'
+  const siteUrl = import.meta.env.VITE_SITE_URL || 'https://tenoris360.com'
   // Supporta sia canonical che canonicalUrl per retrocompatibilità
   const effectiveCanonical = canonicalUrl || (canonical ? `${siteUrl}${canonical}` : siteUrl)
   const fullOgImage = ogImage ? `${siteUrl}${ogImage}` : `${siteUrl}/og-image.jpg`
@@ -50,17 +50,33 @@ export function SEO({
       <meta property="og:type" content={ogType} />
       <meta property="og:url" content={effectiveCanonical} />
       <meta property="og:image" content={fullOgImage} />
+      <meta property="og:site_name" content="Tenoris360" />
 
       {/* Twitter */}
       <meta name="twitter:card" content={twitterCard} />
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={fullOgImage} />
+      <meta name="twitter:site" content="@tenoris360" />
       
       {/* hreflang per il supporto multilingua */}
       {hreflang && hreflang.map((item, index) => (
         <link key={index} rel="alternate" hrefLang={item.locale} href={item.url} />
       ))}
+
+      {/* Evento di completamento del rendering per SSR */}
+      <script>
+        {`
+          document.addEventListener('DOMContentLoaded', function() {
+            if (window.onRenderComplete) {
+              window.onRenderComplete({
+                type: 'page',
+                path: window.location.pathname
+              });
+            }
+          });
+        `}
+      </script>
     </Helmet>
   )
 }

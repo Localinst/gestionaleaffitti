@@ -66,4 +66,4 @@ Disallow: /admin-8b5c127e3f
 Disallow: /admin-8b5c127e3f/*
 
 # Sitemap
-Sitemap: https://www.tenoris360.com/sitemap.xml
+Sitemap: https://tenoris360.com/sitemap.xml

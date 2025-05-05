@@ -1,14 +1,69 @@
-User-agent: Googlebot
-Allow: /
+# Configurazione robots.txt per tenoris360.com
 
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
+# Configura l'accesso dei crawler per tutte le risorse
 User-agent: *
+
+# Consenti l'accesso a tutte le pagine pubbliche e risorse statiche
 Allow: /
+Allow: /*.ico$
+Allow: /*.png$
+Allow: /*.jpg$
+Allow: /*.svg$
+Allow: /*.webp$
+Allow: /*.gif$
+Allow: /*.css$
+Allow: /*.js$
+Allow: /*.woff$
+Allow: /*.woff2$
+Allow: /*.ttf$
+
+# Conferma esplicitamente l'accesso alle pagine pubbliche
+Allow: /blog
+Allow: /guide
+Allow: /supporto
+Allow: /privacy
+Allow: /termini
+Allow: /cookie
+Allow: /pricing
+Allow: /login
+Allow: /register
+Allow: /assets/
+
+# Conferma esplicitamente l'accesso alle versioni in altre lingue
+Allow: /en/
+Allow: /en-gb/
+Allow: /fr/
+Allow: /de/
+Allow: /es/
+Allow: /en/blog
+Allow: /en/guide
+Allow: /en/supporto
+Allow: /en/privacy
+Allow: /en/termini
+Allow: /en/cookie
+Allow: /en/pricing
+
+# Disabilita l'accesso alle pagine protette/amministrative (solo le rotte, non le risorse)
+Disallow: /dashboard$
+Disallow: /dashboard/
+Disallow: /properties$
+Disallow: /properties/
+Disallow: /tenants$
+Disallow: /tenants/
+Disallow: /transactions$
+Disallow: /transactions/
+Disallow: /contracts$
+Disallow: /contracts/
+Disallow: /reports$
+Disallow: /reports/
+Disallow: /activities$
+Disallow: /activities/
+Disallow: /tourism$
+Disallow: /tourism/
+
+# Disabilita l'accesso alla route segreta dell'amministratore
+Disallow: /admin-8b5c127e3f
+Disallow: /admin-8b5c127e3f/*
+
+# Sitemap
+Sitemap: https://tenoris360.com/sitemap.xml

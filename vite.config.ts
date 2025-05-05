@@ -2,14 +2,8 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { resolve } from "path";
-// Modifica: utilizziamo un plugin supportato per il prerendering
-// Nota: Installa questi pacchetti prima di decommentare:
-// npm install -D vite-plugin-static-copy
-// npm install -D @prerenderer/prerender-spa-plugin puppeteer
-// import staticCopy from 'vite-plugin-static-copy'
-// import fs from 'fs';
-// import PrerenderSPAPlugin from '@prerenderer/prerender-spa-plugin';
-// const Renderer = PrerenderSPAPlugin.PuppeteerRenderer;
+// Utilizziamo un approccio semplificato per il prerendering
+import fs from 'fs-extra';
 
 // https://vitejs.dev/config/
 export default defineConfig(() => ({
@@ -43,39 +37,53 @@ export default defineConfig(() => ({
         target: 'http://localhost:3000', // L'indirizzo del tuo server backend
         changeOrigin: true, // Necessario per i virtual host
         secure: false,      // Se il backend usa HTTPS (con certificato valido), impostalo a true
-        // Opzionale: riscrivi il percorso se necessario (non sembra servire qui)
-        // rewrite: (path) => path.replace(/^\/api/, '') 
       }
     }
   },
   plugins: [
     react(),
-    // Decommentare quando i pacchetti sono installati:
-    // {
-    //   name: 'prerender-spa',
-    //   apply: 'build',
-    //   configResolved() {
-    //     // Creazione della cartella necessaria per il prerender
-    //     if (!fs.existsSync(resolve(__dirname, "dist"))) {
-    //       fs.mkdirSync(resolve(__dirname, "dist"), { recursive: true });
-    //     }
-    //   },
-    //   closeBundle() {
-    //     // Esegue il prerendering dopo la build
-    //     const prerenderer = new PrerenderSPAPlugin({
-    //       staticDir: resolve(__dirname, 'dist'),
-    //       routes: ['/', '/blog', '/guide', '/supporto', '/privacy', '/termini', '/cookie', '/pricing'],
-    //       renderer: new Renderer({
-    //         renderAfterDocumentEvent: 'render-complete',
-    //         headless: true,
-    //       })
-    //     });
-    //     
-    //     return prerenderer.apply({ hooks: { thisCompilation: (compilation) => {
-    //       compilation.hooks.additionalAssets = { tap: () => {} };
-    //     }}});
-    //   }
-    // }
+    {
+      name: 'copy-sitemap-rss',
+      apply: 'build',
+      closeBundle() {
+        try {
+          // Copiare sitemap.xml nella cartella dist
+          if (fs.existsSync('./public/sitemap.xml')) {
+            if (!fs.existsSync('./dist')) {
+              fs.mkdirSync('./dist', { recursive: true });
+            }
+            fs.copyFileSync('./public/sitemap.xml', './dist/sitemap.xml');
+            console.log('File sitemap.xml copiato con successo nella cartella dist');
+          }
+          
+          // Copiare rss.xml nella cartella dist
+          if (fs.existsSync('./public/rss.xml')) {
+            fs.copyFileSync('./public/rss.xml', './dist/rss.xml');
+            console.log('File rss.xml copiato con successo nella cartella dist');
+          }
+          
+          // Copiare robots.txt nella cartella dist
+          if (fs.existsSync('./public/robots.txt')) {
+            fs.copyFileSync('./public/robots.txt', './dist/robots.txt');
+            console.log('File robots.txt copiato con successo nella cartella dist');
+          }
+          
+          // Copiare opensearch.xml nella cartella dist
+          if (fs.existsSync('./public/opensearch.xml')) {
+            fs.copyFileSync('./public/opensearch.xml', './dist/opensearch.xml');
+            console.log('File opensearch.xml copiato con successo nella cartella dist');
+          }
+          
+          // Assicurarsi che il file og-image.jpg sia presente
+          if (fs.existsSync('./public/logo.png') && !fs.existsSync('./dist/og-image.jpg')) {
+            fs.copyFileSync('./public/logo.png', './dist/og-image.jpg');
+            console.log('File og-image.jpg creato nella cartella dist');
+          }
+        } catch (err) {
+          console.error('Errore durante la copia dei file:', err);
+        }
+      }
+    }
   ],
   resolve: {
     alias: {
