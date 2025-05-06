@@ -1,5 +1,6 @@
 [build]
-  publish = "dist"  # La cartella di output del tuo build (cambia se usi una cartella diversa)
+  publish = "dist"
+  command = "npm run build"
 
 # Configurazione proxy per reindirizzare le chiamate API
 [[redirects]]
@@ -13,14 +14,6 @@
   from = "/*"
   to = "/index.html"
   status = 200 
-
-# Ottimizzazione SEO per i crawler dei motori di ricerca
-[[plugins]]
-  package = "@netlify/plugin-sitemap"
-
-  [plugins.inputs]
-  baseUrl = "https://tenoris360.com"
-  buildDir = "dist"
 
 # Questa configurazione aiuta Netlify a rilevare crawler e bot per servire versioni prerendered
 [[headers]]
