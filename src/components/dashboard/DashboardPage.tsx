@@ -1402,10 +1402,7 @@ export default function DashboardPage() {
 
   return (
     <AppLayout>
-      <PageHeader
-        title={t("dashboard.title")}
-        description={t("dashboard.description")}
-      />
+      
       
       <div className="container mx-auto p-2 sm:p-6">
         <div className="flex justify-between items-center mb-4 sm:mb-6" data-tutorial="dashboard-overview">

@@ -1,52 +1,70 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import axios from 'axios';
+import { setSubscriptionContextHandle } from '../services/api';
 
 // Interfaccia per il contesto dell'abbonamento
 interface SubscriptionContextProps {
   hasActiveSubscription: boolean;
+  isInTrialPeriod: boolean;
+  trialDaysRemaining: number;
   isLoading: boolean;
   checkSubscriptionStatus: () => Promise<boolean>;
+  handleSubscriptionError: (error: any) => void;
 }
 
-// Creazione del contesto
-const SubscriptionContext = createContext<SubscriptionContextProps>({
-  hasActiveSubscription: false,
-  isLoading: true,
-  checkSubscriptionStatus: async () => false,
-});
+const SubscriptionContext = createContext<SubscriptionContextProps | undefined>(undefined);
 
-// Hook per utilizzare il contesto
-export const useSubscription = () => useContext(SubscriptionContext);
+export const useSubscription = () => {
+  const context = useContext(SubscriptionContext);
+  if (!context) {
+    throw new Error('useSubscription deve essere usato all\'interno di SubscriptionProvider');
+  }
+  return context;
+};
 
 // Provider del contesto
 export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
+  const [isInTrialPeriod, setIsInTrialPeriod] = useState(false);
+  const [trialDaysRemaining, setTrialDaysRemaining] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
   const checkedInSession = useRef(false);
 
   // Funzione per ottenere la base URL dell'API
   const getAPIBaseUrl = () => {
-    // In produzione usa l'URL corretto
     if (window.location.hostname !== 'localhost') {
       return 'https://gestionaleaffitti.onrender.com/api';
     }
-    // In locale usa localhost:3000
     return 'http://localhost:3000/api';
   };
 
+  // Funzione per gestire specificamente gli errori 403 relativi all'abbonamento
+  const handleSubscriptionError = useCallback((error: any) => {
+    if (axios.isAxiosError(error) && error.response?.status === 403) {
+      const responseData = error.response.data;
+      
+      if (responseData?.trialExpired && responseData?.subscribed === false) {
+        setHasActiveSubscription(false);
+        setIsInTrialPeriod(false);
+        setTrialDaysRemaining(0);
+        checkedInSession.current = true;
+        return true;
+      }
+    }
+    return false;
+  }, []);
+
   const checkSubscriptionStatus = useCallback(async (force = false): Promise<boolean> => {
-    // Se abbiamo già verificato in questa sessione e non è forzato, usiamo lo stato attuale
     if (checkedInSession.current && !force) {
-      console.log('SubscriptionContext: Usando stato abbonamento memorizzato:', hasActiveSubscription);
-      return hasActiveSubscription;
+      return hasActiveSubscription || isInTrialPeriod;
     }
 
-    // Se non c'è un utente, non può avere un abbonamento
     if (!user) {
-      console.log('SubscriptionContext: Nessun utente autenticato, abbonamento impostato a false');
       setHasActiveSubscription(false);
+      setIsInTrialPeriod(false);
+      setTrialDaysRemaining(0);
       setIsLoading(false);
       return false;
     }
@@ -55,22 +73,18 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
       setIsLoading(true);
       
       if (user.email) {
-        console.log('SubscriptionContext: Verifica abbonamento per utente', user.email);
-        // Ottieni il token di autenticazione
         const token = localStorage.getItem('authToken');
         
         if (!token) {
           console.error('Token di autenticazione mancante');
           setHasActiveSubscription(false);
+          setIsInTrialPeriod(false);
+          setTrialDaysRemaining(0);
           return false;
         }
         
-        // Usa l'URL completo del backend
         const apiBaseUrl = getAPIBaseUrl();
-        console.log(`SubscriptionContext: Usando base URL API: ${apiBaseUrl}`);
         
-        // Effettua una chiamata API al backend per verificare lo stato dell'abbonamento con Stripe
-        // Usa l'email dell'utente invece dell'ID
         const response = await axios.get(`${apiBaseUrl}/payments/check-subscription-status?userEmail=${encodeURIComponent(user.email)}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -78,82 +92,97 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
           }
         });
         
-        // Verifica lo stato dell'abbonamento
         const isActive = response.data?.active === true;
-        console.log('SubscriptionContext: Abbonamento attivo?', isActive);
+        const isTrial = response.data?.isTrial === true;
+        const daysLeft = response.data?.daysLeft || 0;
+        const trialEndDate = response.data?.trialEndDate;
         
-        // Se stiamo forzando la verifica (dopo un pagamento) e l'abbonamento non è attivo
-        // potrebbe esserci un ritardo nella sincronizzazione con Stripe, ottimisticamente imposta a true
-        if (force && !isActive) {
-          console.log('SubscriptionContext: Forzatura verifica dopo pagamento, impostazione temporanea a true');
+        // Se l'utente ha un abbonamento attivo
+        if (isActive && !isTrial) {
           setHasActiveSubscription(true);
-          
-          // Riprova tra 5 secondi per verificare nuovamente lo stato reale
-          setTimeout(() => {
-            console.log('SubscriptionContext: Ri-verifica abbonamento dopo ritardo');
-            checkSubscriptionStatus(true);
-          }, 5000);
-          
-          return true;
+          setIsInTrialPeriod(false);
+          setTrialDaysRemaining(0);
+        } 
+        // Se l'utente è nel periodo di prova
+        else if (isActive && isTrial) {
+          setHasActiveSubscription(false);
+          setIsInTrialPeriod(true);
+          setTrialDaysRemaining(daysLeft);
+        }
+        // Se il periodo di prova è scaduto e non c'è abbonamento
+        else {
+          setHasActiveSubscription(false);
+          setIsInTrialPeriod(false);
+          setTrialDaysRemaining(0);
         }
         
-        setHasActiveSubscription(isActive);
-        checkedInSession.current = true; // Segna che abbiamo verificato in questa sessione
-        return isActive;
+        checkedInSession.current = true;
+        return isActive || isTrial;
       }
       
-      console.log('SubscriptionContext: Email utente non valida');
       return false;
     } catch (error) {
       console.error('Errore durante la verifica dello stato dell\'abbonamento:', error);
       
-      // In produzione, se c'è un errore di comunicazione, è meglio non bloccare l'utente
-      // ma questo comportamento può essere modificato in base alle esigenze aziendali
+      // Gestiamo specificamente gli errori 403 relativi all'abbonamento
+      if (handleSubscriptionError(error)) {
+        return false;
+      }
+      
       const serverIsDown = !navigator.onLine || axios.isAxiosError(error) && !error.response;
       
       if (serverIsDown) {
-        // Se il server non è raggiungibile, potremmo permettere l'accesso temporaneo
         console.warn('Server non raggiungibile, accesso temporaneo consentito');
         setHasActiveSubscription(true);
         return true;
       }
       
-      // Se stiamo forzando la verifica dopo un pagamento e c'è un errore
-      // consideriamo l'abbonamento come valido temporaneamente
       if (force) {
-        console.log('SubscriptionContext: Errore durante verifica forzata, impostazione temporanea a true');
         setHasActiveSubscription(true);
         return true;
       }
       
       setHasActiveSubscription(false);
+      setIsInTrialPeriod(false);
+      setTrialDaysRemaining(0);
       return false;
     } finally {
       setIsLoading(false);
     }
-  }, [user, hasActiveSubscription]); // Dipendenze
+  }, [user, hasActiveSubscription, isInTrialPeriod, handleSubscriptionError]);
 
-  // Controlla lo stato dell'abbonamento quando l'utente cambia (una sola volta)
   useEffect(() => {
     if (user && !checkedInSession.current) {
-      console.log('SubscriptionContext: Utente cambiato, controllo abbonamento');
       checkSubscriptionStatus();
     }
   }, [user, checkSubscriptionStatus]);
 
-  // Reset del flag quando l'utente cambia
   useEffect(() => {
     checkedInSession.current = false;
   }, [user?.id]);
 
+  // Registra le funzioni di gestione errori con l'interceptor API
+  useEffect(() => {
+    // Imposta il riferimento al contesto dell'abbonamento per gli interceptor
+    setSubscriptionContextHandle({
+      handleSubscriptionError
+    });
+
+    return () => {
+      // In caso di smontaggio, rimuovi il riferimento
+      setSubscriptionContextHandle(null);
+    };
+  }, [handleSubscriptionError]);
+
   return (
-    <SubscriptionContext.Provider
-      value={{
-        hasActiveSubscription,
-        isLoading,
-        checkSubscriptionStatus,
-      }}
-    >
+    <SubscriptionContext.Provider value={{
+      hasActiveSubscription,
+      isInTrialPeriod,
+      trialDaysRemaining,
+      isLoading,
+      checkSubscriptionStatus,
+      handleSubscriptionError
+    }}>
       {children}
     </SubscriptionContext.Provider>
   );

@@ -84,11 +84,21 @@ interface DashboardSummary {
 
 import { DashboardSummaryResponse } from '@/components/dashboard/DashboardPage';
 
+// Importa axios
+import axios from 'axios';
+
+// Variabile per memorizzare il context di SubscriptionContext
+let subscriptionContextHandle: any = null;
+
+// Funzione per impostare il reference al context dell'abbonamento
+export function setSubscriptionContextHandle(handle: any) {
+  subscriptionContextHandle = handle;
+}
+
 // Configurazione dell'URL API di base
 export function getAPIBaseUrl() {
   // Per debugging, mostra sempre quale URL viene usato
   const result = getActualAPIBaseUrl();
-  console.log('API Base URL configurato:', result);
   return result;
 }
 
@@ -101,6 +111,36 @@ export function getActualAPIBaseUrl() {
   
   // In ambiente di sviluppo locale, usa localhost:3000
   return 'http://localhost:3000/api';
+}
+
+// Setup degli interceptors di Axios per la gestione centralizzata degli errori
+export function setupAxiosInterceptors() {
+  // Interceptor di risposta per gestire errori 403 relativi all'abbonamento
+  axios.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      // Se l'errore è 403 e contiene informazioni sul periodo di prova scaduto
+      if (axios.isAxiosError(error) && 
+          error.response?.status === 403 && 
+          subscriptionContextHandle) {
+        
+        // Prova a gestire l'errore usando il contesto dell'abbonamento
+        const handled = subscriptionContextHandle.handleSubscriptionError(error);
+        
+        if (handled) {
+          // Reindirizza l'utente alla pagina pricing se necessario
+          if (window.location.pathname !== '/pricing' && 
+              !window.location.pathname.startsWith('/login') &&
+              !window.location.pathname.startsWith('/register')) {
+            window.location.href = '/pricing';
+          }
+        }
+      }
+      
+      // Rilancia l'errore per permettere ai componenti di gestirlo se necessario
+      return Promise.reject(error);
+    }
+  );
 }
 
 // URL base dell'API

@@ -491,17 +491,17 @@ export const RefundPolicy = () => {
           <section>
             <h2>2. Periodo di Prova Gratuito</h2>
             <p>
-              Offriamo un periodo di prova gratuito di 7 giorni per tutti i nuovi abbonamenti, sia mensili (19,99€/mese) che annuali (199,99€/anno). Durante questi 7 giorni, potrai testare completamente tutte le funzionalità del servizio senza alcun addebito.
+              Offriamo un periodo di prova gratuito di 14 giorni per tutti i nuovi abbonamenti, sia mensili (19,99€/mese) che annuali (199,99€/anno). Durante questi 14 giorni, potrai testare completamente tutte le funzionalità del servizio senza alcun addebito.
             </p>
             <p>
-              <strong>Importante</strong>: È responsabilità dell'utente annullare l'abbonamento entro il periodo di prova di 7 giorni per evitare qualsiasi addebito. Al termine dei 7 giorni, se l'abbonamento non viene annullato, verrà automaticamente addebitato il costo del piano scelto.
+              <strong>Importante</strong>: È responsabilità dell'utente annullare l'abbonamento entro il periodo di prova di 14 giorni per evitare qualsiasi addebito. Al termine dei 14 giorni, se l'abbonamento non viene annullato, verrà automaticamente addebitato il costo del piano scelto.
             </p>
           </section>
 
           <section>
             <h2>3. Annullamento durante il Periodo di Prova</h2>
             <p>
-              Per annullare durante il periodo di prova di 7 giorni:
+              Per annullare durante il periodo di prova di 14 giorni:
             </p>
             <ol>
               <li>Accedi al tuo account Tenoris360</li>
@@ -510,7 +510,7 @@ export const RefundPolicy = () => {
               <li>Segui le istruzioni per completare l'annullamento</li>
             </ol>
             <p>
-              L'annullamento durante il periodo di prova di 7 giorni comporta la cessazione immediata dell'accesso al servizio senza alcun addebito.
+              L'annullamento durante il periodo di prova di 14 giorni comporta la cessazione immediata dell'accesso al servizio senza alcun addebito.
             </p>
           </section>
 
@@ -518,7 +518,7 @@ export const RefundPolicy = () => {
             <h2>4. Politica di Rimborso dopo il Periodo di Prova</h2>
             <h3>4.1 Principio Generale</h3>
             <p>
-              Poiché offriamo un periodo di prova gratuito di 7 giorni, non prevediamo rimborsi dopo l'addebito effettivo.
+              Poiché offriamo un periodo di prova gratuito di 14 giorni, non prevediamo rimborsi dopo l'addebito effettivo.
             </p>
             
             <h3>4.2 Abbonamenti Mensili (19,99€/mese)</h3>

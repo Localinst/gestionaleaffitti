@@ -9,11 +9,13 @@ import { StripePayment } from "@/components/ui/stripe-payment";
 import { getProducts, getProductVariants } from "@/services/lemon-squeezy-api";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/context/AuthContext";
+import { useTranslation } from 'react-i18next';
 
 const ProtectedPricing: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const faqs = [
     {
@@ -154,9 +156,9 @@ const ProtectedPricing: React.FC = () => {
 
       <main className="container max-w-6xl mx-auto py-16 px-4">
         <div className="flex flex-col items-center text-center mb-12">
-          <h1 className="text-4xl font-bold tracking-tighter mb-4">Completa il tuo abbonamento</h1>
+          <h1 className="text-4xl font-bold tracking-tighter mb-4">{t('pricing.title')}</h1>
           <p className="text-xl text-muted-foreground max-w-3xl">
-            Benvenuto, {user?.name}! Per iniziare a utilizzare tutte le funzionalità di Tenoris360, scegli il piano più adatto alle tue esigenze.
+            {t('pricing.description')}
           </p>
         </div>
         

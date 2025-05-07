@@ -1,6 +1,7 @@
+import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
-import { useSubscription } from '@/context/SubscriptionContext';
+import { useSubscription } from '../../context/SubscriptionContext';
+import { useAuth } from '../../context/AuthContext';
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -15,10 +16,10 @@ interface SubscriptionRouteProps {
  * Se l'utente è autenticato ma non ha un abbonamento attivo, viene reindirizzato alla pagina per l'acquisto.
  */
 export const SubscriptionRoute: React.FC<SubscriptionRouteProps> = ({ children }) => {
-  const { user, isLoading: isLoadingAuth } = useAuth();
-  const { hasActiveSubscription, isLoading: isLoadingSubscription, checkSubscriptionStatus } = useSubscription();
-  const [recentlyConfirmed, setRecentlyConfirmed] = useState<boolean>(false);
+  const { hasActiveSubscription, isInTrialPeriod, isLoading, checkSubscriptionStatus } = useSubscription();
+  const { user } = useAuth();
   const location = useLocation();
+  const [recentlyConfirmed, setRecentlyConfirmed] = useState<boolean>(false);
   const checkPerformed = useRef(false);
   
   // Controlla se l'utente ha recentemente confermato un abbonamento
@@ -46,16 +47,6 @@ export const SubscriptionRoute: React.FC<SubscriptionRouteProps> = ({ children }
     }
   }, [user, checkSubscriptionStatus]);
 
-  // Se stiamo caricando i dati dell'utente o dell'abbonamento, mostriamo un caricamento
-  if (isLoadingAuth || isLoadingSubscription) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-        <p className="text-lg">Verifica abbonamento in corso...</p>
-      </div>
-    );
-  }
-  
   // Se l'utente non è autenticato, reindirizza al login
   if (!user) {
     toast.error("Accesso negato", {
@@ -64,23 +55,26 @@ export const SubscriptionRoute: React.FC<SubscriptionRouteProps> = ({ children }
     });
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
-  
-  // Se l'utente ha recentemente confermato un abbonamento, mostriamo il contenuto protetto
-  // anche se il sistema non ha ancora aggiornato lo stato dell'abbonamento
-  if (recentlyConfirmed) {
-    console.log('SubscriptionRoute: Abbonamento recentemente confermato, accesso consentito');
+
+  // Se stiamo caricando, mostra un messaggio di caricamento
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+        <p className="text-lg">Verifica abbonamento in corso...</p>
+      </div>
+    );
+  }
+
+  // Se l'utente ha un abbonamento attivo o è nel periodo di prova, mostra il contenuto
+  if (hasActiveSubscription || isInTrialPeriod || recentlyConfirmed) {
     return <>{children}</>;
   }
-  
-  // Se l'utente è autenticato ma non ha un abbonamento attivo, reindirizza alla pagina di acquisto
-  if (!hasActiveSubscription) {
-    toast.info("Abbonamento richiesto", {
-      description: "Per accedere a questa funzionalità è necessario un abbonamento attivo",
-      duration: 5000
-    });
-    return <Navigate to="/subscribe" replace />;
-  }
-  
-  // Altrimenti, mostra il contenuto protetto
-  return <>{children}</>;
+
+  // Se l'utente non ha un abbonamento attivo e non è nel periodo di prova, reindirizza alla pagina dei prezzi
+  toast.info("Abbonamento richiesto", {
+    description: "Per accedere a questa funzionalità è necessario un abbonamento attivo",
+    duration: 5000
+  });
+  return <Navigate to="/pricing" state={{ from: location }} replace />;
 }; 

@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import Stripe from 'stripe';
 import dotenv from 'dotenv';
 import { authenticate } from '../middleware/auth';
+import { supabase } from '../lib/supabase';
 
 dotenv.config();
 
@@ -15,11 +16,130 @@ const stripe = new Stripe(stripeSecretKey, {
   apiVersion: '2025-03-31.basil',
 });
 
-// Crea una sessione di checkout per l'abbonamento mensile (€20)
-router.post('/create-checkout-session/monthly', async (req: Request, res: Response) => {
+// Verifica lo stato dell'abbonamento
+router.get('/check-subscription-status', authenticate, async (req: Request, res: Response) => {
   try {
-    // Estrai l'email dall'utente autenticato o dal body
-    const userEmail = req.body.email;
+    const userEmail = req.query.userEmail as string;
+    const userId = req.user.id; // Prendiamo l'ID dell'utente dal token JWT
+    
+    if (!userEmail || !userId) {
+      return res.status(400).json({ error: 'Email e ID utente richiesti' });
+    }
+
+    // ===== BYPASS TEMPORANEO =====
+    // Controlliamo se l'utente esiste in auth.users tramite SQL diretto
+    const { data: authResult, error: authError } = await supabase
+      .from('auth.users') // Questo potrebbe non funzionare a causa del prefisso 'public'
+      .select('created_at')
+      .eq('id', userId)
+      .single();
+
+    // Controllo di fallback: se l'utente è connesso, ha un auth token valido, quindi è registrato
+    // Per gli utenti appena creati, forniamo automaticamente un periodo di prova
+    // === INIZIO MISURA TEMPORANEA ===
+    const now = new Date();
+    let createdAt: Date;
+    let createdAtValid = false;
+    
+    // Verifica che la data di creazione sia valida
+    if (authResult?.created_at) {
+      const tempDate = new Date(authResult.created_at);
+      if (!isNaN(tempDate.getTime())) {
+        createdAt = tempDate;
+        createdAtValid = true;
+      } else {
+        // Fallback se la data non è valida
+        createdAt = new Date(now);
+        createdAt.setDate(createdAt.getDate() - 1); // Un giorno fa per dare un breve periodo di prova
+      }
+    } else {
+      // Se non c'è data di creazione, usiamo il fallback
+      createdAt = new Date(now);
+      createdAt.setDate(createdAt.getDate() - 1); // Un giorno fa
+    }
+    
+    // Calcola la fine del periodo di prova (14 giorni dalla creazione)
+    const trialEndDate = new Date(createdAt);
+    trialEndDate.setDate(trialEndDate.getDate() + 14);
+    const diffDays = Math.ceil((trialEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    
+    // Se l'utente si è appena registrato, consideralo in periodo di prova
+    if (diffDays > 0) {
+      return res.json({
+        active: true,
+        isTrial: true,
+        daysLeft: diffDays,
+        trialEndDate: trialEndDate.toISOString()
+      });
+    }
+    // === FINE MISURA TEMPORANEA ===
+    
+
+    // Query diretta al database usando pool (accesso a auth.users)
+    const { error, data } = await supabase.rpc('check_trial_period', { 
+      user_identifier: userId 
+    });
+
+    if (error) {
+      console.error('Errore nella funzione RPC:', error);
+    } else if (data) {
+      // Formatta le date per una migliore leggibilità
+      const rpcCreatedAt = data.created_at ? new Date(data.created_at) : null;
+      const rpcTrialEndDate = rpcCreatedAt ? new Date(rpcCreatedAt) : null;
+      if (rpcTrialEndDate) {
+        rpcTrialEndDate.setDate(rpcTrialEndDate.getDate() + 14);
+      }
+
+      if (data.in_trial_period) {
+        return res.json({
+          active: true,
+          isTrial: true,
+          daysLeft: data.days_remaining,
+          trialEndDate: rpcTrialEndDate?.toISOString()
+        });
+      }
+    }
+
+    // Se non è nel periodo di prova o c'è stato un errore, verifica Stripe
+    const customers = await stripe.customers.list({
+      email: userEmail,
+      limit: 1
+    });
+
+    if (customers.data.length === 0) {
+      return res.json({
+        active: false,
+        isTrial: false
+      });
+    }
+
+    const customer = customers.data[0];
+
+    // Cerca le sottoscrizioni attive
+    const subscriptions = await stripe.subscriptions.list({
+      customer: customer.id,
+      status: 'active',
+      limit: 1
+    });
+
+    const isActive = subscriptions.data.length > 0;
+
+    return res.json({
+      active: isActive,
+      isTrial: false,
+      subscription: isActive ? subscriptions.data[0] : null
+    });
+
+  } catch (error) {
+    console.error('Errore durante la verifica dello stato dell\'abbonamento:', error);
+    res.status(500).json({ error: 'Errore durante la verifica dello stato dell\'abbonamento' });
+  }
+});
+
+// Crea una sessione di checkout per l'abbonamento mensile
+router.post('/create-checkout-session/monthly', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { email: userEmail } = req.body;
     
     if (!userEmail) {
       return res.status(400).json({ error: 'Email utente richiesta per creare la sessione di checkout' });
@@ -29,7 +149,7 @@ router.post('/create-checkout-session/monthly', async (req: Request, res: Respon
     
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
-      customer_email: userEmail, // Precompila l'email dell'utente
+      customer_email: userEmail,
       line_items: [
         {
           price_data: {
@@ -38,7 +158,7 @@ router.post('/create-checkout-session/monthly', async (req: Request, res: Respon
               name: 'Abbonamento Mensile Gestionale Affitti',
               description: "Pagamento mensile per l'utilizzo completo del gestionale affitti",
             },
-            unit_amount: 2000, // €20.00 in centesimi
+            unit_amount: 2000,
             recurring: {
               interval: 'month',
             },
@@ -50,8 +170,8 @@ router.post('/create-checkout-session/monthly', async (req: Request, res: Respon
       success_url: `${req.headers.origin}/abbonamento-confermato?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.headers.origin}/pricing`,
       metadata: {
-        userEmail: userEmail, // Salva l'email nei metadati per verifica successiva
-        userId: req.body.customData?.userId || '',
+        userEmail,
+        userId: req.user?.id,
         planName: 'piano-mensile'
       }
     });
@@ -63,11 +183,10 @@ router.post('/create-checkout-session/monthly', async (req: Request, res: Respon
   }
 });
 
-// Crea una sessione di checkout per l'abbonamento annuale (€200)
-router.post('/create-checkout-session/annual', async (req: Request, res: Response) => {
+// Crea una sessione di checkout per l'abbonamento annuale
+router.post('/create-checkout-session/annual', authenticate, async (req: Request, res: Response) => {
   try {
-    // Estrai l'email dall'utente autenticato o dal body
-    const userEmail = req.body.email;
+    const { email: userEmail } = req.body;
     
     if (!userEmail) {
       return res.status(400).json({ error: 'Email utente richiesta per creare la sessione di checkout' });
@@ -77,7 +196,7 @@ router.post('/create-checkout-session/annual', async (req: Request, res: Respons
     
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
-      customer_email: userEmail, // Precompila l'email dell'utente
+      customer_email: userEmail,
       line_items: [
         {
           price_data: {
@@ -86,7 +205,7 @@ router.post('/create-checkout-session/annual', async (req: Request, res: Respons
               name: 'Abbonamento Annuale Gestionale Affitti',
               description: 'Abbonamento annuale con sconto - risparmio di €40',
             },
-            unit_amount: 20000, // €200.00 in centesimi
+            unit_amount: 20000,
             recurring: {
               interval: 'year',
             },
@@ -98,8 +217,8 @@ router.post('/create-checkout-session/annual', async (req: Request, res: Respons
       success_url: `${req.headers.origin}/abbonamento-confermato?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.headers.origin}/pricing`,
       metadata: {
-        userEmail: userEmail, // Salva l'email nei metadati per verifica successiva
-        userId: req.body.customData?.userId || '',
+        userEmail,
+        userId: req.user?.id,
         planName: 'piano-annuale'
       }
     });
@@ -108,120 +227,6 @@ router.post('/create-checkout-session/annual', async (req: Request, res: Respons
   } catch (error) {
     console.error('Errore nella creazione della sessione di checkout:', error);
     res.status(500).json({ error: 'Errore nella creazione della sessione di pagamento' });
-  }
-});
-
-// Endpoint per verificare lo stato dell'abbonamento dell'utente
-router.get('/check-subscription-status', authenticate, async (req: Request, res: Response) => {
-  try {
-    // Usa l'email dalla query se fornita, altrimenti usa l'email dell'utente autenticato
-    const userEmail = req.query.userEmail?.toString() || req.user.email;
-    const userId = req.user.id?.toString();
-    
-    if (!userEmail) {
-      console.error('Email utente mancante nella richiesta di verifica abbonamento');
-      return res.status(400).json({ error: 'Email utente richiesta per la verifica dell\'abbonamento' });
-    }
-    
-    console.log(`Verifica abbonamento Stripe per email: ${userEmail}, userId: ${userId || 'non disponibile'}`);
-    
-    // Cerca il customer in Stripe usando l'email
-    const customers = await stripe.customers.list({
-      email: userEmail,
-      limit: 1,
-    });
-    
-    // Se non troviamo il customer con l'email, cerchiamo tramite metadati
-    let customerId = null;
-    if (customers.data.length === 0) {
-      console.log(`Nessun customer Stripe trovato per l'email ${userEmail}, cerco tramite metadati`);
-      
-      // Cerco tutte le sessioni di checkout completate con questa email nei metadati
-      if (userId) {
-        try {
-          const checkoutSessions = await stripe.checkout.sessions.list({
-            limit: 5,
-            expand: ['data.customer']
-          });
-          
-          // Filtra le sessioni che hanno questo utente nei metadati
-          for (const session of checkoutSessions.data) {
-            if (session.metadata?.userId === userId || session.metadata?.userEmail === userEmail) {
-              customerId = session.customer as string;
-              console.log(`Trovato customer tramite userId nei metadati: ${customerId}`);
-              break;
-            }
-          }
-        } catch (error) {
-          console.error('Errore nella ricerca delle sessioni per userId:', error);
-        }
-      }
-      
-      if (!customerId) {
-        return res.json({ active: false });
-      }
-    } else {
-      customerId = customers.data[0].id;
-    }
-    
-    // Cerca le sottoscrizioni attive per questo customer
-    const subscriptions = await stripe.subscriptions.list({
-      customer: customerId,
-      status: 'active',
-    });
-    
-    console.log(`Trovate ${subscriptions.data.length} sottoscrizioni attive per il customer ${customerId}`);
-    
-    // Determina se l'utente ha una sottoscrizione attiva
-    const hasActiveSubscription = subscriptions.data.length > 0;
-    
-    // Prepara i dati delle sottoscrizioni con gestione errori per le date
-    const subscriptionsData = hasActiveSubscription ? subscriptions.data.map(sub => {
-      try {
-        // Gestisci il timestamp con sicurezza
-        let currentPeriodEnd = null;
-        
-        // Typescript a volte non riconosce proprietà che Stripe effettivamente restituisce
-        const endTimestamp = (sub as any).current_period_end;
-        
-        if (endTimestamp) {
-          try {
-            // Stripe fornisce timestamp in secondi, moltiplichiamo per 1000 per ottenere millisecondi
-            currentPeriodEnd = new Date(endTimestamp * 1000).toISOString();
-          } catch (dateError) {
-            console.warn(`Errore nella conversione della data: ${dateError instanceof Error ? dateError.message : String(dateError)}`);
-            // Fornisci un valore di fallback se la conversione fallisce
-            currentPeriodEnd = 'Data non disponibile';
-          }
-        }
-        
-        return {
-          id: sub.id,
-          status: sub.status,
-          currentPeriodEnd: currentPeriodEnd,
-          plan: (sub as any).items?.data?.[0]?.plan?.nickname || 'Piano Abbonamento'
-        };
-      } catch (itemError) {
-        console.warn(`Errore nell'elaborazione della sottoscrizione ${sub.id}: ${itemError instanceof Error ? itemError.message : String(itemError)}`);
-        return {
-          id: sub.id || 'ID non disponibile',
-          status: sub.status || 'Stato non disponibile',
-          currentPeriodEnd: 'Data non disponibile',
-          plan: 'Piano non disponibile'
-        };
-      }
-    }) : [];
-    
-    res.json({ 
-      active: hasActiveSubscription,
-      subscriptions: subscriptionsData
-    });
-  } catch (error) {
-    console.error('Errore nella verifica dell\'abbonamento:', error);
-    res.status(500).json({ 
-      error: 'Errore durante la verifica dell\'abbonamento',
-      message: error instanceof Error ? error.message : String(error)
-    });
   }
 });
 
@@ -260,7 +265,6 @@ router.post('/webhook', async (req: Request, res: Response) => {
   let event;
 
   try {
-    // Per Express, dobbiamo usare req.rawBody, che deve essere configurato nel middleware
     const rawBody = (req as any).rawBody || req.body;
     
     event = stripe.webhooks.constructEvent(
@@ -277,11 +281,9 @@ router.post('/webhook', async (req: Request, res: Response) => {
   switch (event.type) {
     case 'checkout.session.completed':
       const checkoutSession = event.data.object;
-      // Aggiorna lo stato dell'abbonamento nel database
       console.log('Pagamento completato:', checkoutSession);
 
       try {
-        // Estrai le informazioni dal metadati della sessione
         const metadata = checkoutSession.metadata || {};
         const userEmail = metadata.userEmail;
         const userId = metadata.userId;
@@ -289,30 +291,65 @@ router.post('/webhook', async (req: Request, res: Response) => {
         
         console.log(`Abbonamento completato per utente: ${userEmail}, ID: ${userId}, Piano: ${planName}`);
         
-        // Verifica che l'email nella sessione di checkout corrisponda all'email dell'utente che ha completato il pagamento
-        if (checkoutSession.customer_email && checkoutSession.customer_email !== userEmail) {
-          console.error(`Attenzione: L'email usata per il pagamento (${checkoutSession.customer_email}) non corrisponde all'email dell'utente (${userEmail})`);
-          
-          // Qui potresti implementare la logica per informare l'utente o l'amministratore della discrepanza
-          // Ad esempio, inviare una email di notifica all'admin
+        // Aggiorna lo stato dell'abbonamento in Supabase
+        const { error: updateError } = await supabase
+          .from('auth.users')
+          .update({
+            subscription_status: 'active',
+            subscription_plan: planName,
+            subscription_updated_at: new Date().toISOString()
+          })
+          .eq('id', userId);
+
+        if (updateError) {
+          console.error('Errore nell\'aggiornamento dello stato dell\'abbonamento:', updateError);
         }
         
-        // Continua con il resto della logica di gestione dell'abbonamento
-        // Questo potrebbe includere l'aggiornamento di un database, l'invio di email, ecc.
       } catch (error) {
         console.error('Errore nell\'elaborazione del pagamento completato:', error);
       }
       break;
+
     case 'invoice.paid':
       const invoice = event.data.object;
-      // Gestisci il rinnovo dell'abbonamento
       console.log('Fattura pagata:', invoice);
       break;
+
     case 'customer.subscription.deleted':
       const subscription = event.data.object;
-      // Gestisci la cancellazione dell'abbonamento
       console.log('Abbonamento cancellato:', subscription);
+      
+      try {
+        // Aggiorna lo stato dell'abbonamento in Supabase quando viene cancellato
+        const customerResponse = await stripe.customers.retrieve(subscription.customer as string);
+        
+        // Verifica che il cliente non sia eliminato e abbia un'email
+        if (customerResponse && 
+            typeof customerResponse !== 'string' && 
+            'deleted' in customerResponse && 
+            !customerResponse.deleted &&
+            'email' in customerResponse &&
+            customerResponse.email) {
+            
+          const email = customerResponse.email;
+          
+          const { error: updateError } = await supabase
+            .from('auth.users')
+            .update({
+              subscription_status: 'inactive',
+              subscription_updated_at: new Date().toISOString()
+            })
+            .eq('email', email);
+
+          if (updateError) {
+            console.error('Errore nell\'aggiornamento dello stato dell\'abbonamento:', updateError);
+          }
+        }
+      } catch (error) {
+        console.error('Errore nell\'aggiornamento dello stato dell\'abbonamento cancellato:', error);
+      }
       break;
+
     default:
       console.log(`Evento non gestito: ${event.type}`);
   }

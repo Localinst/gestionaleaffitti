@@ -47,6 +47,10 @@ import AdminDashboard from './pages/AdminDashboard';
 import UpdatePasswordPage from "./pages/UpdatePasswordPage";
 import ProtectedPricing from './pages/ProtectedPricing';
 import { useEffect } from "react";
+import { setupAxiosInterceptors } from './services/api';
+
+// Inizializza gli interceptor di Axios
+setupAxiosInterceptors();
 
 // Configurazione avanzata di QueryClient con gestione della cache ottimizzata
 const queryClient = new QueryClient({

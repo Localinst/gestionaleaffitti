@@ -94,7 +94,7 @@ const LandingPage = () => {
             <div className="grid gap-8 lg:grid-cols-2 lg:gap-16 items-center">
               <div className="flex flex-col gap-4">
                 <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
-                  {t("landing.hero.title")} <span className="text-primary">PREMIUM</span>
+                  {t("landing.hero.title")} <span className="text-primary">Tenoris360</span>
                 </h1>
                 <p className="text-muted-foreground text-lg md:text-xl">
                   {t("landing.hero.description")}
@@ -130,18 +130,18 @@ const LandingPage = () => {
         </section>
         
         {/* Prezzo in evidenza */}
-        <section className="py-10 bg-primary/5">
+        <section className="py-16 bg-muted/30">
           <div className="container px-4 md:px-6 text-center">
             <div className="inline-block bg-primary/10 rounded-full px-4 py-2 mb-4">
-              <span className="text-primary font-semibold">Piano Premium</span>
+              <span className="text-primary font-semibold">14 Giorni di Prova Gratuita</span>
             </div>
-            <h2 className="text-3xl font-bold mb-2">Tutte le funzionalità a un prezzo accessibile</h2>
+            <h2 className="text-3xl font-bold mb-2">Prova tutte le funzionalità senza impegno</h2>
             <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-              Accedi a tutte le potenti funzionalità del nostro software per migliorare la gestione dei tuoi immobili.
+              Inizia subito la tua prova gratuita di 14 giorni. Nessuna carta di credito richiesta, nessun impegno. Scopri come Tenoris360 può semplificare la gestione dei tuoi immobili.
             </p>
             <div className="flex flex-col items-center">
-              <Link to="/pricing" className="mt-6">
-                <Button size="lg">Vedi tutti i dettagli</Button>
+              <Link to="/register" className="mt-6">
+                <Button size="lg">Inizia la Prova Gratuita</Button>
               </Link>
             </div>
           </div>

@@ -122,7 +122,7 @@ export const generateToken = (userId: string, email: string, name: string, role:
 };
 
 /**
- * Middleware per verificare che l'utente ha un abbonamento attivo
+ * Middleware per verificare che l'utente ha un abbonamento attivo o è nel periodo di prova
  */
 export const isSubscribed = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -133,8 +133,74 @@ export const isSubscribed = async (req: Request, res: Response, next: NextFuncti
 
     const userId = req.user.id;
     const userEmail = req.user.email;
-    
-    console.log(`Verifica abbonamento per utente: ID=${userId}, Email=${userEmail}`);
+
+    // Proviamo a vedere se l'utente è nel periodo di prova
+    try {
+      // Tentativo di calcolo lato server del periodo di prova
+      const now = new Date();
+      const { data: userData } = await supabase
+        .from('users')
+        .select('created_at')
+        .eq('id', userId)
+        .single();
+      
+      // Se c'è un problema con la tabella users, prova auth.users
+      let createdAt: Date | null = null;
+      let createdAtValid = false;
+      
+      if (!userData?.created_at) {
+        // Prova a ottenere la data di creazione tramite RPC
+        const { data: authUser, error: rpcError } = await supabase.rpc('get_user_created_at', {
+          user_id: userId
+        });
+        
+        if (authUser && authUser.created_at) {
+          // Verifica che la data sia valida
+          const tempDate = new Date(authUser.created_at);
+          if (!isNaN(tempDate.getTime())) {
+            createdAt = tempDate;
+            createdAtValid = true;
+          }
+        }
+        
+        // Se non abbiamo ottenuto una data valida, usiamo un fallback
+        if (!createdAtValid) {
+          // Fallback: usa la data attuale meno 1 giorno come data di creazione
+          createdAt = new Date(now);
+          createdAt.setDate(createdAt.getDate() - 1);
+          createdAtValid = true;
+        }
+      } else {
+        // Verifica che la data sia valida
+        const tempDate = new Date(userData.created_at);
+        if (!isNaN(tempDate.getTime())) {
+          createdAt = tempDate;
+          createdAtValid = true;
+        } else {
+          // Fallback
+          createdAt = new Date(now);
+          createdAt.setDate(createdAt.getDate() - 1);
+          createdAtValid = true;
+        }
+      }
+      
+      // Verifica finale che abbiamo una data valida
+      if (!createdAtValid || !createdAt) {
+        throw new Error('Impossibile determinare una data di creazione valida');
+      }
+      
+      // Calcola la fine del periodo di prova (14 giorni dalla creazione)
+      const trialEndDate = new Date(createdAt);
+      trialEndDate.setDate(trialEndDate.getDate() + 14);
+      
+      // Se l'utente è nel periodo di prova (creato meno di 14 giorni fa)
+      if (now <= trialEndDate) {
+        const daysRemaining = Math.ceil((trialEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        return next();
+      }
+    } catch (error) {
+      console.error(`[Middleware] Errore nel calcolo del periodo di prova:`, error);
+    }
 
     try {
       // Cercare il customer in Stripe usando l'email
@@ -150,10 +216,10 @@ export const isSubscribed = async (req: Request, res: Response, next: NextFuncti
       
       // Se non troviamo il customer, l'utente non ha un abbonamento
       if (customers.data.length === 0) {
-        console.log(`Nessun customer Stripe trovato per l'email ${userEmail}`);
         return res.status(403).json({ 
-          message: 'Accesso negato: non hai un abbonamento attivo',
-          subscribed: false 
+          message: 'Accesso negato: periodo di prova scaduto e nessun abbonamento attivo',
+          subscribed: false,
+          trialExpired: true
         });
       }
       
@@ -165,28 +231,25 @@ export const isSubscribed = async (req: Request, res: Response, next: NextFuncti
         status: 'active',
       });
       
-      console.log(`Trovate ${subscriptions.data.length} sottoscrizioni attive per il customer ${customerId}`);
-      
       // Se l'utente non ha sottoscrizioni attive, nega l'accesso
       if (subscriptions.data.length === 0) {
-        console.log(`Nessun abbonamento attivo trovato per l'utente ${userId} (${userEmail})`);
         return res.status(403).json({ 
-          message: 'Accesso negato: non hai un abbonamento attivo',
-          subscribed: false 
+          message: 'Accesso negato: periodo di prova scaduto e nessun abbonamento attivo',
+          subscribed: false,
+          trialExpired: true
         });
       }
 
-      console.log(`Utente ${userId} ha un abbonamento attivo`);
       next();
     } catch (error) {
-      console.error('Errore nella verifica dell\'abbonamento:', error);
+      console.error('[Middleware] Errore nella verifica dell\'abbonamento:', error);
       return res.status(500).json({ 
         message: 'Errore durante la verifica dell\'abbonamento',
         error: error instanceof Error ? error.message : 'Errore sconosciuto'
       });
     }
   } catch (error) {
-    console.error('Errore nella verifica dell\'abbonamento:', error);
+    console.error('[Middleware] Errore nella verifica dell\'abbonamento:', error);
     return res.status(500).json({ 
       message: 'Errore durante la verifica dell\'abbonamento',
       error: error instanceof Error ? error.message : 'Errore sconosciuto'
