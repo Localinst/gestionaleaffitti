@@ -1089,6 +1089,11 @@ export const importData = async (entityType: string, data: any[]) => {
             }
           }
           
+          // Imposta un valore predefinito per l'indirizzo se mancante
+          if (!property.address) {
+            property.address = "Indirizzo non specificato";
+          }
+          
           // Imposta un valore predefinito per la città se mancante
           if (!property.city) {
             property.city = "Non specificata";

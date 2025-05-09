@@ -376,14 +376,27 @@ async function importProperties(data: any[]): Promise<number> {
         const values: any[] = [];
         let paramIndex = 1;
         
+        // Tutti i campi devono essere facoltativi, assegniamo valori predefiniti per i campi obbligatori
+        const propertyWithDefaults = {
+          ...property,
+          // Se address è mancante, usa un valore predefinito
+          address: property.address || "Indirizzo non specificato",
+          // Se name è mancante, usa un valore predefinito
+          name: property.name || "Nuova Proprietà",
+          // Se city è mancante, usa un valore predefinito
+          city: property.city || "Città non specificata",
+          // Se type è mancante, usa un valore predefinito
+          type: property.type || "Altro"
+        };
+        
         // Mappa solo i campi presenti nei dati
         const possibleFields = ['name', 'address', 'city', 'postal_code', 'type', 'rooms', 'bathrooms', 'area', 'price', 'notes'];
         
         possibleFields.forEach(field => {
-          if (property[field] !== undefined && property[field] !== null) {
+          if (propertyWithDefaults[field] !== undefined && propertyWithDefaults[field] !== null) {
             fields.push(field);
             placeholders.push(`$${paramIndex}`);
-            values.push(property[field]);
+            values.push(propertyWithDefaults[field]);
             paramIndex++;
           }
         });
@@ -391,6 +404,14 @@ async function importProperties(data: any[]): Promise<number> {
         if (fields.length === 0) {
           console.warn('Nessun campo valido trovato per la proprietà');
           return;
+        }
+        
+        // Assicurati che user_id sia incluso
+        if (propertyWithDefaults.user_id) {
+          fields.push('user_id');
+          placeholders.push(`$${paramIndex}::uuid`);  // Aggiungi il cast ::uuid
+          values.push(propertyWithDefaults.user_id);
+          paramIndex++;
         }
         
         const query = `
