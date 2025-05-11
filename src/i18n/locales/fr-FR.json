@@ -684,6 +684,12 @@
         "learnMore": "En savoir plus"
       }
     },
+    "trial": {
+      "badge": "Essai gratuit de 14 jours",
+      "title": "Essayez toutes les fonctionnalités sans engagement",
+      "description": "Commencez dès aujourd'hui votre essai gratuit de 14 jours. Aucune carte de crédit requise, aucun engagement. Découvrez comment Tenoris360 peut simplifier la gestion de vos biens immobiliers.",
+      "cta": "Commencer l'essai gratuit"
+    },
     "features": {
       "title": "Fonctionnalités principales",
       "description": "Notre plateforme offre des outils complets pour optimiser la gestion de vos propriétés locatives.",

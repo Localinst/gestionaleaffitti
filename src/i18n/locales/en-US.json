@@ -1589,6 +1589,12 @@
         "learnMore": "Learn More"
       }
     },
+    "trial": {
+      "badge": "14-Day Free Trial",
+      "title": "Try all features with no commitment",
+      "description": "Start your 14-day free trial today. No credit card required, no commitment. Discover how Tenoris360 can simplify your property management.",
+      "cta": "Start Free Trial"
+    },
     "features": {
       "title": "Key Features",
       "description": "Our platform offers comprehensive tools to optimize the management of your rental properties.",

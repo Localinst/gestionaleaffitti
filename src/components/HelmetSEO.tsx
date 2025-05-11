@@ -8,6 +8,7 @@ interface HelmetSEOProps {
   canonicalUrl?: string;
   image?: string;
   type?: string;
+  keywords?: string[];
   children?: React.ReactNode;
 }
 
@@ -17,6 +18,7 @@ export function HelmetSEO({
   canonicalUrl,
   image = "/og-image.jpg",
   type = "website",
+  keywords,
   children
 }: HelmetSEOProps) {
   const location = useLocation();
@@ -35,6 +37,11 @@ export function HelmetSEO({
       <title>{title}</title>
       <meta name="description" content={description} />
       <link rel="canonical" href={fullCanonicalUrl} />
+      
+      {/* Meta tag per keywords */}
+      {keywords && keywords.length > 0 && (
+        <meta name="keywords" content={keywords.join(', ')} />
+      )}
       
       {/* Meta tag Open Graph */}
       <meta property="og:title" content={title} />

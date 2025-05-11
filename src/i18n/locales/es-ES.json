@@ -684,6 +684,12 @@
         "learnMore": "Saber más"
       }
     },
+    "trial": {
+      "badge": "Prueba gratuita de 14 días",
+      "title": "Prueba todas las funciones sin compromiso",
+      "description": "Comienza hoy mismo tu prueba gratuita de 14 días. No se requiere tarjeta de crédito, sin compromiso. Descubre cómo Tenoris360 puede simplificar la gestión de tus propiedades.",
+      "cta": "Iniciar prueba gratuita"
+    },
     "features": {
       "title": "Características principales",
       "description": "Nuestra plataforma ofrece herramientas completas para optimizar la gestión de tus propiedades en alquiler.",

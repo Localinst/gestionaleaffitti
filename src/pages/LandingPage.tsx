@@ -133,15 +133,15 @@ const LandingPage = () => {
         <section className="py-16 bg-muted/30">
           <div className="container px-4 md:px-6 text-center">
             <div className="inline-block bg-primary/10 rounded-full px-4 py-2 mb-4">
-              <span className="text-primary font-semibold">14 Giorni di Prova Gratuita</span>
+              <span className="text-primary font-semibold">{t("landing.trial.badge")}</span>
             </div>
-            <h2 className="text-3xl font-bold mb-2">Prova tutte le funzionalità senza impegno</h2>
+            <h2 className="text-3xl font-bold mb-2">{t("landing.trial.title")}</h2>
             <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-              Inizia subito la tua prova gratuita di 14 giorni. Nessuna carta di credito richiesta, nessun impegno. Scopri come Tenoris360 può semplificare la gestione dei tuoi immobili.
+              {t("landing.trial.description")}
             </p>
             <div className="flex flex-col items-center">
               <Link to="/register" className="mt-6">
-                <Button size="lg">Inizia la Prova Gratuita</Button>
+                <Button size="lg">{t("landing.trial.cta")}</Button>
               </Link>
             </div>
           </div>

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Search, Filter, Calendar, Clock } from "lucide-react";
 import { guides } from "@/data/guides";
 
@@ -16,15 +16,109 @@ import {
 import { Separator } from "@/components/ui/separator";
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
+import { useTranslation } from "react-i18next";
+import { HelmetSEO } from "@/components/HelmetSEO";
+import { getCurrentLanguage, getHreflangUrls } from "@/i18n";
 
 // Estrazione di tutti i tag unici dalle guide
 const allTags = Array.from(
   new Set(guides.flatMap((guide) => guide.tags))
 ).sort();
 
+// Funzione per ottenere il percorso corretto per le guide in base alla lingua
+const getGuidePathByLanguage = (slug: string) => {
+  const currentLang = getCurrentLanguage();
+  
+  // Mappa di base percorso in base alla lingua
+  const pathMap: Record<string, string> = {
+    'it-IT': `/guide/${slug}`,
+    'en-US': `/en/guides/${slug}`,
+    'en-GB': `/en-gb/guides/${slug}`,
+    'fr-FR': `/fr/guides/${slug}`,
+    'de-DE': `/de/anleitungen/${slug}`,
+    'es-ES': `/es/guias/${slug}`,
+  };
+  
+  return pathMap[currentLang] || pathMap['it-IT']; // Italiano come fallback
+};
+
+// Ottieni le keywords multilingua per la pagina delle guide
+const getGuidesSeoKeywords = (language: string): string[] => {
+  const keywordsMap: Record<string, string[]> = {
+    'it-IT': [
+      'guide affitti', 'guide proprietari immobili', 'consigli affitti', 'gestione immobiliare', 
+      'proprietà in affitto', 'affitti brevi', 'locazioni', 'guide fiscali immobili', 
+      'normative immobiliari', 'ottimizzazione affitti'
+    ],
+    'en-US': [
+      'rental guides', 'property owner guides', 'rental tips', 'property management', 
+      'rental properties', 'short term rentals', 'leases', 'property tax guides', 
+      'real estate regulations', 'rental optimization'
+    ],
+    'en-GB': [
+      'rental guides', 'property owner guides', 'letting tips', 'property management', 
+      'rental properties', 'short term lets', 'tenancies', 'property tax guides', 
+      'real estate regulations', 'rental optimisation'
+    ],
+    'fr-FR': [
+      'guides location', 'guides propriétaires', 'conseils location', 'gestion immobilière', 
+      'propriétés locatives', 'locations courte durée', 'baux', 'guides fiscalité immobilière', 
+      'réglementations immobilières', 'optimisation location'
+    ],
+    'de-DE': [
+      'vermietungsratgeber', 'anleitungen für eigentümer', 'vermietungstipps', 'immobilienverwaltung',
+      'mietobjekte', 'kurzzeitvermietung', 'mietverträge', 'immobiliensteuerführer',
+      'immobilienvorschriften', 'mietoptimierung'
+    ],
+    'es-ES': [
+      'guías alquiler', 'guías propietarios', 'consejos alquiler', 'gestión inmobiliaria',
+      'propiedades en alquiler', 'alquileres corto plazo', 'arrendamientos', 'guías fiscales inmobiliarias',
+      'normativas inmobiliarias', 'optimización alquiler'
+    ]
+  };
+  
+  return keywordsMap[language] || keywordsMap['it-IT'];
+};
+
+// Funzione per ottenere il titolo della pagina in base alla lingua
+const getGuidesTitle = (language: string): string => {
+  const titleMap: Record<string, string> = {
+    'it-IT': 'Guide per Proprietari di Immobili - Tenoris360',
+    'en-US': 'Property Owner Guides - Tenoris360',
+    'en-GB': 'Property Owner Guides - Tenoris360',
+    'fr-FR': 'Guides pour Propriétaires - Tenoris360',
+    'de-DE': 'Ratgeber für Immobilieneigentümer - Tenoris360',
+    'es-ES': 'Guías para Propietarios - Tenoris360'
+  };
+  
+  return titleMap[language] || titleMap['it-IT'];
+};
+
+// Funzione per ottenere la descrizione della pagina in base alla lingua
+const getGuidesDescription = (language: string): string => {
+  const descriptionMap: Record<string, string> = {
+    'it-IT': 'Scopri le nostre guide complete per proprietari di immobili. Consigli pratici su gestione affitti, fiscalità, normative e ottimizzazione del rendimento immobiliare.',
+    'en-US': 'Discover our comprehensive guides for property owners. Practical advice on rental management, taxation, regulations and optimizing your real estate returns.',
+    'en-GB': 'Explore our comprehensive guides for property owners. Practical advice on property management, taxation, regulations and optimising your real estate returns.',
+    'fr-FR': 'Découvrez nos guides complets pour propriétaires. Conseils pratiques sur la gestion locative, la fiscalité, les réglementations et l\'optimisation de vos rendements immobiliers.',
+    'de-DE': 'Entdecken Sie unsere umfassenden Ratgeber für Immobilieneigentümer. Praktische Tipps zu Vermietungsmanagement, Besteuerung, Vorschriften und Optimierung Ihrer Immobilienrenditen.',
+    'es-ES': 'Descubra nuestras guías completas para propietarios. Consejos prácticos sobre gestión de alquileres, fiscalidad, normativas y optimización de sus rendimientos inmobiliarios.'
+  };
+  
+  return descriptionMap[language] || descriptionMap['it-IT'];
+};
+
 const Guides = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const { t } = useTranslation();
+  const currentLang = getCurrentLanguage();
+  const location = useLocation();
+  
+  // Ottieni keywords, titolo e descrizione SEO in base alla lingua corrente
+  const seoKeywords = getGuidesSeoKeywords(currentLang);
+  const seoTitle = getGuidesTitle(currentLang);
+  const seoDescription = getGuidesDescription(currentLang);
 
   // Filtra le guide in base al termine di ricerca e al tag selezionato
   const filteredGuides = guides.filter((guide) => {
@@ -43,6 +137,14 @@ const Guides = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
+      {/* Metadati SEO */}
+      <HelmetSEO
+        title={seoTitle}
+        description={seoDescription}
+        image="/images/guides/guide-cover.jpg"
+        keywords={seoKeywords}
+      />
+      
       <Navbar />
       <main className="flex-grow">
         <div className="bg-primary/5 py-12">
@@ -103,7 +205,7 @@ const Guides = () => {
                 {featuredGuides.slice(0, 2).map((guide) => (
                   <Link
                     key={guide.id}
-                    to={`/guide/${guide.slug}`}
+                    to={getGuidePathByLanguage(guide.slug)}
                     className="block group"
                   >
                     <Card className="overflow-hidden h-full hover:shadow-md transition-shadow">
@@ -198,7 +300,7 @@ const Guides = () => {
                 {filteredGuides.map((guide) => (
                   <Link
                     key={guide.id}
-                    to={`/guide/${guide.slug}`}
+                    to={getGuidePathByLanguage(guide.slug)}
                     className="block group"
                   >
                     <Card className="overflow-hidden h-full hover:shadow-md transition-shadow">

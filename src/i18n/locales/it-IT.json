@@ -1473,12 +1473,18 @@
   "landing": {
     "hero": {
       "title": "Semplifica la gestione dei tuoi affitti con ",
-      "highlight": "14 GIORNI GRATIS",
-      "description": "Prova gratuitamente per 14 giorni la piattaforma completa per proprietari e amministratori immobiliari. Gestisci contratti, inquilini e pagamenti in modo efficiente, senza impegno.",
+      "highlight": "GRATIS",
+      "description": "La piattaforma completa e GRATUITA per proprietari e gestori di immobili che vogliono gestire in modo efficiente contratti, inquilini e pagamenti.",
       "cta": {
-        "register": "Inizia la Prova Gratuita",
+        "register": "Inizia Gratis",
         "learnMore": "Scopri di più"
       }
+    },
+    "trial": {
+      "badge": "14 Giorni di Prova Gratuita",
+      "title": "Prova tutte le funzionalità senza impegno",
+      "description": "Inizia subito la tua prova gratuita di 14 giorni. Nessuna carta di credito richiesta, nessun impegno. Scopri come Tenoris360 può semplificare la gestione dei tuoi immobili.",
+      "cta": "Inizia la Prova Gratuita"
     },
     "features": {
       "title": "Funzionalità Principali",
@@ -1504,15 +1510,15 @@
     },
     "nav": {
       "features": "Funzionalità",
-      "pricing": "Prezzi",
+      "pricing": "Gratuito",
       "testimonials": "Testimonianze",
       "login": "Accedi",
       "register": "Registrati",
-      "freeService": "Prezzi"
+      "freeService": "Servizio Gratuito"
     },
     "cta": {
       "title": "Pronto a semplificare la gestione dei tuoi affitti?",
-      "description": "Registrati oggi e scopri come il nostro gestionale può aiutarti a risparmiare tempo e aumentare la redditività dei tuoi investimenti."
+      "description": "Registrati oggi e scopri come il nostro sistema può aiutarti a risparmiare tempo e aumentare la redditività dei tuoi investimenti."
     }
   }
 }

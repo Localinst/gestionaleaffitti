@@ -19,7 +19,9 @@ Allow: /*.ttf$
 
 # Conferma esplicitamente l'accesso alle pagine pubbliche
 Allow: /blog
+Allow: /blog/*
 Allow: /guide
+Allow: /guide/*
 Allow: /supporto
 Allow: /privacy
 Allow: /termini
@@ -35,13 +37,77 @@ Allow: /en-gb/
 Allow: /fr/
 Allow: /de/
 Allow: /es/
+Allow: /it/
+
+# Conferma esplicitamente accesso alle pagine multilingua
 Allow: /en/blog
-Allow: /en/guide
-Allow: /en/supporto
+Allow: /en/blog/*
+Allow: /en/guides
+Allow: /en/guides/*
+Allow: /en/guide/*
+Allow: /en/support
 Allow: /en/privacy
-Allow: /en/termini
+Allow: /en/terms
 Allow: /en/cookie
 Allow: /en/pricing
+
+Allow: /fr/blog
+Allow: /fr/blog/*
+Allow: /fr/guides
+Allow: /fr/guides/*
+Allow: /fr/guide/*
+Allow: /fr/support
+Allow: /fr/confidentialite
+Allow: /fr/conditions
+Allow: /fr/cookie
+Allow: /fr/pricing
+
+Allow: /de/blog
+Allow: /de/blog/*
+Allow: /de/anleitungen
+Allow: /de/anleitungen/*
+Allow: /de/anleitung/*
+Allow: /de/guide/*
+Allow: /de/guides/*
+Allow: /de/unterstutzung
+Allow: /de/datenschutz
+Allow: /de/bedingungen
+Allow: /de/cookie
+Allow: /de/pricing
+
+Allow: /es/blog
+Allow: /es/blog/*
+Allow: /es/guias
+Allow: /es/guias/*
+Allow: /es/guia/*
+Allow: /es/guide/*
+Allow: /es/guides/*
+Allow: /es/soporte
+Allow: /es/privacidad
+Allow: /es/terminos
+Allow: /es/cookie
+Allow: /es/pricing
+
+Allow: /en-gb/blog
+Allow: /en-gb/blog/*
+Allow: /en-gb/guides
+Allow: /en-gb/guides/*
+Allow: /en-gb/guide/*
+Allow: /en-gb/support
+Allow: /en-gb/privacy
+Allow: /en-gb/terms
+Allow: /en-gb/cookie
+Allow: /en-gb/pricing
+
+Allow: /it/blog
+Allow: /it/blog/*
+Allow: /it/guide
+Allow: /it/guide/*
+Allow: /it/supporto
+Allow: /it/privacy
+Allow: /it/termini
+Allow: /it/cookie
+Allow: /it/pricing
 
 # Disabilita l'accesso alle pagine protette/amministrative (solo le rotte, non le risorse)
 Disallow: /dashboard$

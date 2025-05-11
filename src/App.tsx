@@ -183,6 +183,7 @@ function App() {
                             <Route path="/en/blog/:slug" element={<BlogDetail />} />
                             <Route path="/en/guides" element={<Guides />} />
                             <Route path="/en/guides/:slug" element={<GuideDetail />} />
+                            <Route path="/en/guide/:slug" element={<GuideDetail />} />
                             <Route path="/en/support" element={<SupportoPage />} />
                             <Route path="/en/privacy" element={<PrivacyPolicy />} />
                             <Route path="/en/terms" element={<TerminiServizio />} />
@@ -196,6 +197,7 @@ function App() {
                             <Route path="/fr/blog/:slug" element={<BlogDetail />} />
                             <Route path="/fr/guides" element={<Guides />} />
                             <Route path="/fr/guides/:slug" element={<GuideDetail />} />
+                            <Route path="/fr/guide/:slug" element={<GuideDetail />} />
                             <Route path="/fr/support" element={<SupportoPage />} />
                             <Route path="/fr/confidentialite" element={<PrivacyPolicy />} />
                             <Route path="/fr/conditions" element={<TerminiServizio />} />
@@ -209,6 +211,9 @@ function App() {
                             <Route path="/de/blog/:slug" element={<BlogDetail />} />
                             <Route path="/de/anleitungen" element={<Guides />} />
                             <Route path="/de/anleitungen/:slug" element={<GuideDetail />} />
+                            <Route path="/de/anleitung/:slug" element={<GuideDetail />} />
+                            <Route path="/de/guide/:slug" element={<GuideDetail />} />
+                            <Route path="/de/guides/:slug" element={<GuideDetail />} />
                             <Route path="/de/unterstutzung" element={<SupportoPage />} />
                             <Route path="/de/datenschutz" element={<PrivacyPolicy />} />
                             <Route path="/de/bedingungen" element={<TerminiServizio />} />
@@ -222,6 +227,9 @@ function App() {
                             <Route path="/es/blog/:slug" element={<BlogDetail />} />
                             <Route path="/es/guias" element={<Guides />} />
                             <Route path="/es/guias/:slug" element={<GuideDetail />} />
+                            <Route path="/es/guia/:slug" element={<GuideDetail />} />
+                            <Route path="/es/guide/:slug" element={<GuideDetail />} />
+                            <Route path="/es/guides/:slug" element={<GuideDetail />} />
                             <Route path="/es/soporte" element={<SupportoPage />} />
                             <Route path="/es/privacidad" element={<PrivacyPolicy />} />
                             <Route path="/es/terminos" element={<TerminiServizio />} />

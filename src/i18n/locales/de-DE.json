@@ -736,6 +736,12 @@
         "learnMore": "Mehr erfahren"
       }
     },
+    "trial": {
+      "badge": "14 Tage kostenlos testen",
+      "title": "Testen Sie alle Funktionen ohne Verpflichtung",
+      "description": "Starten Sie noch heute Ihre 14-tägige kostenlose Testphase. Keine Kreditkarte erforderlich, keine Verpflichtung. Entdecken Sie, wie Tenoris360 Ihre Immobilienverwaltung vereinfachen kann.",
+      "cta": "Kostenlose Testphase starten"
+    },
     "features": {
       "title": "Hauptfunktionen",
       "description": "Unsere Plattform bietet umfassende Tools zur Optimierung der Verwaltung Ihrer Mietobjekte.",

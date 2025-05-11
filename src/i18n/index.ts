@@ -296,6 +296,43 @@ export const getHreflangUrls = (
         }
       };
       
+      // Gestire i percorsi delle guide con slug
+      if (cleanPath.startsWith('/guide/')) {
+        const slug = cleanPath.replace('/guide/', '');
+        switch(langKey) {
+          case 'en-US':
+            return {
+              locale: langData.code,
+              url: `${baseUrl}/en/guides/${slug}`
+            };
+          case 'en-GB':
+            return {
+              locale: langData.code,
+              url: `${baseUrl}/en-gb/guides/${slug}`
+            };
+          case 'fr-FR':
+            return {
+              locale: langData.code,
+              url: `${baseUrl}/fr/guides/${slug}`
+            };
+          case 'de-DE':
+            return {
+              locale: langData.code,
+              url: `${baseUrl}/de/anleitungen/${slug}`
+            };
+          case 'es-ES':
+            return {
+              locale: langData.code,
+              url: `${baseUrl}/es/guias/${slug}`
+            };
+          default:
+            return {
+              locale: langData.code,
+              url: `${baseUrl}/guide/${slug}`
+            };
+        }
+      }
+      
       // Controllo se il percorso pulito corrisponde a una mappatura speciale
       if (urlMapping[cleanPath]?.[langKey]) {
         return {

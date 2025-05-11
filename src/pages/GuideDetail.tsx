@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useLocation } from "react-router-dom";
 import { ArrowLeft, Calendar, Clock, Download, Mail } from "lucide-react";
 import { guides } from "@/data/guides";
+import { getCurrentLanguage } from "@/i18n";
+import { useTranslation } from "react-i18next";
+import { HelmetSEO } from "@/components/HelmetSEO";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -14,8 +17,107 @@ import { AvatarImage } from "@/components/ui/avatar";
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
 
+// Funzione per ottenere il percorso corretto per le guide in base alla lingua
+const getGuidePathByLanguage = (slug: string) => {
+  const currentLang = getCurrentLanguage();
+  
+  // Mappa di base percorso in base alla lingua
+  const pathMap: Record<string, string> = {
+    'it-IT': `/guide/${slug}`,
+    'en-US': `/en/guides/${slug}`,
+    'en-GB': `/en-gb/guides/${slug}`,
+    'fr-FR': `/fr/guides/${slug}`,
+    'de-DE': `/de/anleitungen/${slug}`,
+    'es-ES': `/es/guias/${slug}`,
+  };
+  
+  return pathMap[currentLang] || pathMap['it-IT']; // Italiano come fallback
+};
+
+// Mappa delle keywords SEO multilingua in base alle tag delle guide
+const getMultilingualKeywords = (tags: string[], language: string) => {
+  // Mappatura delle keyword in diverse lingue per migliorare la SEO
+  const keywordMap: Record<string, Record<string, string[]>> = {
+    'Affitti brevi': {
+      'it-IT': ['affitti brevi', 'affitti turistici', 'locazioni turistiche', 'affitto casa vacanze'],
+      'en-US': ['short-term rentals', 'vacation rentals', 'holiday lets', 'airbnb management'],
+      'en-GB': ['short-term lettings', 'holiday rentals', 'vacation properties', 'airbnb hosting'],
+      'fr-FR': ['location courte durée', 'location saisonnière', 'location vacances', 'gestion airbnb'],
+      'de-DE': ['kurzzeitvermietung', 'ferienvermietung', 'ferienunterkünfte', 'airbnb verwaltung'],
+      'es-ES': ['alquileres corto plazo', 'alquiler vacacional', 'alojamiento turístico', 'gestión airbnb']
+    },
+    'Ottimizzazione': {
+      'it-IT': ['ottimizzazione affitti', 'rendimento immobiliare', 'gestione proprietà', 'profitto immobiliare'],
+      'en-US': ['rental optimization', 'property management', 'rental yield', 'property revenue'],
+      'en-GB': ['rental optimisation', 'property management', 'rental yield', 'property revenue'],
+      'fr-FR': ['optimisation location', 'gestion immobilière', 'rendement locatif', 'revenu immobilier'],
+      'de-DE': ['mietoptimierung', 'immobilienverwaltung', 'mietrendite', 'immobilienertrag'],
+      'es-ES': ['optimización alquiler', 'gestión inmobiliaria', 'rendimiento alquiler', 'ingresos inmobiliarios']
+    },
+    'Rendimento': {
+      'it-IT': ['rendimento affitti', 'redditività immobiliare', 'guadagno affitti', 'ritorno investimento immobiliare'],
+      'en-US': ['rental yield', 'property profitability', 'real estate ROI', 'rental return'],
+      'en-GB': ['rental yield', 'property profitability', 'real estate ROI', 'rental return'],
+      'fr-FR': ['rendement locatif', 'rentabilité immobilière', 'ROI immobilier', 'retour sur investissement'],
+      'de-DE': ['mietrendite', 'immobilienrentabilität', 'immobilien ROI', 'anlagerendite'],
+      'es-ES': ['rendimiento alquiler', 'rentabilidad inmobiliaria', 'ROI inmobiliario', 'retorno inversión']
+    },
+    'Fiscalità': {
+      'it-IT': ['fiscalità immobiliare', 'tasse affitto', 'cedolare secca', 'dichiarazione redditi affitti'],
+      'en-US': ['rental tax', 'property taxation', 'real estate tax', 'rental income tax'],
+      'en-GB': ['rental tax', 'property taxation', 'real estate tax', 'rental income tax'],
+      'fr-FR': ['fiscalité immobilière', 'impôts location', 'fiscalité locative', 'revenu locatif'],
+      'de-DE': ['immobiliensteuer', 'mietsteuer', 'einkommensteuer vermietung', 'steuerliche aspekte'],
+      'es-ES': ['fiscalidad inmobiliaria', 'impuestos alquiler', 'declaración renta alquiler', 'tributación alquileres']
+    },
+    'Tasse': {
+      'it-IT': ['tasse immobili', 'imposte proprietà', 'tassazione affitti', 'adempimenti fiscali'],
+      'en-US': ['property taxes', 'real estate taxes', 'rental property taxation', 'tax compliance'],
+      'en-GB': ['property taxes', 'real estate taxes', 'rental property taxation', 'tax compliance'],
+      'fr-FR': ['taxes immobilières', 'imposition location', 'charges fiscales', 'obligations fiscales'],
+      'de-DE': ['immobiliensteuern', 'grundsteuer', 'einkommensteuer', 'steuervorschriften'],
+      'es-ES': ['impuestos inmobiliarios', 'tributos propiedad', 'imposición alquileres', 'obligaciones fiscales']
+    },
+    'Normative': {
+      'it-IT': ['normative affitti', 'regolamenti locazione', 'leggi immobiliari', 'adempimenti legali'],
+      'en-US': ['rental regulations', 'property laws', 'real estate legislation', 'legal compliance'],
+      'en-GB': ['rental regulations', 'property laws', 'real estate legislation', 'legal compliance'],
+      'fr-FR': ['réglementations location', 'lois immobilières', 'législation propriété', 'conformité légale'],
+      'de-DE': ['mietvorschriften', 'immobiliengesetze', 'mietrecht', 'rechtliche compliance'],
+      'es-ES': ['normativas alquiler', 'regulaciones inmobiliarias', 'legislación propiedad', 'cumplimiento legal']
+    },
+    'Marketing': {
+      'it-IT': ['marketing immobiliare', 'promozione affitti', 'annunci immobiliari', 'strategie marketing'],
+      'en-US': ['real estate marketing', 'rental promotion', 'property listing', 'marketing strategies'],
+      'en-GB': ['property marketing', 'rental advertising', 'property listing', 'marketing strategies'],
+      'fr-FR': ['marketing immobilier', 'promotion location', 'annonces immobilières', 'stratégies marketing'],
+      'de-DE': ['immobilienmarketing', 'mietwerbung', 'immobilienanzeigen', 'marketingstrategien'],
+      'es-ES': ['marketing inmobiliario', 'promoción alquileres', 'anuncios inmobiliarios', 'estrategias marketing']
+    }
+  };
+  
+  // Raccogli tutte le keyword appropriate per i tag della guida nella lingua corrente
+  let keywords: string[] = [];
+  
+  tags.forEach(tag => {
+    if (keywordMap[tag] && keywordMap[tag][language]) {
+      keywords = [...keywords, ...keywordMap[tag][language]];
+    } else {
+      // Se non abbiamo una traduzione specifica, aggiungi il tag originale
+      keywords.push(tag);
+    }
+  });
+  
+  // Assicurati che non ci siano duplicati
+  return [...new Set(keywords)];
+};
+
 const GuideDetail = () => {
   const { slug } = useParams<{ slug: string }>();
+  const location = useLocation();
+  const { t } = useTranslation();
+  const currentLang = getCurrentLanguage();
+  
   const [currentGuide, setCurrentGuide] = useState(
     guides.find((guide) => guide.slug === slug)
   );
@@ -30,6 +132,9 @@ const GuideDetail = () => {
       .slice(0, 3)
   );
   const [email, setEmail] = useState("");
+  
+  // Ottieni le keywords SEO multilingua per questa guida
+  const seoKeywords = currentGuide ? getMultilingualKeywords(currentGuide.tags, currentLang) : [];
 
   useEffect(() => {
     // Aggiorna la guida corrente quando cambia lo slug
@@ -79,6 +184,15 @@ const GuideDetail = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
+      {/* Metadati SEO */}
+      <HelmetSEO
+        title={currentGuide.title}
+        description={currentGuide.description}
+        image={currentGuide.fullImage || currentGuide.image}
+        canonicalUrl={`https://tenoris360.com${getGuidePathByLanguage(currentGuide.slug)}`}
+        keywords={seoKeywords}
+      />
+      
       <Navbar />
       <main className="flex-grow">
         <div className="container max-w-7xl mx-auto px-4 py-8">
@@ -205,7 +319,7 @@ const GuideDetail = () => {
                     {relatedGuides.map((guide) => (
                       <Link
                         key={guide.id}
-                        to={`/guide/${guide.slug}`}
+                        to={getGuidePathByLanguage(guide.slug)}
                         className="block"
                       >
                         <Card className="overflow-hidden hover:shadow-md transition-shadow">
