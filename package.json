@@ -5,13 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node -e \"require('fs').copyFileSync('.nojekyll', 'dist/.nojekyll')\"",
+    "build": "vite build && node scripts/create-language-pages.js && node -e \"require('fs').copyFileSync('.nojekyll', 'dist/.nojekyll')\"",
     "build:dev": "vite build --mode development",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist",
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "generate-sitemap": "node scripts/generate-sitemap.js"
+    "generate-sitemap": "node scripts/generate-sitemap.js",
+    "create-language-pages": "node scripts/create-language-pages.js"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",

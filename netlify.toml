@@ -2,6 +2,10 @@
   publish = "dist"
   command = "npm run build"
 
+# Pre-rendering configuration
+[prerender]
+  config = "prerender-config.json"
+
 # Configurazione proxy per reindirizzare le chiamate API
 [[redirects]]
   from = "/api/*"
@@ -9,44 +13,46 @@
   status = 200
   force = true
 
-# Reindirizzamento per SPA con supporto multilingua
+# Configurazione per le pagine multilingua (eliminati i redirect, ora serviamo pagine reali)
+# Ogni richiesta a un percorso linguistico specifico viene gestita dalla stessa pagina index.html
+# ma con i meta tag e i contenuti corretti per quella lingua
 [[redirects]]
   from = "/it/*"
-  to = "/index.html"
+  to = "/it/index.html"
   status = 200
   force = true
 
 [[redirects]]
   from = "/en/*"
-  to = "/index.html"
+  to = "/en/index.html"
   status = 200
   force = true
 
 [[redirects]]
   from = "/fr/*"
-  to = "/index.html"
+  to = "/fr/index.html"
   status = 200
   force = true
 
 [[redirects]]
   from = "/de/*"
-  to = "/index.html"
+  to = "/de/index.html"
   status = 200
   force = true
 
 [[redirects]]
   from = "/es/*"
-  to = "/index.html"
+  to = "/es/index.html"
   status = 200
   force = true
 
 [[redirects]]
   from = "/en-gb/*"
-  to = "/index.html"
+  to = "/en-gb/index.html"
   status = 200
   force = true
 
-# Reindirizzamento di fallback per SPA
+# Reindirizzamento di fallback per SPA (solo per percorsi non linguistici)
 [[redirects]]
   from = "/*"
   to = "/index.html"
