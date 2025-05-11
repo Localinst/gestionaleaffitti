@@ -52,6 +52,7 @@ interface SettingsContextType {
   settings: UserSettings;
   updateSettings: (updates: Partial<UserSettings>) => void;
   resetSettings: () => void;
+  updateLanguageFromUrl: (langCode: string) => void;
 }
 
 // Creazione del contesto
@@ -62,11 +63,63 @@ interface SettingsProviderProps {
   children: ReactNode;
 }
 
+// Funzione per determinare la lingua iniziale
+function getInitialLanguage(): string {
+  // Controlla prima i prefissi di lingua nell'URL
+  const path = window.location.pathname;
+  console.log("Getting initial language from path:", path);
+  
+  const langPrefixes = {
+    '/en': 'en-US',
+    '/en-gb': 'en-GB', 
+    '/fr': 'fr-FR',
+    '/de': 'de-DE',
+    '/es': 'es-ES'
+  };
+  
+  // Verifica i prefissi di lingua nell'URL in modo più preciso
+  for (const [prefix, lang] of Object.entries(langPrefixes)) {
+    // Controlla se il path è esattamente il prefisso o inizia con il prefisso seguito da /
+    if (path === prefix || path.startsWith(`${prefix}/`)) {
+      console.log(`Found language prefix ${prefix} in URL, setting language to ${lang}`);
+      return lang;
+    }
+  }
+  
+  console.log("No language prefix found in URL, trying localStorage");
+  
+  // Se non c'è un prefisso nell'URL, prova a leggere da localStorage
+  try {
+    const savedSettings = localStorage.getItem("userSettings");
+    if (savedSettings) {
+      const parsedSettings = JSON.parse(savedSettings);
+      if (parsedSettings.language) {
+        console.log(`Using language from localStorage: ${parsedSettings.language}`);
+        return parsedSettings.language;
+      }
+    }
+  } catch (error) {
+    console.error("Errore nel leggere le impostazioni:", error);
+  }
+  
+  // Altrimenti ritorna il valore predefinito
+  console.log(`Using default language: ${defaultSettings.language}`);
+  return defaultSettings.language;
+}
+
 export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) => {
   // Carica le impostazioni dal localStorage o utilizza quelle predefinite
   const [settings, setSettings] = useState<UserSettings>(() => {
+    const initialLanguage = getInitialLanguage();
     const savedSettings = localStorage.getItem("userSettings");
-    return savedSettings ? JSON.parse(savedSettings) : defaultSettings;
+    
+    if (savedSettings) {
+      const parsedSettings = JSON.parse(savedSettings);
+      // Sovrascrivi la lingua con quella rilevata dall'URL, se presente
+      return { ...parsedSettings, language: initialLanguage };
+    }
+    
+    return { ...defaultSettings, language: initialLanguage };
   });
 
   // Aggiorna le impostazioni
@@ -81,6 +134,19 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
       }
       
       return newSettings;
+    });
+  };
+
+  // Funzione specifica per aggiornare la lingua dall'URL
+  const updateLanguageFromUrl = (langCode: string) => {
+    setSettings((prev) => {
+      if (langCode !== prev.language) {
+        const newSettings = { ...prev, language: langCode };
+        localStorage.setItem("userSettings", JSON.stringify(newSettings));
+        changeLanguage(langCode);
+        return newSettings;
+      }
+      return prev;
     });
   };
 
@@ -129,7 +195,12 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
   }, [settings.animationsEnabled]);
 
   return (
-    <SettingsContext.Provider value={{ settings, updateSettings, resetSettings }}>
+    <SettingsContext.Provider value={{ 
+      settings, 
+      updateSettings, 
+      resetSettings,
+      updateLanguageFromUrl 
+    }}>
       {children}
     </SettingsContext.Provider>
   );
