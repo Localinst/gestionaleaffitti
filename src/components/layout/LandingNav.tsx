@@ -1,20 +1,19 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { supportedLanguages, changeLanguage } from "@/i18n";
 import { useTranslation } from "react-i18next";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Globe } from "lucide-react";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { getCurrentLanguage } from "@/i18n";
+import { LinkWithQuery } from "@/components/LinkWithQuery";
 
 export function LandingNav() {
-  const { i18n, t } = useTranslation();
+  const { t } = useTranslation();
+  const location = useLocation();
+  const currentLang = getCurrentLanguage();
   
-  // Ottieni le prime due lettere della lingua corrente
-  const currentLanguageCode = i18n.language.substring(0, 2).toUpperCase();
+  // Funzione per aggiungere il parametro di lingua all'URL
+  const getUrlWithLang = (baseUrl: string) => {
+    return `${baseUrl}?lang=${currentLang}`;
+  };
   
   return (
     <nav className="w-full py-4 px-3 md:px-8 flex items-center justify-between bg-background border-b">
@@ -27,46 +26,26 @@ export function LandingNav() {
         <a href="#features" className="text-sm font-medium hover:text-primary transition-colors">
           {t("landing.nav.features")}
         </a>
-        <Link to="/pricing" className="text-sm font-medium hover:text-primary transition-colors">
+        <LinkWithQuery to="/pricing" className="text-sm font-medium hover:text-primary transition-colors">
           {t("landing.nav.pricing")}
-        </Link>
+        </LinkWithQuery>
         <a href="#testimonials" className="text-sm font-medium hover:text-primary transition-colors">
           {t("landing.nav.testimonials")}
         </a>
       </nav>
       
       <div className="flex items-center gap-1 sm:gap-4">
-        <div className="flex items-center">
-          <span className="text-sm font-medium mr-1">{currentLanguageCode}</span>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <Globe className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {Object.entries(supportedLanguages).map(([langKey, langData]) => (
-                <DropdownMenuItem 
-                  key={langKey}
-                  className={i18n.language === langKey ? "bg-muted" : ""}
-                  onClick={() => changeLanguage(langKey)}
-                >
-                  {langData.name}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        <LanguageSwitcher />
         
-        <Link to="/login">
+        <LinkWithQuery to="/login">
           <Button variant="ghost" size="sm" className="px-2 sm:px-4">{t("landing.nav.login")}</Button>
-        </Link>
-        <Link to="/register">
+        </LinkWithQuery>
+        <LinkWithQuery to="/register">
           <Button size="sm" className="px-2 sm:px-4">{t("landing.nav.register")}</Button>
-        </Link>
-        <Link to="/pricing" className="hidden sm:block">
+        </LinkWithQuery>
+        <LinkWithQuery to="/pricing" className="hidden sm:block">
           <Button variant="outline" size="sm">{t("landing.nav.freeService")}</Button>
-        </Link>
+        </LinkWithQuery>
       </div>
     </nav>
   );

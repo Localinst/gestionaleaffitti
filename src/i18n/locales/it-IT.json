@@ -252,6 +252,20 @@
       "confirm": "Elimina",
       "success": "Transazione eliminata con successo",
       "error": "Errore durante l'eliminazione della transazione"
+    },
+    "deleteAll": {
+      "title": "Elimina tutte le transazioni",
+      "message": "Sei sicuro di voler eliminare TUTTE le tue transazioni? Questa azione non può essere annullata.",
+      "cancel": "Annulla",
+      "confirm": "Elimina tutte",
+      "success": "{{count}} transazioni eliminate con successo",
+      "error": "Errore durante l'eliminazione delle transazioni"
+    },
+    "count": "{{count}} transazioni trovate",
+    "deleteAllTransactions": "Elimina tutte le transazioni",
+    "type": {
+      "income": "Entrata",
+      "expense": "Uscita"
     }
   },
   "common": {
@@ -278,7 +292,8 @@
       "error": "Si è verificato un errore",
       "empty": "Nessun elemento trovato",
       "saving": "Salvataggio in corso...",
-      "processing": "Elaborazione in corso..."
+      "processing": "Elaborazione in corso...",
+      "showing": "Mostrati"
     },
     "navigation": {
       "dashboard": "Dashboard",
@@ -685,7 +700,7 @@
   "activities": {
     "title": "Attività",
     "description": "Gestisci e monitora tutte le attività",
-    "loading": "Caricamento attività in corso...",
+    "loading": "Caricamento attività...",
     "addActivity": "Aggiungi attività",
     "addYourFirst": "Nessuna attività presente. Aggiungi la tua prima attività.",
     "noActivities": "Nessuna attività trovata",
@@ -702,12 +717,12 @@
       "description": "Attività programmate per date future"
     },
     "pastPending": {
-      "title": "Attività Passate in Attesa",
+      "title": "Attività Passate in Sospeso",
       "description": "Attività che non hai ancora completato"
     },
     "dismissed": "Ignorate",
     "addNew": {
-      "title": "Inserisci nuova attività",
+      "title": "Aggiungi nuova attività",
       "description": "Descrivi l'attività...",
       "property": "Proprietà",
       "selectProperty": "Seleziona proprietà",
@@ -733,7 +748,7 @@
       "activityDeleted": "Attività eliminata con successo",
       "activityCompleted": "Attività completata con successo",
       "activityDismissed": "Attività ignorata con successo",
-      "statusUpdate": "Stato attività aggiornato con successo"
+      "statusUpdate": "Stato dell'attività aggiornato con successo"
     },
     "errors": {
       "loading": "Impossibile caricare le attività",
@@ -747,7 +762,7 @@
     },
     "filters": {
       "all": "Tutte",
-      "pending": "In attesa",
+      "pending": "In sospeso",
       "completed": "Completate",
       "dismissed": "Ignorate",
       "highPriority": "Alta priorità",
@@ -757,26 +772,26 @@
       "tenant": "Inquilino",
       "type": "Tipo",
       "applyFilters": "Applica filtri",
-      "resetFilters": "Resetta filtri"
+      "resetFilters": "Reimposta filtri"
     },
     "fields": {
       "title": "Titolo",
       "description": "Descrizione",
       "date": "Data",
-      "dueDate": "Data scadenza",
+      "dueDate": "Data di scadenza",
       "property": "Proprietà",
       "tenant": "Inquilino",
       "priority": "Priorità",
       "status": "Stato",
       "type": "Tipo",
-      "assignedTo": "Assegnata a",
+      "assignedTo": "Assegnato a",
       "notes": "Note",
       "attachments": "Allegati",
       "actions": "Azioni",
-      "createdAt": "Data creazione",
-      "updatedAt": "Data aggiornamento",
-      "completedAt": "Data completamento",
-      "dismissedAt": "Data ignoro"
+      "createdAt": "Data di creazione",
+      "updatedAt": "Data di aggiornamento",
+      "completedAt": "Data di completamento",
+      "dismissedAt": "Data di archiviazione"
     },
     "priority": {
       "high": "Alta",
@@ -784,7 +799,7 @@
       "low": "Bassa"
     },
     "status": {
-      "pending": "In attesa",
+      "pending": "In sospeso",
       "completed": "Completata",
       "dismissed": "Ignorata",
       "overdue": "In ritardo"
@@ -795,7 +810,7 @@
       "dismissTitle": "Ignora attività",
       "dismissMessage": "Sei sicuro di voler ignorare questa attività?",
       "deleteTitle": "Elimina attività",
-      "deleteMessage": "Sei sicuro di voler eliminare questa attività? L'operazione non può essere annullata.",
+      "deleteMessage": "Sei sicuro di voler eliminare questa attività? Questa azione non può essere annullata.",
       "cancel": "Annulla",
       "confirm": "Conferma"
     },
@@ -1249,12 +1264,12 @@
     }
   },
   "import": {
-    "title": "Importazione",
-    "description": "Importa dati da file esterni",
-    "selectFile": "Seleziona File",
-    "dragAndDrop": "Trascina e rilascia il file qui o clicca per selezionare",
+    "title": "Importazione Dati",
+    "description": "Importa dati da file Excel o CSV",
+    "selectFile": "Seleziona file",
+    "dragAndDrop": "Trascina qui i file o clicca per selezionare",
     "supportedFormats": "Formati supportati",
-    "maxFileSize": "Dimensione massima del file",
+    "maxFileSize": "Dimensione massima file",
     "steps": {
       "uploadFile": "Carica File",
       "mapFields": "Mappa Campi",
@@ -1263,13 +1278,13 @@
     },
     "fieldMapping": {
       "title": "Mappatura Campi",
-      "description": "Associa i campi del file ai campi dell'applicazione",
-      "sourceField": "Campo Origine",
+      "description": "Mappa i campi del file ai campi dell'applicazione",
+      "sourceField": "Campo Sorgente",
       "targetField": "Campo Destinazione",
       "required": "Obbligatorio",
       "preview": "Anteprima",
       "unmappedFields": "Campi non mappati",
-      "autoMap": "Mappa Automaticamente"
+      "autoMap": "Mappatura Automatica"
     },
     "preview": {
       "title": "Anteprima Dati",
@@ -1283,7 +1298,7 @@
       "totalRecords": "Record Totali",
       "importedRecords": "Record Importati",
       "failedRecords": "Record Falliti",
-      "skipReason": "Motivo di salto",
+      "skipReason": "Motivo Salto",
       "errorDetails": "Dettagli Errore",
       "duration": "Durata",
       "downloadErrors": "Scarica Errori"

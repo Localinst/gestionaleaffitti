@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Home, Plus, Loader2, Eye, Edit, Trash2 } from "lucide-react";
+import { Home, Plus, Loader2, Eye, Edit, Trash2, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
@@ -64,6 +64,7 @@ export default function PropertiesPage() {
   const [openEditForm, setOpenEditForm] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteAllDialogOpen, setDeleteAllDialogOpen] = useState(false);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -91,6 +92,21 @@ export default function PropertiesPage() {
     }
   });
 
+  // Utilizzo di useMutation per l'eliminazione di tutte le proprietà
+  const deleteAllMutation = useMutation({
+    mutationFn: () => api.properties.deleteAll(),
+    onSuccess: (data) => {
+      // Invalida la query delle proprietà per forzare un aggiornamento dei dati
+      queryClient.invalidateQueries({ queryKey: ['properties'] });
+      toast.success(`${data.count} proprietà eliminate con successo`);
+      setDeleteAllDialogOpen(false);
+    },
+    onError: (error) => {
+      console.error("Error deleting all properties:", error);
+      toast.error("Errore durante l'eliminazione di tutte le proprietà");
+    }
+  });
+
   const handleView = (property: Property) => {
     setSelectedProperty(property);
     setDetailDialogOpen(true);
@@ -106,9 +122,17 @@ export default function PropertiesPage() {
     setDeleteDialogOpen(true);
   };
 
+  const handleDeleteAll = () => {
+    setDeleteAllDialogOpen(true);
+  };
+
   const confirmDelete = async () => {
     if (!selectedProperty) return;
     deleteMutation.mutate(selectedProperty.id);
+  };
+
+  const confirmDeleteAll = async () => {
+    deleteAllMutation.mutate();
   };
 
   // Mostra un messaggio di errore se c'è stato un problema nel caricamento
@@ -128,6 +152,7 @@ export default function PropertiesPage() {
          title={t("properties.title")}
          description={t("properties.description")}
         />
+          <div className="flex justify-between mb-6">
             <Button 
               onClick={() => {
                 setSelectedProperty(null);
@@ -140,7 +165,19 @@ export default function PropertiesPage() {
               <Plus className="mr-2 h-4 w-4" />
               {t("properties.addProperty")}
             </Button>
-        
+            
+            {properties.length > 0 && (
+              <Button 
+                onClick={handleDeleteAll}
+                variant="destructive" 
+                size="sm" 
+                className="h-9"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Elimina tutte le proprietà
+              </Button>
+            )}
+          </div>
 
           {loading ? (
             <div className="flex items-center justify-center h-64">
@@ -233,7 +270,7 @@ export default function PropertiesPage() {
             />
           )}
 
-          {/* Dialog di conferma eliminazione */}
+          {/* Dialog di conferma eliminazione proprietà singola */}
           <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
             <AlertDialogContent>
               <AlertDialogHeader>
@@ -246,6 +283,33 @@ export default function PropertiesPage() {
                 <AlertDialogCancel>Annulla</AlertDialogCancel>
                 <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90">
                   Elimina
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          {/* Dialog di conferma eliminazione di tutte le proprietà */}
+          <AlertDialog open={deleteAllDialogOpen} onOpenChange={setDeleteAllDialogOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+                  <AlertTriangle className="h-5 w-5" />
+                  Sei sicuro di voler eliminare TUTTE le proprietà?
+                </AlertDialogTitle>
+                <AlertDialogDescription className="mt-4">
+                  <p className="font-bold mb-2">ATTENZIONE: Questa è un'azione irreversibile!</p>
+                  <p>Stai per eliminare tutte le {properties.length} proprietà presenti nel sistema.</p>
+                  <p>Verranno cancellati anche tutti i dati collegati come contratti e transazioni.</p>
+                  <p>Questa azione non può essere annullata.</p>
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Annulla</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={confirmDeleteAll} 
+                  className="bg-destructive hover:bg-destructive/90"
+                >
+                  Elimina tutte le proprietà
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

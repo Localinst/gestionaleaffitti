@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useTranslation } from "react-i18next";
+import { changeLanguage } from "@/i18n";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -21,8 +23,18 @@ export default function LoginPage() {
   const { login, isAuthenticated, user, autoLogin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { i18n } = useTranslation();
+  const [searchParams] = useSearchParams();
 
   const from = location.state?.from || "/dashboard";
+
+  // Gestisci il parametro di query 'lang'
+  useEffect(() => {
+    const langParam = searchParams.get('lang');
+    if (langParam) {
+      changeLanguage(langParam);
+    }
+  }, [searchParams]);
 
   // Controllo se esiste già un token nel localStorage e se l'utente è autenticato
   useEffect(() => {
@@ -62,6 +74,10 @@ export default function LoginPage() {
     try {
       setIsLoading(true);
       await login(email, password);
+      
+      // La lingua corrente è già salvata nelle impostazioni dall'app 
+      // tramite il componente LanguageSwitcher o dal parametro di query
+      
       navigate(from, { replace: true });
     } catch (error: any) {
       if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
@@ -131,30 +147,18 @@ export default function LoginPage() {
       
       <div className="flex min-h-[calc(100vh-64px)] items-center justify-center px-4">
         <div className="w-full max-w-md space-y-8">
-          <div className="text-center">
+         
+          
+          
+          
+          <div className="bg-card border rounded-lg p-6 shadow-sm">
+          <div className="text-center my-6">
             <h1 className="text-2xl font-bold tracking-tight">Accedi</h1>
             <p className="mt-2 text-sm text-muted-foreground">
               Inserisci le tue credenziali per accedere
             </p>
           </div>
-          
-          <Alert className="mb-4 border-blue-200 text-blue-800 bg-blue-50 dark:border-blue-700 dark:text-blue-300 dark:bg-blue-900/20">
-            <Info className="h-4 w-4 !text-blue-800 dark:!text-blue-300" /> 
-            <AlertTitle>Conferma Email Richiesta</AlertTitle>
-            <AlertDescription>
-              Se ti sei appena registrato, ricorda di cliccare sul link di conferma che abbiamo inviato alla tua email (controlla anche la cartella Spam).
-            </AlertDescription>
-          </Alert>
-          
-          <div className="bg-card border rounded-lg p-6 shadow-sm">
-            {showWaitMessage && (
-              <Alert className="mb-6 bg-amber-50 text-amber-800 border-amber-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-700">
-                <AlertDescription>
-                  Il server è temporaneamente offline per manutenzione. Attendere 30 secondi per permettere il riavvio del server. Il login verrà elaborato automaticamente.
-                </AlertDescription>
-              </Alert>
-            )}
-            
+                        
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>

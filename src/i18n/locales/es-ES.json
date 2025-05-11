@@ -5,116 +5,267 @@
     "tabs": {
       "general": "General",
       "notifications": "Notificaciones",
-      "appearance": "Apariencia",
-      "advanced": "Avanzado"
+      "appearance": "Apariencia"
     },
     "general": {
       "title": "Configuración General",
-      "language": "Idioma",
-      "timezone": "Zona horaria",
-      "dateFormat": "Formato de fecha",
-      "timeFormat": "Formato de hora",
-      "startOfWeek": "Inicio de la semana"
+      "description": "Configura los ajustes básicos de la aplicación",
+      "language": {
+        "title": "Idioma",
+        "description": "Selecciona el idioma de la interfaz de usuario"
+      },
+      "behavior": {
+        "title": "Comportamiento de la Aplicación"
+      },
+      "autoSave": {
+        "title": "Guardado Automático",
+        "label": "Guardado Automático",
+        "description": "Guardar automáticamente los cambios"
+      },
+      "confirmDialogs": {
+        "title": "Diálogos de Confirmación",
+        "label": "Diálogos de Confirmación",
+        "description": "Mostrar diálogos de confirmación para acciones importantes"
+      },
+      "saveButton": "Guardar Configuración"
     },
     "notifications": {
-      "title": "Preferencias de notificación",
-      "email": "Notificaciones por correo electrónico",
-      "push": "Notificaciones push",
-      "sms": "Notificaciones SMS",
-      "frequency": "Frecuencia",
-      "types": {
-        "payments": "Pagos",
-        "maintenance": "Mantenimiento",
-        "leases": "Contratos",
-        "messages": "Mensajes"
+      "title": "Configuración de Notificaciones",
+      "description": "Configura cómo y cuándo recibir notificaciones",
+      "notificationsEnabled": {
+        "title": "Habilitar Notificaciones",
+        "description": "Activar o desactivar todas las notificaciones"
       },
-      "frequencies": {
-        "immediately": "Inmediatamente",
-        "daily": "Diario",
-        "weekly": "Semanal",
-        "never": "Nunca"
-      }
+      "channels": {
+        "title": "Canales de Notificación"
+      },
+      "emailNotifications": {
+        "label": "Notificaciones por Email",
+        "description": "Recibir notificaciones por correo electrónico"
+      },
+      "pushNotifications": {
+        "label": "Notificaciones Push",
+        "description": "Recibir notificaciones push en el navegador"
+      },
+      "categories": {
+        "title": "Categorías de Notificación"
+      },
+      "contractNotifications": {
+        "label": "Notificaciones de Contratos",
+        "description": "Notificaciones sobre vencimiento o renovación de contratos"
+      },
+      "tenantNotifications": {
+        "label": "Notificaciones de Inquilinos",
+        "description": "Mensajes y comunicaciones de los inquilinos"
+      },
+      "systemNotifications": {
+        "label": "Notificaciones del Sistema",
+        "description": "Actualizaciones del sistema y mantenimiento"
+      },
+      "saveButton": "Guardar Configuración"
     },
     "appearance": {
-      "title": "Apariencia",
-      "theme": "Tema",
-      "themes": {
-        "light": "Claro",
-        "dark": "Oscuro",
-        "system": "Sistema"
+      "title": "Configuración de Apariencia",
+      "description": "Personaliza la apariencia visual de la aplicación",
+      "theme": {
+        "title": "Tema",
+        "options": {
+          "light": "Claro",
+          "dark": "Oscuro",
+          "system": "Sistema"
+        }
       },
-      "density": "Densidad de visualización",
-      "densities": {
-        "comfortable": "Cómodo",
-        "compact": "Compacto",
-        "standard": "Estándar"
+      "fontSize": {
+        "title": "Tamaño de Fuente",
+        "options": {
+          "small": "Pequeño",
+          "medium": "Mediano",
+          "large": "Grande"
+        }
       },
-      "fontSize": "Tamaño de letra",
-      "fontSizes": {
-        "small": "Pequeño",
-        "medium": "Mediano",
-        "large": "Grande"
-      }
+      "animations": {
+        "title": "Animaciones",
+        "label": "Animaciones de Interfaz",
+        "description": "Activar o desactivar las animaciones de la interfaz"
+      },
+      "saveButton": "Guardar Configuración"
     },
-    "advanced": {
-      "title": "Configuración avanzada",
-      "dataSync": "Sincronización de datos",
-      "backups": "Copias de seguridad",
-      "export": "Exportar datos",
-      "import": "Importar datos",
-      "resetSettings": "Restablecer configuración",
-      "resetConfirmation": "¿Está seguro de que desea restablecer toda la configuración?"
+    "toasts": {
+      "generalSaved": "Configuración general guardada con éxito",
+      "notificationsSaved": "Configuración de notificaciones guardada con éxito",
+      "appearanceSaved": "Configuración de apariencia guardada con éxito",
+      "settingsReset": "Configuración restablecida a los valores predeterminados"
     }
   },
   "transactions": {
     "title": "Transacciones",
     "description": "Gestiona todas las transacciones financieras",
+    "loading": "Cargando transacciones...",
+    "addTransaction": "Añadir transacción",
+    "searchTransactions": "Buscar transacciones...",
+    "noTransactions": "No se encontraron transacciones",
     "filters": {
       "all": "Todas",
       "income": "Ingresos",
       "expense": "Gastos",
       "pending": "Pendientes",
       "completed": "Completadas",
-      "dateRange": "Rango de fechas"
+      "property": "Propiedad",
+      "category": "Categoría",
+      "dateRange": "Rango de fechas",
+      "applyFilters": "Aplicar filtros",
+      "resetFilters": "Restablecer filtros"
     },
-    "income": {
-      "title": "Ingresos",
-      "description": "Gestionar ingresos por alquiler",
-      "rent": "Alquileres",
-      "deposits": "Fianzas",
-      "other": "Otros"
-    },
-    "expense": {
-      "title": "Gastos",
-      "description": "Gestionar gastos inmobiliarios",
-      "maintenance": "Mantenimiento",
-      "utilities": "Servicios",
-      "taxes": "Impuestos",
-      "insurance": "Seguro",
-      "other": "Otros"
-    },
-    "details": {
-      "amount": "Importe",
+    "fields": {
+      "id": "ID",
       "date": "Fecha",
+      "amount": "Importe",
+      "type": "Tipo",
       "category": "Categoría",
       "property": "Propiedad",
       "tenant": "Inquilino",
       "description": "Descripción",
       "status": "Estado",
-      "paymentMethod": "Método de pago"
+      "paymentMethod": "Método de pago",
+      "reference": "Referencia",
+      "notes": "Notas",
+      "attachments": "Archivos adjuntos",
+      "actions": "Acciones"
+    },
+    "types": {
+      "income": "Ingreso",
+      "expense": "Gasto",
+      "transfer": "Transferencia",
+      "deposit": "Depósito",
+      "refund": "Reembolso"
     },
     "status": {
       "pending": "Pendiente",
       "completed": "Completada",
-      "canceled": "Cancelada",
-      "failed": "Fallida"
+      "cancelled": "Cancelada",
+      "failed": "Fallida",
+      "refunded": "Reembolsada"
     },
-    "actions": {
-      "addTransaction": "Añadir transacción",
-      "editTransaction": "Editar transacción",
-      "deleteTransaction": "Eliminar transacción",
-      "markAsPaid": "Marcar como pagada",
-      "downloadReceipt": "Descargar recibo"
+    "categories": {
+      "income": {
+        "rent": "Alquiler",
+        "deposit": "Depósito",
+        "latePayment": "Pago tardío",
+        "other": "Otro"
+      },
+      "expense": {
+        "maintenance": "Mantenimiento",
+        "utilities": "Servicios",
+        "tax": "Impuestos",
+        "insurance": "Seguro", 
+        "mortgage": "Hipoteca",
+        "other": "Otro"
+      }
+    },
+    "paymentMethods": {
+      "cash": "Efectivo",
+      "bankTransfer": "Transferencia bancaria",
+      "creditCard": "Tarjeta de crédito",
+      "check": "Cheque",
+      "other": "Otro"
+    },
+    "form": {
+      "title": "Detalles de la transacción",
+      "date": "Fecha",
+      "amount": "Importe",
+      "type": "Tipo",
+      "category": "Categoría",
+      "property": "Propiedad",
+      "selectProperty": "Seleccionar propiedad",
+      "tenant": "Inquilino",
+      "selectTenant": "Seleccionar inquilino",
+      "description": "Descripción",
+      "descriptionPlaceholder": "Describe la transacción",
+      "status": "Estado",
+      "paymentMethod": "Método de pago",
+      "reference": "Referencia",
+      "referencePlaceholder": "Número de factura, número de cheque, etc.",
+      "notes": "Notas",
+      "notesPlaceholder": "Añade cualquier nota",
+      "attachments": "Archivos adjuntos",
+      "uploadAttachments": "Subir archivos adjuntos",
+      "submit": "Guardar transacción",
+      "cancel": "Cancelar",
+      "noProperties": "No se encontraron propiedades",
+      "addPropertyFirst": "Añade primero una propiedad",
+      "updateSuccess": "Transacción actualizada",
+      "createSuccess": "Transacción creada",
+      "updateError": "Error al actualizar la transacción",
+      "createError": "Error al crear la transacción",
+      "enterAmount": "Introduce el importe",
+      "enterDescription": "Introduce la descripción",
+      "selectUnit": "Selecciona unidad",
+      "noTenant": "Sin inquilino",
+      "selectType": "Selecciona tipo",
+      "selectCategory": "Selecciona categoría",
+      "addTransactionDesc": "Añadir una nueva transacción",
+      "updateTransaction": "Actualizar transacción"
+    },
+    "confirmation": {
+      "deleteTitle": "Eliminar transacción",
+      "deleteMessage": "¿Estás seguro de que quieres eliminar esta transacción? Esta acción no se puede deshacer.",
+      "cancelTitle": "Cancelar transacción",
+      "cancelMessage": "¿Estás seguro de que quieres cancelar esta transacción?",
+      "cancel": "Cancelar",
+      "confirm": "Confirmar"
+    },
+    "details": {
+      "title": "Detalles de la transacción",
+      "basicInfo": "Información básica",
+      "financialDetails": "Detalles financieros",
+      "documents": "Documentos",
+      "history": "Historial"
+    },
+    "transactionDetails": {
+      "date": "Fecha",
+      "amount": "Importe",
+      "description": "Descripción",
+      "type": "Tipo",
+      "category": "Categoría",
+      "tenant": "Inquilino",
+      "property": "Propiedad"
+    },
+    "filterByType": "Filtrar por tipo",
+    "filterByProperty": "Filtrar por propiedad",
+    "allTypes": "Todos los tipos",
+    "allProperties": "Todas las propiedades",
+    "incomes": "Ingresos",
+    "expenses": "Gastos",
+    "noTransactionsFound": "No se encontraron transacciones",
+    "modifySearchOrAdd": "Modifica los criterios de búsqueda o añade una nueva transacción",
+    "tryAgain": "Intentar de nuevo",
+    "connectionError": "Error de conexión",
+    "menu": {
+      "open": "Abrir menú",
+      "edit": "Editar",
+      "delete": "Eliminar"
+    },
+    "confirmDelete": {
+      "title": "Eliminar transacción",
+      "message": "¿Estás seguro de que quieres eliminar esta transacción? Esta acción no se puede deshacer.",
+      "cancel": "Cancelar",
+      "confirm": "Eliminar",
+      "success": "Transacción eliminada con éxito",
+      "error": "Error al eliminar la transacción"
+    },
+    "deleteAll": {
+      "title": "Eliminar todas las transacciones",
+      "message": "¿Estás seguro de que quieres eliminar TODAS tus transacciones? Esta acción no se puede deshacer.",
+      "cancel": "Cancelar",
+      "confirm": "Eliminar todas",
+      "success": "{{count}} transacciones eliminadas con éxito",
+      "error": "Error al eliminar las transacciones"
+    },
+    "count": "{{count}} transacciones encontradas",
+    "deleteAllTransactions": "Eliminar todas las transacciones",
+    "type": {
+      "income": "Ingreso",
+      "expense": "Gasto"
     }
   },
   "common": {
@@ -141,10 +292,11 @@
       "error": "Se ha producido un error",
       "empty": "No se encontraron elementos",
       "saving": "Guardando...",
-      "processing": "Procesando..."
+      "processing": "Procesando...",
+      "showing": "Mostrando"
     },
     "navigation": {
-      "dashboard": "Panel",
+      "dashboard": "Panel de control",
       "properties": "Propiedades",
       "tenants": "Inquilinos",
       "contracts": "Contratos",
@@ -155,7 +307,7 @@
       "profile": "Perfil",
       "logout": "Cerrar sesión",
       "home": "Inicio",
-      "pricing": "Servicio Gratuito",
+      "pricing": "Precios",
       "blog": "Blog",
       "guides": "Guías",
       "support": "Soporte",
@@ -168,7 +320,7 @@
       "bookings": "Reservas",
       "import": "Importación",
       "info": "Información",
-      "appSettings": "Configuración de la aplicación",
+      "appSettings": "Configuración de la App",
       "notifications": "Notificaciones"
     },
     "dateTime": {
@@ -239,6 +391,250 @@
         "pool": "Piscina",
         "gym": "Gimnasio"
       }
+    },
+    "bookings": {
+      "title": "Reservas",
+      "description": "Gestiona las reservas turísticas",
+      "loading": "Cargando reservas...",
+      "addBooking": "Añadir reserva",
+      "searchBookings": "Buscar reservas...",
+      "noBookings": "No se han encontrado reservas",
+      "filters": {
+        "all": "Todas",
+        "upcoming": "Próximas",
+        "current": "Actuales",
+        "completed": "Completadas",
+        "cancelled": "Canceladas",
+        "property": "Propiedad",
+        "dateRange": "Rango de fechas",
+        "applyFilters": "Aplicar filtros",
+        "resetFilters": "Restablecer filtros"
+      },
+      "fields": {
+        "id": "ID",
+        "guest": "Huésped",
+        "property": "Propiedad",
+        "checkIn": "Entrada",
+        "checkOut": "Salida",
+        "nights": "Noches",
+        "guests": "Huéspedes",
+        "status": "Estado",
+        "totalAmount": "Importe total",
+        "payment": "Pago",
+        "actions": "Acciones"
+      },
+      "status": {
+        "pending": "Pendiente",
+        "confirmed": "Confirmada",
+        "checkedIn": "Registrado",
+        "checkedOut": "Finalizada",
+        "cancelled": "Cancelada",
+        "noShow": "No presentado"
+      },
+      "form": {
+        "title": "Detalles de la reserva",
+        "guestInfo": "Información del huésped",
+        "guestName": "Nombre",
+        "guestEmail": "Email",
+        "guestPhone": "Teléfono",
+        "guestCountry": "País",
+        "selectCountry": "Seleccionar país",
+        "bookingDetails": "Detalles de la reserva",
+        "property": "Propiedad",
+        "selectProperty": "Seleccionar propiedad",
+        "checkIn": "Fecha de entrada",
+        "checkOut": "Fecha de salida",
+        "adults": "Adultos",
+        "children": "Niños",
+        "infants": "Bebés",
+        "notes": "Notas",
+        "notesPlaceholder": "Añade notas o peticiones especiales",
+        "pricing": "Precios",
+        "baseRate": "Tarifa base",
+        "cleaningFee": "Limpieza",
+        "serviceFee": "Comisión de servicio",
+        "taxAmount": "Impuestos",
+        "totalAmount": "Total",
+        "deposit": "Depósito",
+        "payment": "Pago",
+        "paymentMethod": "Método de pago",
+        "paymentStatus": "Estado del pago",
+        "submit": "Guardar reserva",
+        "cancel": "Cancelar"
+      },
+      "confirmation": {
+        "deleteTitle": "Eliminar reserva",
+        "deleteMessage": "¿Estás seguro de que quieres eliminar esta reserva? Esta acción no se puede deshacer.",
+        "cancelTitle": "Cancelar reserva",
+        "cancelMessage": "¿Estás seguro de que quieres cancelar esta reserva?",
+        "cancel": "Cancelar",
+        "confirm": "Confirmar"
+      },
+      "details": {
+        "title": "Detalles de la reserva",
+        "guestInfo": "Información del huésped",
+        "bookingInfo": "Información de la reserva",
+        "paymentInfo": "Información del pago",
+        "createChecklist": "Crear checklist",
+        "addNote": "Añadir nota",
+        "sendMessage": "Enviar mensaje",
+        "actions": "Acciones",
+        "checkInGuest": "Registrar entrada",
+        "checkOutGuest": "Registrar salida",
+        "cancelBooking": "Cancelar reserva",
+        "editBooking": "Editar reserva"
+      },
+      "calendar": {
+        "title": "Calendario de reservas",
+        "today": "Hoy",
+        "month": "Mes",
+        "week": "Semana",
+        "day": "Día",
+        "list": "Lista",
+        "viewAll": "Ver todas",
+        "availability": "Disponibilidad",
+        "booked": "Reservado",
+        "blocked": "Bloqueado",
+        "available": "Disponible"
+      }
+    },
+    "calendar": {
+      "title": "Calendario de Disponibilidad",
+      "monthView": "Vista Mensual",
+      "weekView": "Vista Semanal",
+      "dayView": "Vista Diaria",
+      "listView": "Vista Lista",
+      "today": "Hoy",
+      "bookings": "Reservas",
+      "available": "Disponible",
+      "unavailable": "No Disponible",
+      "blocked": "Bloqueado"
+    },
+    "activities": {
+      "title": "Actividades",
+      "description": "Gestiona y supervisa todas las actividades",
+      "loading": "Cargando actividades...",
+      "addActivity": "Añadir actividad",
+      "addYourFirst": "No hay actividades presentes. Añade tu primera actividad.",
+      "noActivities": "No se encontraron actividades",
+      "upcomingActivities": "Próximas actividades",
+      "today": "Hoy",
+      "thisWeek": "Esta semana",
+      "later": "Más tarde",
+      "completed": {
+        "title": "Actividades completadas",
+        "description": "Actividades que han sido completadas"
+      },
+      "future": {
+        "title": "Actividades futuras",
+        "description": "Actividades programadas para fechas futuras"
+      },
+      "pastPending": {
+        "title": "Actividades pasadas pendientes",
+        "description": "Actividades que aún no has completado"
+      },
+      "dismissed": "Descartadas",
+      "addNew": {
+        "title": "Añadir nueva actividad",
+        "description": "Describe la actividad...",
+        "property": "Propiedad",
+        "selectProperty": "Seleccionar propiedad",
+        "tenant": "Inquilino (opcional)",
+        "selectTenant": "Seleccionar inquilino",
+        "noTenant": "Sin inquilino",
+        "date": "Fecha",
+        "type": "Tipo",
+        "selectType": "Seleccionar tipo",
+        "priority": "Prioridad",
+        "selectPriority": "Seleccionar prioridad",
+        "addButton": "Añadir actividad"
+      },
+      "types": {
+        "contract_expiration": "Vencimiento de contrato",
+        "rent_payment": "Pago de alquiler",
+        "maintenance": "Mantenimiento",
+        "other": "Otro"
+      },
+      "success": {
+        "activityAdded": "Actividad añadida con éxito",
+        "activityUpdated": "Actividad actualizada con éxito",
+        "activityDeleted": "Actividad eliminada con éxito",
+        "activityCompleted": "Actividad completada con éxito",
+        "activityDismissed": "Actividad descartada con éxito",
+        "statusUpdate": "Estado de la actividad actualizado con éxito"
+      },
+      "errors": {
+        "loading": "No se pudieron cargar las actividades",
+        "adding": "No se pudo añadir la actividad",
+        "updating": "No se pudo actualizar la actividad",
+        "deleting": "No se pudo eliminar la actividad",
+        "completing": "No se pudo completar la actividad",
+        "dismissing": "No se pudo descartar la actividad",
+        "loadingData": "No se pudieron cargar los datos",
+        "statusUpdate": "No se pudo actualizar el estado de la actividad"
+      },
+      "filters": {
+        "all": "Todas",
+        "pending": "Pendientes",
+        "completed": "Completadas",
+        "dismissed": "Descartadas",
+        "highPriority": "Alta prioridad",
+        "mediumPriority": "Prioridad media",
+        "lowPriority": "Baja prioridad",
+        "property": "Propiedad",
+        "tenant": "Inquilino",
+        "type": "Tipo",
+        "applyFilters": "Aplicar filtros",
+        "resetFilters": "Restablecer filtros"
+      },
+      "fields": {
+        "title": "Título",
+        "description": "Descripción",
+        "date": "Fecha",
+        "dueDate": "Fecha de vencimiento",
+        "property": "Propiedad",
+        "tenant": "Inquilino",
+        "priority": "Prioridad",
+        "status": "Estado",
+        "type": "Tipo",
+        "assignedTo": "Asignada a",
+        "notes": "Notas",
+        "attachments": "Archivos adjuntos",
+        "actions": "Acciones",
+        "createdAt": "Fecha de creación",
+        "updatedAt": "Fecha de actualización",
+        "completedAt": "Fecha de finalización",
+        "dismissedAt": "Fecha de descarte"
+      },
+      "priority": {
+        "high": "Alta",
+        "medium": "Media",
+        "low": "Baja"
+      },
+      "status": {
+        "pending": "Pendiente",
+        "completed": "Completada",
+        "dismissed": "Descartada",
+        "overdue": "Atrasada"
+      },
+      "confirmation": {
+        "completeTitle": "Completar actividad",
+        "completeMessage": "¿Estás seguro de que quieres completar esta actividad?",
+        "dismissTitle": "Descartar actividad",
+        "dismissMessage": "¿Estás seguro de que quieres descartar esta actividad?",
+        "deleteTitle": "Eliminar actividad",
+        "deleteMessage": "¿Estás seguro de que quieres eliminar esta actividad? Esta acción no se puede deshacer.",
+        "cancel": "Cancelar",
+        "confirm": "Confirmar"
+      },
+      "actionResults": {
+        "activityTitle": "Actividad: {title}",
+        "completed": "Actividad completada el {date}",
+        "dismissed": "Actividad descartada el {date}",
+        "deleted": "Actividad eliminada el {date}",
+        "added": "Actividad añadida el {date}",
+        "updated": "Actividad actualizada el {date}"
+      }
     }
   },
   "ui": {
@@ -280,7 +676,7 @@
   },
   "landing": {
     "hero": {
-      "title": "Simplifica la gestión de tus alquileres con Tenoris360",
+      "title": "Simplifica la gestión de tus alquileres con ",
       "highlight": "GRATUITO",
       "description": "La plataforma completa y GRATUITA para propietarios y administradores inmobiliarios que desean gestionar contratos, inquilinos y pagos de manera eficiente.",
       "cta": {
@@ -321,6 +717,699 @@
     "cta": {
       "title": "¿Listo para simplificar la gestión de tus alquileres?",
       "description": "Regístrate hoy y descubre cómo nuestro sistema puede ayudarte a ahorrar tiempo y aumentar la rentabilidad de tus inversiones."
+    }
+  },
+  "cookies": {
+    "title": "Configuración de Cookies",
+    "privacyMessage": "Tu privacidad es importante",
+    "description": "Gestiona tus preferencias de cookies. Las cookies esenciales son necesarias para el funcionamiento del sitio.",
+    "usageMessage": "Utilizamos cookies para mejorar tu experiencia de navegación, personalizar contenido y anuncios, proporcionar funciones de redes sociales y analizar nuestro tráfico.",
+    "readMore": "Lee nuestra",
+    "cookiePolicy": "Política de Cookies",
+    "privacyPolicy": "Política de Privacidad",
+    "forMoreInfo": "para más detalles",
+    "and": "y la",
+    "categories": {
+      "essential": {
+        "title": "Cookies Esenciales",
+        "description": "Estas cookies son necesarias para el funcionamiento del sitio y no pueden desactivarse."
+      },
+      "analytics": {
+        "title": "Cookies Analíticas",
+        "description": "Nos ayudan a entender cómo utilizas el sitio, para mejorar la experiencia."
+      },
+      "marketing": {
+        "title": "Cookies de Marketing",
+        "description": "Se utilizan para mostrarte anuncios relevantes basados en tus intereses."
+      }
+    },
+    "buttons": {
+      "acceptAll": "Aceptar todas",
+      "acceptEssential": "Solo esenciales",
+      "save": "Guardar preferencias",
+      "reset": "Restablecer",
+      "close": "Cerrar"
+    }
+  },
+  "footer": {
+    "quickLinks": "Enlaces Rápidos",
+    "resources": "Recursos",
+    "legal": "Legal",
+    "cookieSettings": "Configuración de Cookies",
+    "termsOfService": "Términos de Servicio",
+    "refundPolicy": "Política de Reembolso",
+    "otherInfo": "Otra Información",
+    "legal2": "Legal 2",
+    "companyDescription": "La solución completa para la gestión de alquileres y propiedades.",
+    "allRightsReserved": "Todos los derechos reservados."
+  },
+  "search": {
+    "placeholder": "Buscar en las guías..."
+  },
+  "dashboard": {
+    "title": "Panel de Control",
+    "description": "Resumen del rendimiento de sus propiedades en alquiler",
+    "overview": "Panel de Control",
+    "generateReport": "Generar Informe",
+    "stats": {
+      "properties": "Propiedades",
+      "tenants": "Inquilinos",
+      "monthlyIncome": "Ingresos Mensuales",
+      "occupancyRate": "Tasa de Ocupación"
+    },
+    "charts": {
+      "income": "Tendencia de Ingresos",
+      "occupancy": "Tasa de Ocupación",
+      "propertyTypes": "Tipos de Propiedades",
+      "rentCollection": "Estado de Cobro de Alquileres"
+    },
+    "recentActivities": "Actividades Recientes",
+    "noTrend": "sin cambios",
+    "thisMonth": "este mes"
+  },
+  "properties": {
+    "title": "Propiedades",
+    "description": "Gestione sus propiedades en alquiler",
+    "addProperty": "Añadir Propiedad",
+    "propertyList": "Lista de Propiedades",
+    "noProperties": "No se encontraron propiedades",
+    "searchProperties": "Buscar propiedades...",
+    "filters": {
+      "all": "Todas",
+      "available": "Disponibles",
+      "occupied": "Ocupadas",
+      "maintenance": "En Mantenimiento"
+    },
+    "propertyCard": {
+      "address": "Dirección",
+      "type": "Tipo",
+      "status": "Estado",
+      "rent": "Alquiler",
+      "size": "Tamaño",
+      "rooms": "Habitaciones",
+      "bath": "Baños",
+      "viewDetails": "Ver Detalles"
+    },
+    "status": {
+      "available": "Disponible",
+      "occupied": "Ocupada",
+      "maintenance": "En Mantenimiento",
+      "reserved": "Reservada"
+    }
+  },
+  "tenants": {
+    "title": "Inquilinos",
+    "description": "Gestione sus inquilinos",
+    "addTenant": "Añadir Inquilino",
+    "tenantList": "Lista de Inquilinos",
+    "noTenants": "No se encontraron inquilinos",
+    "searchTenants": "Buscar inquilinos...",
+    "filters": {
+      "all": "Todos",
+      "active": "Activos",
+      "former": "Anteriores",
+      "late": "Con retraso"
+    },
+    "tenantDetails": {
+      "contactInfo": "Información de Contacto",
+      "leaseInfo": "Información del Contrato",
+      "paymentHistory": "Historial de Pagos",
+      "documents": "Documentos",
+      "notes": "Notas"
+    },
+    "status": {
+      "active": "Activo",
+      "former": "Anterior",
+      "late": "Con retraso",
+      "onNotice": "En preaviso"
+    }
+  },
+  "contracts": {
+    "title": "Contratos",
+    "description": "Gestione sus contratos de alquiler",
+    "yourContracts": "Sus contratos",
+    "totalContracts": "{count} contratos en total",
+    "addContract": "Añadir Contrato",
+    "newContract": "Nuevo Contrato",
+    "addFirstContract": "Añadir primer contrato",
+    "contractList": "Lista de Contratos",
+    "noContracts": "No se encontraron contratos",
+    "noContractsYet": "Aún no ha añadido ningún contrato.",
+    "searchContracts": "Buscar contratos...",
+    "loading": "Cargando...",
+    "filters": {
+      "all": "Todos",
+      "active": "Activos",
+      "expired": "Expirados",
+      "upcoming": "Próximos"
+    },
+    "contractDetails": {
+      "propertyInfo": "Información de la Propiedad",
+      "tenantInfo": "Información del Inquilino",
+      "contractTerms": "Términos del Contrato",
+      "paymentSchedule": "Calendario de Pagos",
+      "documents": "Documentos",
+      "notes": "Notas"
+    },
+    "fields": {
+      "id": "ID",
+      "property": "Propiedad",
+      "tenant": "Inquilino",
+      "startDate": "Fecha de Inicio",
+      "endDate": "Fecha de Fin",
+      "rentAmount": "Alquiler Mensual",
+      "deposit": "Fianza",
+      "status": "Estado"
+    },
+    "status": {
+      "active": "Activo",
+      "expired": "Expirado",
+      "upcoming": "Próximo",
+      "terminated": "Terminado"
+    },
+    "noPropertyId": "Ninguna",
+    "propertyIdNotFound": "ID de propiedad no encontrado",
+    "noTenantId": "Ninguno",
+    "tenantIdNotFound": "ID de inquilino no encontrado",
+    "form": {
+      "tenant": "Inquilino",
+      "property": "Propiedad",
+      "unit": "Unidad",
+      "startDate": "Fecha de Inicio",
+      "endDate": "Fecha de Fin",
+      "rentAmount": "Importe del Alquiler",
+      "depositAmount": "Importe de la Fianza",
+      "paymentFrequency": "Frecuencia de Pago",
+      "paymentDueDay": "Día de Vencimiento",
+      "autoRenewal": "Renovación Automática",
+      "specialTerms": "Términos Especiales",
+      "submit": "Guardar Contrato",
+      "cancel": "Cancelar"
+    },
+    "errors": {
+      "loadingData": "No se pudieron cargar los datos",
+      "loading": "No se pudieron cargar los contratos",
+      "adding": "No se pudo añadir el contrato",
+      "updating": "No se pudo actualizar el contrato",
+      "deleting": "No se pudo eliminar el contrato",
+      "renewing": "No se pudo renovar el contrato",
+      "terminating": "No se pudo terminar el contrato"
+    },
+    "filters": {
+      "all": "Todos",
+      "active": "Activos",
+      "expired": "Expirados",
+      "expiringSoon": "Por expirar",
+      "property": "Propiedad",
+      "tenant": "Inquilino",
+      "applyFilters": "Aplicar filtros",
+      "resetFilters": "Restablecer filtros"
+    },
+    "fields": {
+      "contractCode": "Código de contrato",
+      "property": "Propiedad",
+      "tenant": "Inquilino",
+      "startDate": "Fecha de inicio",
+      "endDate": "Fecha de fin",
+      "rentAmount": "Importe del alquiler",
+      "depositAmount": "Importe de la fianza",
+      "paymentFrequency": "Frecuencia de pago",
+      "status": "Estado",
+      "type": "Tipo de contrato",
+      "renewalType": "Tipo de renovación",
+      "noticePeriod": "Período de preaviso",
+      "documents": "Documentos",
+      "notes": "Notas",
+      "actions": "Acciones"
+    },
+    "form": {
+      "title": "Detalles del contrato",
+      "basicInfo": "Información básica",
+      "financialDetails": "Detalles financieros",
+      "termsAndConditions": "Términos y condiciones",
+      "additionalInfo": "Información adicional",
+      "contractCode": "Código de contrato",
+      "generateCode": "Generar código",
+      "property": "Propiedad",
+      "selectProperty": "Seleccionar una propiedad",
+      "tenant": "Inquilino",
+      "selectTenant": "Seleccionar un inquilino",
+      "startDate": "Fecha de inicio",
+      "endDate": "Fecha de fin",
+      "rentAmount": "Importe del alquiler",
+      "depositAmount": "Importe de la fianza",
+      "paymentFrequency": "Frecuencia de pago",
+      "selectPaymentFrequency": "Seleccionar frecuencia de pago",
+      "paymentDay": "Día de pago",
+      "type": "Tipo de contrato",
+      "selectType": "Seleccionar tipo de contrato",
+      "renewalType": "Tipo de renovación",
+      "selectRenewalType": "Seleccionar tipo de renovación",
+      "noticePeriod": "Período de preaviso (días)",
+      "lateFeesApplicable": "Cargos por retraso aplicables",
+      "lateFeeAmount": "Importe por retraso",
+      "lateFeeType": "Tipo de cargo por retraso",
+      "fixed": "Fijo",
+      "percentage": "Porcentaje",
+      "gracePeriod": "Período de gracia (días)",
+      "utilities": "Suministros",
+      "includedUtilities": "Suministros incluidos",
+      "selectUtilities": "Seleccionar suministros",
+      "noUtilities": "No hay suministros seleccionados",
+      "specialTerms": "Términos especiales",
+      "specialTermsPlaceholder": "Introduzca términos especiales",
+      "documents": "Documentos",
+      "uploadDocuments": "Subir documentos",
+      "noDocuments": "No hay documentos subidos",
+      "notes": "Notas",
+      "notesPlaceholder": "Introduzca notas",
+      "submit": "Guardar contrato",
+      "reset": "Restablecer",
+      "cancel": "Cancelar"
+    },
+    "statuses": {
+      "active": "Activo",
+      "expired": "Expirado",
+      "terminated": "Terminado",
+      "pending": "Pendiente"
+    },
+    "types": {
+      "fixed_term": "Contrato de plazo fijo",
+      "periodic": "Contrato periódico",
+      "indefinite": "Contrato indefinido",
+      "sublease": "Subarriendo",
+      "other": "Otro"
+    },
+    "renewalTypes": {
+      "automatic": "Automático",
+      "manual": "Manual",
+      "conditional": "Condicional",
+      "none": "Sin renovación"
+    },
+    "paymentFrequencies": {
+      "monthly": "Mensual",
+      "quarterly": "Trimestral",
+      "biannual": "Semestral",
+      "annual": "Anual",
+      "weekly": "Semanal",
+      "biweekly": "Quincenal"
+    },
+    "utilities": {
+      "water": "Agua",
+      "electricity": "Electricidad",
+      "gas": "Gas",
+      "internet": "Internet",
+      "heating": "Calefacción",
+      "cooling": "Aire acondicionado",
+      "waste": "Basura",
+      "maintenance": "Mantenimiento",
+      "other": "Otro"
+    },
+    "details": {
+      "title": "Detalles del contrato",
+      "basicInfo": "Información básica",
+      "financialDetails": "Detalles financieros",
+      "termsAndConditions": "Términos y condiciones",
+      "documents": "Documentos",
+      "history": "Historial"
+    },
+    "actions": {
+      "view": "Ver",
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "renew": "Renovar",
+      "terminate": "Terminar",
+      "print": "Imprimir",
+      "download": "Descargar PDF",
+      "sendToTenant": "Enviar al inquilino"
+    },
+    "history": {
+      "title": "Historial del contrato",
+      "date": "Fecha",
+      "event": "Evento",
+      "user": "Usuario",
+      "notes": "Notas",
+      "created": "Contrato creado",
+      "updated": "Contrato actualizado",
+      "renewed": "Contrato renovado",
+      "terminated": "Contrato terminado"
+    },
+    "renewal": {
+      "title": "Renovación de contrato",
+      "currentEndDate": "Fecha de fin actual",
+      "newStartDate": "Nueva fecha de inicio",
+      "newEndDate": "Nueva fecha de fin",
+      "currentRent": "Alquiler actual",
+      "newRent": "Nuevo alquiler",
+      "rentIncrease": "Incremento de alquiler",
+      "keepCurrentTerms": "Mantener términos actuales",
+      "specialTerms": "Términos especiales",
+      "notes": "Notas",
+      "submit": "Confirmar renovación",
+      "cancel": "Cancelar"
+    },
+    "termination": {
+      "title": "Terminar contrato",
+      "terminationDate": "Fecha de terminación",
+      "reason": "Motivo",
+      "reasonPlaceholder": "Introduzca el motivo de la terminación",
+      "depositReturn": "Devolución de fianza",
+      "depositReturnAmount": "Importe de fianza a devolver",
+      "conditions": "Condiciones",
+      "conditionsPlaceholder": "Introduzca condiciones",
+      "notes": "Notas",
+      "notesPlaceholder": "Introduzca notas",
+      "submit": "Confirmar terminación",
+      "cancel": "Cancelar"
+    }
+  },
+  "form": {
+    "personalInfo": {
+      "firstname": "Nombre",
+      "lastname": "Apellido",
+      "email": "Email",
+      "subject": "Asunto",
+      "message": "Mensaje"
+    },
+    "placeholders": {
+      "firstname": "Tu nombre",
+      "lastname": "Tu apellido",
+      "email": "Tu email",
+      "subject": "Asunto de la solicitud",
+      "message": "Describe tu solicitud..."
+    },
+    "buttons": {
+      "submit": "Enviar Mensaje",
+      "sendAnother": "Enviar otro mensaje"
+    },
+    "success": {
+      "title": "¡Mensaje Enviado!",
+      "description": "Gracias por contactarnos. Te responderemos en un plazo de 24 horas laborables."
+    }
+  },
+  "contact": {
+    "title": "Contáctanos"
+  },
+  "testimonials": {
+    "title": "Lo que Dicen Nuestros Clientes",
+    "description": "Descubre las experiencias de quienes utilizan Tenoris360 para gestionar sus propiedades en alquiler.",
+    "feedback": {
+      "example": "Tenoris360 ha simplificado enormemente la gestión de mis 5 apartamentos. Las notificaciones automáticas me ayudan a no olvidar fechas importantes."
+    }
+  },
+  "faq": {
+    "title": "Preguntas Frecuentes",
+    "questions": {
+      "start": {
+        "question": "¿Cómo puedo empezar a usar Tenoris360?",
+        "answer": "Para empezar, regístrate gratuitamente en nuestro sitio web. Después del registro, podrás comenzar a añadir tus propiedades y configurar tu cuenta. Consulta nuestra guía de inicio para más detalles."
+      },
+      "trial": {
+        "question": "¿Es posible probar Tenoris360 antes de suscribirse?",
+        "answer": "Sí, ofrecemos un período de prueba gratuito de 14 días con todas las funcionalidades de la versión Premium. No se requiere tarjeta de crédito para registrarse en la prueba."
+      },
+      "cancel": {
+        "question": "¿Cómo puedo cancelar mi suscripción?",
+        "answer": "Puedes cancelar tu suscripción en cualquier momento desde la sección 'Suscripción' en tu perfil. La cancelación será efectiva al final del ciclo de facturación actual."
+      },
+      "international": {
+        "question": "¿Tenoris360 puede utilizarse para gestionar propiedades en diferentes países?",
+        "answer": "Sí, Tenoris360 puede utilizarse para gestionar propiedades en cualquier país. El sistema admite diferentes monedas y formatos fiscales."
+      },
+      "import": {
+        "question": "¿Puedo importar datos de mi sistema de gestión anterior?",
+        "answer": "Sí, ofrecemos herramientas de importación para transferir fácilmente tus datos desde otros sistemas. Contacta con nuestro soporte para recibir asistencia personalizada en el proceso de migración."
+      }
+    }
+  },
+  "onboarding": {
+    "interactiveGuide": "Guía interactiva"
+  },
+  "notFound": {
+    "title": "404",
+    "message": "¡Ups! Página no encontrada",
+    "backToHome": "Volver al Inicio"
+  },
+  "profile": {
+    "title": "Perfil",
+    "subtitle": "Gestiona tu información personal",
+    "profileDetails": "Detalles del Perfil",
+    "profileDescription": "Edita tu información personal y de contacto",
+    "memberSince": "Miembro desde {date}",
+    "plan": "Plan: {plan}",
+    "tabs": {
+      "info": "Información",
+      "security": "Seguridad",
+      "billing": "Facturación"
+    },
+    "security": {
+      "title": "Seguridad de la Cuenta",
+      "description": "Gestiona tu contraseña y configuración de seguridad",
+      "currentPassword": "Contraseña Actual",
+      "currentPasswordPlaceholder": "Introduce tu contraseña actual",
+      "newPassword": "Nueva Contraseña"
+    },
+    "form": {
+      "fullName": "Nombre Completo",
+      "fullNamePlaceholder": "Tu nombre",
+      "email": "Email",
+      "emailPlaceholder": "Tu email",
+      "phone": "Teléfono",
+      "phonePlaceholder": "Tu número de teléfono",
+      "company": "Empresa",
+      "companyPlaceholder": "Nombre de la empresa",
+      "address": "Dirección",
+      "addressPlaceholder": "Tu dirección",
+      "city": "Ciudad",
+      "cityPlaceholder": "Ciudad",
+      "postalCode": "Código Postal",
+      "postalCodePlaceholder": "Código Postal",
+      "country": "País",
+      "countryPlaceholder": "País",
+      "saveChanges": "Guardar Cambios",
+      "cancel": "Cancelar"
+    }
+  },
+  "booking": {
+    "confirmation": {
+      "deleteTitle": "Eliminar reserva",
+      "deleteMessage": "¿Estás seguro de que quieres eliminar esta reserva?",
+      "successDelete": "Reserva eliminada con éxito",
+      "errorDelete": "No se pudo eliminar la reserva",
+      "successUpdate": "Reserva actualizada con éxito",
+      "successCreate": "Reserva creada con éxito",
+      "error": "Se ha producido un error. Inténtalo de nuevo más tarde."
+    }
+  },
+  "tourGuide": {
+    "skipButton": "Saltar",
+    "nextButton": "Siguiente",
+    "backButton": "Atrás"
+  },
+  "reports": {
+    "title": "Informes",
+    "description": "Visualiza y genera informes detallados",
+    "generateReport": "Generar Informe",
+    "reportTypes": {
+      "financial": "Informe Financiero",
+      "occupancy": "Informe de Ocupación",
+      "propertyPerformance": "Rendimiento de Propiedades",
+      "tenantHistory": "Historial de Inquilinos",
+      "maintenanceHistory": "Historial de Mantenimiento",
+      "taxReport": "Informe Fiscal"
+    },
+    "filters": {
+      "dateRange": "Rango de fechas",
+      "property": "Propiedad",
+      "tenant": "Inquilino",
+      "categories": "Categorías",
+      "applyFilters": "Aplicar filtros",
+      "resetFilters": "Restablecer filtros"
+    },
+    "timeframes": {
+      "thisMonth": "Este mes",
+      "lastMonth": "Mes pasado",
+      "thisQuarter": "Este trimestre",
+      "lastQuarter": "Trimestre pasado",
+      "thisYear": "Este año",
+      "lastYear": "Año pasado",
+      "custom": "Personalizado"
+    },
+    "export": {
+      "pdf": "Exportar a PDF",
+      "excel": "Exportar a Excel",
+      "csv": "Exportar a CSV",
+      "print": "Imprimir"
+    }
+  },
+  "import": {
+    "title": "Importación",
+    "description": "Importar datos desde archivos externos",
+    "selectFile": "Seleccionar archivo",
+    "dragAndDrop": "Arrastra y suelta el archivo aquí o haz clic para seleccionar",
+    "supportedFormats": "Formatos soportados",
+    "maxFileSize": "Tamaño máximo de archivo",
+    "steps": {
+      "uploadFile": "Subir archivo",
+      "mapFields": "Mapear campos",
+      "preview": "Vista previa",
+      "import": "Importar"
+    },
+    "fieldMapping": {
+      "title": "Mapeo de campos",
+      "description": "Mapea los campos del archivo con los campos de la aplicación",
+      "sourceField": "Campo de origen",
+      "targetField": "Campo de destino",
+      "required": "Obligatorio",
+      "preview": "Vista previa",
+      "unmappedFields": "Campos no mapeados",
+      "autoMap": "Mapeo automático"
+    },
+    "preview": {
+      "title": "Vista previa de datos",
+      "description": "Verifica los datos antes de importar",
+      "records": "Registros",
+      "errors": "Errores"
+    },
+    "results": {
+      "title": "Resultados de importación",
+      "description": "Resumen de los resultados de la importación",
+      "totalRecords": "Registros totales",
+      "importedRecords": "Registros importados",
+      "failedRecords": "Registros fallidos",
+      "skipReason": "Motivo de omisión",
+      "errorDetails": "Detalles del error",
+      "duration": "Duración",
+      "downloadErrors": "Descargar errores"
+    }
+  },
+  "documents": {
+    "title": "Documentos",
+    "description": "Gestiona y visualiza documentos",
+    "upload": "Subir Documento",
+    "noDocuments": "No se encontraron documentos",
+    "searchDocuments": "Buscar documentos...",
+    "filters": {
+      "all": "Todos",
+      "contracts": "Contratos",
+      "invoices": "Facturas",
+      "receipts": "Recibos",
+      "other": "Otros"
+    },
+    "documentDetails": {
+      "name": "Nombre",
+      "type": "Tipo",
+      "size": "Tamaño",
+      "uploadedOn": "Subido el",
+      "property": "Propiedad",
+      "tenant": "Inquilino",
+      "category": "Categoría",
+      "tags": "Etiquetas",
+      "download": "Descargar",
+      "delete": "Eliminar",
+      "preview": "Vista previa"
+    },
+    "categories": {
+      "contract": "Contrato",
+      "invoice": "Factura",
+      "receipt": "Recibo",
+      "maintenance": "Mantenimiento",
+      "legal": "Documento Legal",
+      "other": "Otro"
+    }
+  },
+  "addContract": {
+    "title": "Añadir nuevo contrato",
+    "description": "Crear un nuevo contrato de alquiler",
+    "steps": {
+      "propertyTenant": "Propiedad e inquilino",
+      "details": "Detalles del contrato",
+      "terms": "Términos y condiciones",
+      "documents": "Documentos",
+      "review": "Revisión",
+      "next": "Siguiente",
+      "back": "Atrás",
+      "finalize": "Finalizar contrato"
+    },
+    "propertyTenant": {
+      "title": "Propiedad e inquilino",
+      "selectProperty": "Seleccionar una propiedad",
+      "propertyRequired": "Selecciona una propiedad para continuar",
+      "noProperties": "No hay propiedades disponibles. Añade primero una propiedad.",
+      "selectTenant": "Seleccionar un inquilino",
+      "tenantRequired": "Selecciona un inquilino para continuar",
+      "noTenants": "No hay inquilinos disponibles. Añade primero un inquilino.",
+      "addNewTenant": "Añadir nuevo inquilino",
+      "propertyDetails": "Detalles de la propiedad",
+      "tenantDetails": "Detalles del inquilino"
+    },
+    "details": {
+      "title": "Detalles del contrato",
+      "contractCode": "Código del contrato",
+      "generateCode": "Generar código",
+      "startDate": "Fecha de inicio",
+      "startDateRequired": "La fecha de inicio es obligatoria",
+      "endDate": "Fecha de fin",
+      "endDateRequired": "La fecha de fin es obligatoria",
+      "contractType": "Tipo de contrato",
+      "contractTypeRequired": "El tipo de contrato es obligatorio",
+      "renewalType": "Tipo de renovación",
+      "rentAmount": "Importe del alquiler",
+      "rentAmountRequired": "El importe del alquiler es obligatorio",
+      "depositAmount": "Importe de la fianza",
+      "depositAmountRequired": "El importe de la fianza es obligatorio",
+      "paymentFrequency": "Frecuencia de pago",
+      "paymentDay": "Día de pago"
+    },
+    "terms": {
+      "title": "Términos y condiciones",
+      "noticePeriod": "Período de preaviso (días)",
+      "lateFeesApplicable": "Cargos por retraso aplicables",
+      "lateFeeAmount": "Importe por retraso",
+      "lateFeeType": "Tipo de cargo por retraso",
+      "fixed": "Fijo",
+      "percentage": "Porcentaje",
+      "gracePeriod": "Período de gracia (días)",
+      "utilities": "Suministros",
+      "includedUtilities": "Suministros incluidos",
+      "specialTerms": "Términos especiales",
+      "specialTermsPlaceholder": "Añade términos o cláusulas especiales"
+    },
+    "documents": {
+      "title": "Documentos",
+      "contractDocument": "Documento de contrato",
+      "uploadContract": "Subir contrato",
+      "additionalDocuments": "Documentos adicionales",
+      "uploadAdditionalDocs": "Subir documentos adicionales",
+      "dragDropFiles": "Arrastra archivos aquí o haz clic para subir",
+      "maxFileSize": "Tamaño máximo de archivo: 10MB",
+      "noDocumentsUploaded": "No hay documentos subidos"
+    },
+    "review": {
+      "title": "Revisión del contrato",
+      "propertyInfo": "Información de la propiedad",
+      "tenantInfo": "Información del inquilino",
+      "contractInfo": "Información del contrato",
+      "termsInfo": "Términos y condiciones",
+      "documentsUploaded": "Documentos subidos",
+      "edit": "Editar",
+      "contractPreview": "Vista previa del contrato",
+      "downloadDraft": "Descargar borrador"
+    },
+    "success": {
+      "title": "Contrato creado con éxito",
+      "message": "El contrato ha sido creado con éxito.",
+      "contractCode": "Código del contrato: {code}",
+      "downloadContract": "Descargar contrato",
+      "viewContract": "Ver contrato",
+      "addAnother": "Añadir otro contrato",
+      "backToContracts": "Volver a la lista de contratos"
+    },
+    "error": {
+      "title": "Error al crear el contrato",
+      "message": "Se ha producido un error al crear el contrato. Inténtalo de nuevo más tarde.",
+      "tryAgain": "Intentar de nuevo",
+      "backToContracts": "Volver a la lista de contratos"
     }
   }
 } 

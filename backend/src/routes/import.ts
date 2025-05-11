@@ -240,6 +240,14 @@ router.post('/:entityType', async (req, res) => {
 
     console.log(`Richiesta importazione per ${entityType} con ${data.length} record da utente ${userId}`);
 
+    // Aggiunta di log dettagliati per transazioni
+    if (entityType === 'transaction') {
+      console.log('Endpoint transazioni standard invocato con importazione a blocchi');
+      if (data.length > 0) {
+        console.log('Primo record di esempio:', JSON.stringify(data[0], null, 2));
+      }
+    }
+
     // Validazione dei dati in base al tipo di entità
     const validationErrors = validateImportData(entityType, data);
     if (validationErrors.length > 0) {
@@ -265,7 +273,9 @@ router.post('/:entityType', async (req, res) => {
         importedCount = await importContracts(dataWithUserId);
         break;
       case 'transaction':
+        console.log(`Inizio importazione ${dataWithUserId.length} transazioni...`);
         importedCount = await importTransactions(dataWithUserId);
+        console.log(`Fine importazione transazioni: ${importedCount} inserite con successo`);
         break;
       default:
         return res.status(400).json({ error: `Tipo di entità '${entityType}' non supportato` });
@@ -279,6 +289,64 @@ router.post('/:entityType', async (req, res) => {
   } catch (error) {
     console.error('Errore durante l\'importazione:', error);
     return res.status(500).json({ error: 'Errore durante l\'importazione dei dati' });
+  }
+});
+
+/**
+ * Endpoint per importare dati a blocchi (chunk)
+ * POST /api/import/:entityType/chunk
+ */
+router.post('/:entityType/chunk', async (req, res) => {
+  try {
+    const { entityType } = req.params;
+    const { data } = req.body;
+    const userId = req.user?.id;
+
+    if (!Array.isArray(data) || data.length === 0) {
+      return res.status(400).json({ error: 'Dati non validi o mancanti' });
+    }
+
+    console.log(`Richiesta importazione chunk per ${entityType} con ${data.length} record da utente ${userId}`);
+
+    // Validazione dei dati in base al tipo di entità
+    const validationErrors = validateImportData(entityType, data);
+    if (validationErrors.length > 0) {
+      return res.status(400).json({ errors: validationErrors });
+    }
+
+    // Aggiungi user_id a tutti i record
+    const dataWithUserId = data.map(item => ({
+      ...item,
+      user_id: userId
+    }));
+
+    // Elaborazione in base al tipo di entità
+    let importedCount = 0;
+    switch (entityType) {
+      case 'properties':
+        importedCount = await importProperties(dataWithUserId);
+        break;
+      case 'tenants':
+        importedCount = await importTenants(dataWithUserId);
+        break;
+      case 'contracts':
+        importedCount = await importContracts(dataWithUserId);
+        break;
+      case 'transactions':
+        importedCount = await importTransactions(dataWithUserId);
+        break;
+      default:
+        return res.status(400).json({ error: `Tipo di entità '${entityType}' non supportato` });
+    }
+
+    return res.status(200).json({ 
+      message: `Chunk importato con successo: ${importedCount} record importati`,
+      importedCount,
+      totalCount: data.length
+    });
+  } catch (error) {
+    console.error('Errore durante l\'importazione del chunk:', error);
+    return res.status(500).json({ error: 'Errore durante l\'importazione del chunk di dati' });
   }
 });
 
@@ -543,83 +611,186 @@ async function importContracts(data: any[]): Promise<number> {
   return importedCount;
 }
 
-// Funzione per importare transazioni
+// Funzione per importare transazioni con bulk insert
 async function importTransactions(data: any[]): Promise<number> {
   let importedCount = 0;
+  let errorCount = 0;
   
   console.log(`Tentativo di importare ${data.length} transazioni`);
   
-  for (const transaction of data) {
-    try {
-      console.log(`Importazione transazione: ${transaction.description || 'senza descrizione'}`);
+  // Carica tutte le proprietà dell'utente per la conversione nome->id (mantieni questa parte)
+  let propertiesMap = new Map<string, string>(); // mappa per nome in minuscolo → id
+  
+  try {
+    // Usa executeQuery per ottenere tutte le proprietà dell'utente
+    await executeQuery(async (client) => {
+      const query = "SELECT id, name, address FROM properties WHERE user_id = $1";
+      const result = await client.query(query, [data[0]?.user_id]); // Assume che user_id sia lo stesso per tutte le transazioni
       
-      await executeQuery(async (client) => {
-        // Costruisci dinamicamente la query in base ai campi presenti
-        const fields: string[] = [];
-        const placeholders: string[] = [];
-        const values: any[] = [];
-        let paramIndex = 1;
-        
-        // Mappa solo i campi presenti nei dati
-        const possibleFields = [
-          'date', 'amount', 'type', 'category', 'description', 
-          'property_id', 'tenant_id', 'notes', 'user_id'
-        ];
-        
-        possibleFields.forEach(field => {
-          if (transaction[field] !== undefined && transaction[field] !== null) {
-            fields.push(field);
-            placeholders.push(`$${paramIndex}`);
-            values.push(transaction[field]);
-            paramIndex++;
+      // Popola la mappa
+      for (const property of result.rows) {
+        if (property.name) {
+          propertiesMap.set(property.name.toLowerCase().trim(), property.id);
+        }
+        if (property.address) {
+          propertiesMap.set(property.address.toLowerCase().trim(), property.id);
+        }
+      }
+      
+      console.log(`Caricate ${result.rows.length} proprietà per conversione nome→id`);
+    });
+  } catch (error) {
+    console.warn("Errore nel caricamento delle proprietà per la conversione nome→id:", error);
+    // Continua comunque, useremo solo gli ID diretti
+  }
+  
+  // OTTIMIZZAZIONE: Utilizza il batch insert
+  try {
+    console.log(`Inizio batch insert per ${data.length} transazioni`);
+    
+    // Prepara le transazioni normalizzate
+    const normalizedTransactions = data.map(transaction => {
+      // Gestione speciale per property_id
+      if (transaction.property_id && typeof transaction.property_id === 'string') {
+        // Controlla se non sembra un UUID valido
+        if (!transaction.property_id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+          // Potrebbe essere un nome, cerca nella mappa
+          const normalizedName = transaction.property_id.toLowerCase().trim();
+          if (propertiesMap.has(normalizedName)) {
+            transaction.property_id = propertiesMap.get(normalizedName);
+          } else {
+            transaction.property_id = null;
           }
-        });
-        
-        if (fields.length === 0) {
-          console.warn('Nessun campo valido trovato per la transazione');
-          return;
         }
+      }
+
+      // Normalizzazione dei dati per un inserimento sicuro
+      return {
+        // Campi obbligatori con valori predefiniti
+        date: transaction.date || new Date().toISOString().split('T')[0],
+        amount: typeof transaction.amount === 'number' ? transaction.amount : 
+                parseFloat(String(transaction.amount).replace(/,/g, '.').replace(/[^\d.-]/g, '')) || 0,
+        type: String(transaction.type || 'expense').toLowerCase(),
+        // Campi opzionali
+        category: transaction.category || 'Altro',
+        description: transaction.description || null,
+        // IDs
+        property_id: transaction.property_id || null,
+        tenant_id: transaction.tenant_id || null,
+        user_id: transaction.user_id
+      };
+    });
+
+    // Dividi in batch di massimo 200 transazioni per insert
+    const batchSize = 200;
+    const batches: any[][] = [];
+    for (let i = 0; i < normalizedTransactions.length; i += batchSize) {
+      batches.push(normalizedTransactions.slice(i, i + batchSize));
+    }
+    
+    console.log(`Creati ${batches.length} batch per l'inserimento (${batchSize} transazioni per batch)`);
+
+    // Processa ogni batch
+    await executeQuery(async (client) => {
+      for (const [batchIndex, batch] of batches.entries()) {
+        try {
+          console.log(`Elaborazione batch ${batchIndex + 1}/${batches.length}`);
         
-        // Assicurati che user_id sia incluso
-        if (!fields.includes('user_id') && transaction.user_id) {
-          fields.push('user_id');
-          placeholders.push(`$${paramIndex}`);
+          // Crea una query di bulk insert con VALUES multiple
+          let queryParts = ['INSERT INTO transactions (date, amount, type, category, description, property_id, tenant_id, user_id) VALUES'];
+          const values = [];
+          let valueStrings = [];
+          let paramCounter = 1;
+          
+          for (const transaction of batch) {
+            // Crea i placeholder per questa transazione
+            const placeholders = [
+              `$${paramCounter++}`, // date
+              `$${paramCounter++}`, // amount
+              `$${paramCounter++}`, // type
+              `$${paramCounter++}`, // category
+              `$${paramCounter++}`, // description
+              transaction.property_id ? `$${paramCounter++}::uuid` : 'NULL', // property_id
+              transaction.tenant_id ? `$${paramCounter++}::uuid` : 'NULL', // tenant_id
+              `$${paramCounter++}::uuid` // user_id
+            ];
+            
+            // Aggiungi i valori all'array
+            values.push(
+              transaction.date, 
+              transaction.amount, 
+              transaction.type,
+              transaction.category,
+              transaction.description
+            );
+            
+            // Aggiungi gli UUID solo se presenti
+            if (transaction.property_id) values.push(transaction.property_id);
+            if (transaction.tenant_id) values.push(transaction.tenant_id);
           values.push(transaction.user_id);
-          paramIndex++;
-        }
-        
-        const query = `
+            
+            // Aggiungi la stringa di placeholder
+            valueStrings.push(`(${placeholders.join(', ')})`);
+          }
+          
+          // Completa la query
+          const fullQuery = queryParts.join(' ') + ' ' + valueStrings.join(', ') + ' RETURNING id';
+          
+          try {
+            const result = await client.query(fullQuery, values);
+            const inserted = result.rows.length;
+            importedCount += inserted;
+            console.log(`Batch ${batchIndex + 1}: inserite ${inserted} transazioni su ${batch.length}`);
+          } catch (batchError) {
+            console.error(`Errore nel batch ${batchIndex + 1}:`, batchError);
+            errorCount += batch.length;
+            
+            // Se il batch insert fallisce, prova con insert singoli per recuperare il più possibile
+            console.log(`Tentativo di recupero con insert singoli per il batch ${batchIndex + 1}`);
+            for (const transaction of batch) {
+              try {
+                // Crea query singola
+                const singleQuery = `
           INSERT INTO transactions 
-          (${fields.join(', ')})
-          VALUES (${placeholders.join(', ')})
+                  (date, amount, type, category, description, property_id, tenant_id, user_id)
+                  VALUES ($1, $2, $3, $4, $5, $6::uuid, $7::uuid, $8::uuid)
           RETURNING id
         `;
         
-        console.log(`Query per transazione:`, query);
-        console.log('Campi:', fields);
-        
-        try {
-          const result = await client.query(query, values);
+                const singleResult = await client.query(singleQuery, [
+                  transaction.date,
+                  transaction.amount,
+                  transaction.type,
+                  transaction.category,
+                  transaction.description,
+                  transaction.property_id,
+                  transaction.tenant_id,
+                  transaction.user_id
+                ]);
           
-          if (result.rows.length > 0) {
-            console.log(`Transazione inserita con ID:`, result.rows[0].id);
+                if (singleResult.rows.length > 0) {
             importedCount++;
-          } else {
-            console.warn(`Transazione non inserita: nessun ID restituito`);
+                  errorCount--;
           }
-        } catch (queryError: any) {
-          console.error(`Errore nella query per transazione:`, queryError.message);
-          throw queryError; // Rilancia l'errore per gestirlo a livello superiore
+              } catch (singleError: any) {
+                // Log ma non fare nulla, continua con il prossimo
+                console.error(`Fallimento anche con insert singolo per una transazione:`, singleError.message);
+              }
         }
-      });
-    } catch (error: any) {
-      console.error(`Errore nell'importazione della transazione: ${transaction.description || 'senza descrizione'}`, error.message);
-      throw error; // Rilancia l'errore per gestirlo a livello superiore
+          }
+        } catch (error) {
+          console.error(`Errore generale nel batch ${batchIndex + 1}:`, error);
+          errorCount += batch.length;
     }
   }
+    });
   
-  console.log(`Importazione completata: ${importedCount} transazioni inserite`);
+    console.log(`Importazione completata: ${importedCount} transazioni inserite, ${errorCount} errori`);
   return importedCount;
+  } catch (error) {
+    console.error('Errore generale nell\'importazione delle transazioni:', error);
+    return importedCount;
+  }
 }
 
 export const importRouter = router; 

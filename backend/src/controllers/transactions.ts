@@ -259,4 +259,32 @@ export const deleteTransaction = async (req: AuthRequest, res: Response) => {
     console.error("Errore nell'eliminazione della transazione:", error);
     res.status(500).json({ error: "Errore nell'eliminazione della transazione" });
   }
+};
+
+export const deleteAllTransactions = async (req: AuthRequest, res: Response) => {
+  const userId = req.user?.id; // UUID
+
+  if (!userId) {
+    return res.status(401).json({ error: 'Utente non autenticato' });
+  }
+
+  try {
+    // Elimina tutte le transazioni dell'utente corrente
+    const result = await executeQuery(async (client) => {
+      return client.query(
+        'DELETE FROM transactions WHERE user_id = $1::uuid RETURNING id', 
+        [userId]
+      );
+    });
+    
+    const deletedCount = result.rows.length;
+    
+    res.json({ 
+      message: `${deletedCount} transazioni eliminate con successo`,
+      count: deletedCount
+    });
+  } catch (error) {
+    console.error('Errore durante l\'eliminazione di tutte le transazioni:', error);
+    res.status(500).json({ error: 'Errore durante l\'eliminazione di tutte le transazioni' });
+  }
 }; 

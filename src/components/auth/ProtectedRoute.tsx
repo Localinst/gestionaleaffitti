@@ -1,17 +1,32 @@
-import { ReactNode, useEffect } from 'react';
+import { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
+import { getCurrentLanguage } from '@/i18n';
+import { LinkWithQuery } from '@/components/LinkWithQuery';
 
 interface ProtectedRouteProps {
   children: ReactNode;
   requiredRole?: string;
 }
 
+/**
+ * Componente Navigate personalizzato che preserva i parametri di query
+ */
+const NavigateWithQuery = ({ to, ...props }: { to: string, [key: string]: any }) => {
+  const location = useLocation();
+  const hasSearchParams = to.includes('?');
+  const newTo = hasSearchParams ? to : `${to}${location.search}`;
+  return <Navigate to={newTo} {...props} />;
+};
+
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole }) => {
   const { isAuthenticated, isLoading, user } = useAuth();
   const location = useLocation();
+  const { i18n } = useTranslation();
+  const currentLang = getCurrentLanguage();
 
   if (isLoading) {
     return (
@@ -29,8 +44,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
       duration: 3000
     });
     
-    // Reindirizza al login, salvando la pagina di origine per reindirizzare l'utente dopo il login
-    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+    // Reindirizza al login, mantenendo il parametro di query e salvando la pagina di origine
+    return <NavigateWithQuery to="/login" state={{ from: location.pathname }} replace />;
   }
 
   // Controllo del ruolo se richiesto
@@ -41,9 +56,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
       duration: 3000
     });
     
-    // Reindirizza alla dashboard o a una pagina di "non autorizzato"
-    // Per ora reindirizziamo alla dashboard
-    return <Navigate to="/dashboard" replace />;
+    // Reindirizza alla dashboard mantenendo il parametro lingua
+    return <NavigateWithQuery to="/dashboard" replace />;
   }
 
   return <>{children}</>;

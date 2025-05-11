@@ -95,8 +95,10 @@ export function ReportFilterComponent({ onFiltersChange }: ReportFilterComponent
         endDate = endOfYear(now);
         break;
       case "all":
-        // Imposta la data di inizio al 1 gennaio 2018 e la data di fine a oggi
-        startDate = new Date(2018, 0, 1); // 1 gennaio 2018
+        // Imposta la data di inizio a 24 mesi fa e la data di fine a oggi
+        startDate = new Date();
+        startDate.setMonth(startDate.getMonth() - 24);
+        startDate.setDate(1); // Primo giorno del mese
         endDate = now; // Data corrente
         break;
       case "custom":
@@ -128,7 +130,7 @@ export function ReportFilterComponent({ onFiltersChange }: ReportFilterComponent
 
   // Formatta l'etichetta del periodo corrente
   const formatPeriodLabel = () => {
-    if (filters.periodType === "all") return "Dal 01/01/2018 ad oggi";
+    if (filters.periodType === "all") return "Ultimi 24 mesi";
     if (filters.periodType === "custom" && filters.startDate && filters.endDate) {
       return `${format(filters.startDate, "dd/MM/yyyy")} - ${format(filters.endDate, "dd/MM/yyyy")}`;
     }
@@ -185,7 +187,7 @@ export function ReportFilterComponent({ onFiltersChange }: ReportFilterComponent
                   <SelectItem value="week">Questa settimana</SelectItem>
                   <SelectItem value="month">Questo mese</SelectItem>
                   <SelectItem value="year">Quest'anno</SelectItem>
-                  <SelectItem value="all">Tutto il periodo</SelectItem>
+                  <SelectItem value="all">Ultimi 24 mesi</SelectItem>
                   <SelectItem value="custom">Personalizzato</SelectItem>
                 </SelectContent>
               </Select>

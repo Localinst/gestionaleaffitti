@@ -111,6 +111,18 @@ function ensureMonthlyData(data: any[], startDate: Date, endDate: Date) {
     return [];
   }
   
+  // Calcola il numero di mesi tra startDate e endDate
+  const monthDiff = (endDate.getFullYear() - startDate.getFullYear()) * 12 + 
+                   (endDate.getMonth() - startDate.getMonth()) + 1;
+                   
+  // Se l'intervallo è troppo grande (più di 36 mesi), limita a 36 mesi più recenti
+  if (monthDiff > 36) {
+    console.warn(`Intervallo di ${monthDiff} mesi troppo grande, limitato a 36 mesi recenti`);
+    startDate = new Date(endDate);
+    startDate.setMonth(startDate.getMonth() - 35);
+    startDate.setDate(1);
+  }
+  
   // Mappa dei dati esistenti per mese
   const existingDataMap = new Map();
   
@@ -257,41 +269,6 @@ interface PropertyPerformanceData {
   occupancyRate: number;
 }
 
-// Dati finanziari di esempio per la modalità di anteprima
-const SAMPLE_FINANCIAL_DATA: FinancialData[] = [
-  { date: 'Jan 2023', income: 24500, expenses: 15000, net: 9500, sortKey: '2023-01' },
-  { date: 'Feb 2023', income: 28400, expenses: 16500, net: 11900, sortKey: '2023-02' },
-  { date: 'Mar 2023', income: 32000, expenses: 17800, net: 14200, sortKey: '2023-03' },
-  { date: 'Apr 2023', income: 29800, expenses: 16200, net: 13600, sortKey: '2023-04' },
-  { date: 'May 2023', income: 33500, expenses: 18900, net: 14600, sortKey: '2023-05' },
-  { date: 'Jun 2023', income: 31200, expenses: 17500, net: 13700, sortKey: '2023-06' },
-  { date: 'Jul 2023', income: 34600, expenses: 19200, net: 15400, sortKey: '2023-07' },
-  { date: 'Aug 2023', income: 36800, expenses: 20100, net: 16700, sortKey: '2023-08' },
-  { date: 'Sep 2023', income: 32900, expenses: 18600, net: 14300, sortKey: '2023-09' },
-  { date: 'Oct 2023', income: 35700, expenses: 19800, net: 15900, sortKey: '2023-10' },
-  { date: 'Nov 2023', income: 38200, expenses: 21000, net: 17200, sortKey: '2023-11' },
-  { date: 'Dec 2023', income: 42000, expenses: 23500, net: 18500, sortKey: '2023-12' },
-];
-
-const SAMPLE_PROPERTY_DATA: PropertyPerformanceData[] = [
-  { propertyId: "1", propertyName: "Villa Belvedere", income: 12500, expenses: 4500, occupancyRate: 95 },
-  { propertyId: "2", propertyName: "Condominio Aurora", income: 18700, expenses: 8200, occupancyRate: 87 },
-  { propertyId: "3", propertyName: "Appartamento Centro", income: 9800, expenses: 3200, occupancyRate: 100 },
-  { propertyId: "4", propertyName: "Residence Mare", income: 15400, expenses: 6800, occupancyRate: 75 },
-  { propertyId: "5", propertyName: "Loft Industriale", income: 7200, expenses: 2900, occupancyRate: 100 },
-  { propertyId: "6", propertyName: "Villetta Giardino", income: 11300, expenses: 4100, occupancyRate: 83 }
-];
-
-const SAMPLE_SUMMARY_DATA: SummaryData = {
-  totalIncome: 84900,
-  totalExpenses: 29700,
-  netIncome: 55200,
-  occupancyRate: 88,
-  propertyCount: 6,
-  tenantCount: 14,
-  avgRent: 1390
-};
-
 // Funzione per ottenere il nome del mese in italiano
 function getItalianMonthName(monthIndex: number): string {
   const italianMonths = [
@@ -302,8 +279,8 @@ function getItalianMonthName(monthIndex: number): string {
   return italianMonths[monthIndex] || '';
 }
 
-// Genera dati di esempio basati sul periodo di query
-const generateSampleData = (timeFilter: string, specificYear?: number): FinancialData[] => {
+// Genera dati vuoti invece che dati di esempio
+const generateEmptyData = (timeFilter: string, specificYear?: number): FinancialData[] => {
   const date = new Date();
   const currentYear = date.getFullYear();
   const currentMonth = date.getMonth();
@@ -313,11 +290,11 @@ const generateSampleData = (timeFilter: string, specificYear?: number): Financia
                      timeFilter === "6months" ? 6 : 
                      timeFilter === "specific-year" ? 12 : 12;
   
-  // Crea un array di dati di esempio con le date corrette
-  const sampleData: FinancialData[] = [];
+  // Crea un array di dati vuoti con le date corrette
+  const emptyData: FinancialData[] = [];
   
   for (let i = 0; i < monthCount; i++) {
-    // Calcola la data per questo elemento (tornando indietro nel tempo)
+    // Calcola la data per questo elemento
     let targetMonth: number;
     let targetYear: number;
     
@@ -338,25 +315,35 @@ const generateSampleData = (timeFilter: string, specificYear?: number): Financia
     const displayDate = `${getItalianMonthName(targetMonth)} ${targetYear}`;
     const sortKey = format(targetDate, 'yyyy-MM');
     
-    // Genera valori casuali per i dati finanziari
-    const income = Math.floor(25000 + Math.random() * 15000);
-    const expenses = Math.floor(15000 + Math.random() * 8000);
-    const net = income - expenses;
-    
-    sampleData.push({
+    // Aggiungi dati vuoti (zero)
+    emptyData.push({
       date: displayDate,
-      income,
-      expenses,
-      net,
+      income: 0,
+      expenses: 0,
+      net: 0,
       sortKey
     });
   }
   
-  // Ordina i dati per data usando sortKey
-  const sortedData = sampleData.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+  // Ordina i dati per data
+  const sortedData = emptyData.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
   
   return sortedData;
 };
+
+// Dati di riepilogo vuoti
+const EMPTY_SUMMARY_DATA: SummaryData = {
+  totalIncome: 0,
+  totalExpenses: 0,
+  netIncome: 0,
+  occupancyRate: 0,
+  propertyCount: 0,
+  tenantCount: 0,
+  avgRent: 0
+};
+
+// Dati vuoti per le performance delle proprietà
+const EMPTY_PROPERTY_DATA: PropertyPerformanceData[] = [];
 
 export default function ReportPage() {
   const [filters, setFilters] = useState<ReportFilters>({
@@ -376,6 +363,9 @@ export default function ReportPage() {
   const [loadingSummary, setLoadingSummary] = useState(false);
   const [loadingProperty, setLoadingProperty] = useState(false);
   
+  // Stato per verificare se il componente è montato
+  const [componentMounted, setComponentMounted] = useState(true);
+  
   const [activeTab, setActiveTab] = useState("summary");
   const [exportLoading, setExportLoading] = useState(false);
   
@@ -384,10 +374,17 @@ export default function ReportPage() {
   const [timeFilter, setTimeFilter] = useState("year"); // "3months", "6months", "year", "specific-year"
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   
+  // Imposta il componentMounted a true quando il componente viene montato
+  // e a false quando viene smontato
+  useEffect(() => {
+    setComponentMounted(true);
+    return () => {
+      setComponentMounted(false);
+    };
+  }, []);
+  
   // Carica i dati finanziari
   useEffect(() => {
-    let isMounted = true; // Flag per gestire l'unmount del componente
-    
     async function loadFinancialData() {
       try {
         // Determina il range temporale in base ai filtri del grafico
@@ -421,6 +418,13 @@ export default function ReportPage() {
           // Use custom dates if provided
           queryStartDate = filters.startDate;
           queryEndDate = filters.endDate;
+        } else if (filters.periodType === "all") {
+          // Per "tutto il periodo", impostiamo un massimo di 24 mesi invece di andare fino al 2018
+          // per evitare problemi di performance
+          queryEndDate = new Date();
+          queryStartDate = new Date();
+          queryStartDate.setMonth(queryStartDate.getMonth() - 24);
+          queryStartDate.setDate(1); // Primo giorno del mese
         } else if (filters.periodType === "month") {
           // Per "questo mese", mostra gli ultimi 30 giorni
           queryEndDate = new Date();
@@ -434,7 +438,7 @@ export default function ReportPage() {
         }
         
         // Se i dati non sono in cache o sono vecchi, inizia il caricamento
-        if (isMounted) {
+        if (componentMounted) {
           setLoadingFinancial(true);
         }
         
@@ -447,15 +451,17 @@ export default function ReportPage() {
         try {
           // Prima prova a caricare dati reali dall'API
           const rawData = await api.reports.getFinancialData(queryParams);
-          if (!isMounted) return; // Non aggiornare lo stato se il componente è smontato
+          if (!componentMounted) return; // Non aggiornare lo stato se il componente è smontato
           
           console.log("Dati finanziari ricevuti dall'API:", rawData);
           
           if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
-            console.log("Nessun dato finanziario ricevuto dall'API, carico dati di esempio");
-            // Use sample data but adjust dates to match the query period
-            const adjustedSampleData = generateSampleData(timeFilter, selectedYear);
-            setFinancialData(adjustedSampleData);
+            console.log("Nessun dato finanziario ricevuto dall'API, mostro dati vuoti");
+            // Use empty data with correct date range
+            const emptyData = generateEmptyData(timeFilter, selectedYear);
+            if (componentMounted) {
+              setFinancialData(emptyData);
+            }
             return;
           }
           
@@ -503,11 +509,13 @@ export default function ReportPage() {
             };
           }).filter(Boolean);
           
-          // Se dopo la validazione non abbiamo dati, usiamo dati di esempio
+          // Se dopo la validazione non abbiamo dati, mostriamo dati vuoti
           if (!validatedData || validatedData.length === 0) {
-            console.log("Dati finanziari non validi dopo la validazione, carico dati di esempio");
-            const adjustedSampleData = generateSampleData(timeFilter, selectedYear);
-            setFinancialData(adjustedSampleData);
+            console.log("Dati finanziari non validi dopo la validazione, mostro dati vuoti");
+            const emptyData = generateEmptyData(timeFilter, selectedYear);
+            if (componentMounted) {
+              setFinancialData(emptyData);
+            }
             return;
           }
           
@@ -528,33 +536,39 @@ export default function ReportPage() {
             return 0;
           });
           
-          setFinancialData(completeData);
+          if (componentMounted) {
+            setFinancialData(completeData);
+          }
         } catch (apiError) {
           console.error("Errore API durante il caricamento dei dati finanziari:", apiError);
-          // Use sample data but adjust dates to match the query period
-          const adjustedSampleData = generateSampleData(timeFilter, selectedYear);
-          
-          // Ordina i dati per garantire il corretto ordine cronologico
-          adjustedSampleData.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
-          
-          setFinancialData(adjustedSampleData);
+          // Use empty data with correct date range
+          const emptyData = generateEmptyData(timeFilter, selectedYear);
+          if (componentMounted) {
+            setFinancialData(emptyData);
+            
+            toast({
+              title: "Errore di connessione",
+              description: "Impossibile caricare i dati finanziari. Verifica la connessione al database.",
+              variant: "destructive"
+            });
+          }
         }
       } catch (error) {
         console.error('Errore generale durante il caricamento dei dati:', error);
+        // Carica dati vuoti in caso di errore generale
+        const emptyData = generateEmptyData(timeFilter, selectedYear);
+        if (componentMounted) {
+          setFinancialData(emptyData);
+        }
       } finally {
-        if (isMounted) {
+        if (componentMounted) {
           setLoadingFinancial(false);
         }
       }
     }
     
     loadFinancialData();
-    
-    // Cleanup function per gestire l'unmount
-    return () => {
-      isMounted = false;
-    };
-  }, [timeFilter, selectedYear, filters.periodType, filters.startDate, filters.endDate, filters.propertyId]);
+  }, [timeFilter, selectedYear, filters.periodType, filters.startDate, filters.endDate, filters.propertyId, componentMounted]);
   
   // Carica i dati di riepilogo
   useEffect(() => {
@@ -572,6 +586,12 @@ export default function ReportPage() {
           queryEndDate = new Date();
           queryStartDate = new Date();
           queryStartDate.setDate(queryStartDate.getDate() - 30); // Ultimi 30 giorni invece dell'intero mese
+        } else if (filters.periodType === "all") {
+          // Anche qui, per "tutto il periodo" limitiamo a 24 mesi per evitare problemi
+          queryEndDate = new Date();
+          queryStartDate = new Date();
+          queryStartDate.setMonth(queryStartDate.getMonth() - 24);
+          queryStartDate.setDate(1); // Primo giorno del mese
         } else if (filters.periodType === "month") {
           // Se il filtro è "questo mese", impostiamo gli ultimi 30 giorni
           queryEndDate = new Date();
@@ -590,8 +610,8 @@ export default function ReportPage() {
           const rawData = await api.reports.getSummary(queryParams);
           
           if (!rawData) {
-            console.log("Nessun dato ricevuto dall'API, caricamento dati di esempio");
-            setSummaryData(SAMPLE_SUMMARY_DATA);
+            console.log("Nessun dato di riepilogo ricevuto dall'API, mostro dati vuoti");
+            setSummaryData(EMPTY_SUMMARY_DATA);
             return;
           }
           
@@ -632,17 +652,17 @@ export default function ReportPage() {
           setSummaryData(validatedData);
         } catch (apiError) {
           console.error("Errore API durante il caricamento dei dati di riepilogo:", apiError);
-          setSummaryData(SAMPLE_SUMMARY_DATA);
+          setSummaryData(EMPTY_SUMMARY_DATA);
+          
+          toast({
+            title: "Errore di connessione",
+            description: "Impossibile caricare i dati di riepilogo. Verifica la connessione al database.",
+            variant: "destructive"
+          });
         }
       } catch (error) {
         console.error("Errore generale durante il caricamento dei dati di riepilogo:", error);
-        toast({
-          title: "Attenzione",
-          description: "Utilizzando dati di esempio a causa di problemi di connessione al database",
-          variant: "destructive"
-        });
-        
-        setSummaryData(SAMPLE_SUMMARY_DATA);
+        setSummaryData(EMPTY_SUMMARY_DATA);
       } finally {
         setLoadingSummary(false);
       }
@@ -667,6 +687,12 @@ export default function ReportPage() {
           queryEndDate = new Date();
           queryStartDate = new Date();
           queryStartDate.setDate(queryStartDate.getDate() - 30); // Ultimi 30 giorni invece dell'intero mese
+        } else if (filters.periodType === "all") {
+          // Anche qui, per "tutto il periodo" limitiamo a 24 mesi per evitare problemi
+          queryEndDate = new Date();
+          queryStartDate = new Date();
+          queryStartDate.setMonth(queryStartDate.getMonth() - 24);
+          queryStartDate.setDate(1); // Primo giorno del mese
         } else if (filters.periodType === "month") {
           // Se il filtro è "questo mese", impostiamo gli ultimi 30 giorni
           queryEndDate = new Date();
@@ -685,8 +711,8 @@ export default function ReportPage() {
           const rawData = await api.reports.getPropertyPerformance(queryParams);
           
           if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
-            console.log("Nessun dato valido di proprietà ricevuto dall'API, caricamento dati di esempio");
-            setPropertyData(SAMPLE_PROPERTY_DATA);
+            console.log("Nessun dato valido di proprietà ricevuto dall'API, mostro dati vuoti");
+            setPropertyData(EMPTY_PROPERTY_DATA);
             return;
           }
           
@@ -717,8 +743,8 @@ export default function ReportPage() {
           }).filter(Boolean) as PropertyPerformanceData[];
           
           if (validatedData.length === 0) {
-            console.log("Nessun dato valido di proprietà dopo la validazione, caricamento dati di esempio");
-            setPropertyData(SAMPLE_PROPERTY_DATA);
+            console.log("Nessun dato valido di proprietà dopo la validazione, mostro dati vuoti");
+            setPropertyData(EMPTY_PROPERTY_DATA);
             return;
           }
           
@@ -726,17 +752,17 @@ export default function ReportPage() {
           setPropertyData(validatedData);
         } catch (apiError) {
           console.error("Errore API durante il caricamento dei dati delle proprietà:", apiError);
-          setPropertyData(SAMPLE_PROPERTY_DATA);
+          setPropertyData(EMPTY_PROPERTY_DATA);
+          
+          toast({
+            title: "Errore di connessione",
+            description: "Impossibile caricare i dati delle proprietà. Verifica la connessione al database.",
+            variant: "destructive"
+          });
         }
       } catch (error) {
         console.error("Errore generale durante il caricamento dei dati delle proprietà:", error);
-        toast({
-          title: "Attenzione",
-          description: "Utilizzando dati di esempio a causa di problemi di connessione al database",
-          variant: "destructive"
-        });
-        
-        setPropertyData(SAMPLE_PROPERTY_DATA);
+        setPropertyData(EMPTY_PROPERTY_DATA);
       } finally {
         setLoadingProperty(false);
       }
@@ -797,12 +823,12 @@ export default function ReportPage() {
     console.log("ReportPage - finanial data originale:", financialData);
     
     if (!financialData || !Array.isArray(financialData) || financialData.length === 0) {
-      console.log("ReportPage - generando dati di esempio");
-      formattedData = generateSampleData(timeFilter, selectedYear);
-      console.log("ReportPage - dati di esempio generati:", formattedData);
+      console.log("ReportPage - generando dati vuoti");
+      formattedData = generateEmptyData(timeFilter, selectedYear);
+      console.log("ReportPage - dati vuoti generati:", formattedData);
       
-      // Imposta i dati di esempio nello stato
-      if (formattedData && formattedData.length > 0) {
+      // Imposta i dati vuoti nello stato
+      if (formattedData && formattedData.length > 0 && componentMounted) {
         setFinancialData(formattedData);
       }
     }
@@ -902,15 +928,16 @@ export default function ReportPage() {
     }
     
     return (
-      <Card className="col-span-2">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Andamento Finanziario - {timeFilterTitle}</CardTitle>
-            <CardDescription>
-              Visualizzazione dettagliata di entrate, uscite e margine netto
-            </CardDescription>
-          </div>
-          <div className="flex flex-col md:flex-row gap-2">
+      <Card className="col-span-12">
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full">
+            <div>
+              <CardTitle>Andamento Finanziario</CardTitle>
+              <CardDescription>
+                Visualizzazione dettagliata di entrate, uscite e margine netto
+              </CardDescription>
+            </div>
+            
             {/* Filtri temporali */}
             <div className="flex rounded-md overflow-hidden border">
               <Button 
@@ -983,17 +1010,34 @@ export default function ReportPage() {
             </div>
           </div>
         </CardHeader>
+        
         <CardContent>
-          <IncomeChart
-            data={limitedData}
-            isLoading={loadingFinancial}
-            showNetByDefault={showNet}
-            onRefresh={() => {
-              setFinancialData([]);
-              setLoadingFinancial(true);
-              setTimeout(() => setLoadingFinancial(false), 500);
-            }}
-          />
+          {(!componentMounted || (formattedData.length > 0 && formattedData.every(item => item.income === 0 && item.expenses === 0))) ? (
+            <div className="min-h-[300px] flex flex-col items-center justify-center">
+              <LineChart className="h-16 w-16 text-muted-foreground/30 mb-2" />
+              <p className="text-muted-foreground">Nessun dato disponibile per il periodo selezionato</p>
+              <p className="text-sm text-muted-foreground/70 mt-1">
+                Seleziona un altro periodo o verifica la connessione al database
+              </p>
+            </div>
+          ) : (
+            <IncomeChart
+              data={limitedData}
+              isLoading={loadingFinancial}
+              showNetByDefault={showNet}
+              onRefresh={() => {
+                if (componentMounted) {
+                  setFinancialData([]);
+                  setLoadingFinancial(true);
+                  setTimeout(() => {
+                    if (componentMounted) {
+                      setLoadingFinancial(false);
+                    }
+                  }, 500);
+                }
+              }}
+            />
+          )}
         </CardContent>
       </Card>
     );
@@ -1010,7 +1054,7 @@ export default function ReportPage() {
     if (!summaryData) {
       setTimeout(() => {
         if (!summaryData) {
-          setSummaryData(SAMPLE_SUMMARY_DATA);
+          setSummaryData(EMPTY_SUMMARY_DATA);
         }
       }, 100);
       
@@ -1025,14 +1069,29 @@ export default function ReportPage() {
           <CardContent className="h-[200px] flex items-center justify-center text-muted-foreground">
             <div className="text-center">
               <p>Caricamento dei dati di riepilogo in corso...</p>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="mt-4"
-                onClick={() => setSummaryData(SAMPLE_SUMMARY_DATA)}
-              >
-                Carica dati di esempio
-              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+    
+    // Verifica se tutti i valori sono zero
+    const allZero = Object.values(summaryData).every(val => val === 0);
+    
+    if (allZero) {
+      return (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              Riepilogo Performance
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="h-[200px] flex items-center justify-center text-muted-foreground">
+            <div className="text-center">
+              <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-20" />
+              <p>Nessun dato disponibile per il periodo selezionato</p>
+              <p className="text-sm mt-2">Seleziona un altro periodo o verifica la connessione al database</p>
             </div>
           </CardContent>
         </Card>
@@ -1086,12 +1145,6 @@ export default function ReportPage() {
     );
     
     if (!propertyData || propertyData.length === 0) {
-      setTimeout(() => {
-        if (!propertyData || propertyData.length === 0) {
-          setPropertyData(SAMPLE_PROPERTY_DATA);
-        }
-      }, 100);
-      
       return (
         <Card>
           <CardHeader>
@@ -1099,22 +1152,12 @@ export default function ReportPage() {
               <Building2 className="h-5 w-5 text-primary" />
               Performance per Proprietà
             </CardTitle>
-            <CardDescription>
-              Tentativo di recupero dati in corso...
-            </CardDescription>
           </CardHeader>
           <CardContent className="h-[200px] flex items-center justify-center text-muted-foreground">
             <div className="text-center">
               <Building2 className="h-12 w-12 mx-auto mb-4 opacity-20" />
-              <p>Caricamento dei dati delle proprietà in corso...</p>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="mt-4"
-                onClick={() => setPropertyData(SAMPLE_PROPERTY_DATA)}
-              >
-                Carica dati di esempio
-              </Button>
+              <p>Nessun dato disponibile per le proprietà nel periodo selezionato</p>
+              <p className="text-sm mt-2">Seleziona un altro periodo o verifica la connessione al database</p>
             </div>
           </CardContent>
         </Card>

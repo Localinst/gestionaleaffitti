@@ -5,8 +5,7 @@
     "tabs": {
       "general": "General",
       "notifications": "Notifications",
-      "appearance": "Appearance",
-      "advanced": "Advanced"
+      "appearance": "Appearance"
     },
     "general": {
       "title": "General Settings",
@@ -20,22 +19,18 @@
       },
       "autoSave": {
         "title": "Auto Save",
-        "label": "Enable Auto Save",
-        "description": "Automatically save changes without confirmation"
+        "label": "Auto Save",
+        "description": "Automatically save changes"
       },
       "confirmDialogs": {
         "title": "Confirmation Dialogs",
-        "label": "Show Confirmation Dialogs",
-        "description": "Display confirmation dialogs before performing important actions"
+        "label": "Confirmation Dialogs",
+        "description": "Show confirmation dialogs for important actions"
       },
-      "saveButton": "Save Settings",
-      "timezone": "Time Zone",
-      "dateFormat": "Date Format",
-      "timeFormat": "Time Format",
-      "startOfWeek": "Start of Week"
+      "saveButton": "Save Settings"
     },
     "notifications": {
-      "title": "Notification Preferences",
+      "title": "Notification Settings",
       "description": "Configure how and when to receive notifications",
       "notificationsEnabled": {
         "title": "Enable Notifications",
@@ -44,21 +39,16 @@
       "channels": {
         "title": "Notification Channels"
       },
-      "email": "Email Notifications",
-      "push": "Push Notifications",
-      "sms": "SMS Notifications",
-      "frequency": "Frequency",
-      "types": {
-        "payments": "Payments",
-        "maintenance": "Maintenance",
-        "leases": "Leases",
-        "messages": "Messages"
+      "emailNotifications": {
+        "label": "Email Notifications",
+        "description": "Receive notifications via email"
       },
-      "frequencies": {
-        "immediately": "Immediately",
-        "daily": "Daily",
-        "weekly": "Weekly",
-        "never": "Never"
+      "pushNotifications": {
+        "label": "Push Notifications",
+        "description": "Receive push notifications in the browser"
+      },
+      "categories": {
+        "title": "Notification Categories"
       },
       "contractNotifications": {
         "label": "Contract Notifications",
@@ -75,7 +65,7 @@
       "saveButton": "Save Settings"
     },
     "appearance": {
-      "title": "Appearance",
+      "title": "Appearance Settings",
       "description": "Customize the visual appearance of the application",
       "theme": {
         "title": "Theme",
@@ -85,17 +75,6 @@
           "system": "System"
         }
       },
-      "themes": {
-        "light": "Light",
-        "dark": "Dark",
-        "system": "System"
-      },
-      "density": "Display Density",
-      "densities": {
-        "comfortable": "Comfortable",
-        "compact": "Compact",
-        "standard": "Standard"
-      },
       "fontSize": {
         "title": "Font Size",
         "options": {
@@ -104,26 +83,12 @@
           "large": "Large"
         }
       },
-      "fontSizes": {
-        "small": "Small",
-        "medium": "Medium",
-        "large": "Large"
-      },
       "animations": {
         "title": "Animations",
         "label": "Interface Animations",
-        "description": "Enable or disable interface animations"
+        "description": "Turn interface animations on or off"
       },
       "saveButton": "Save Settings"
-    },
-    "advanced": {
-      "title": "Advanced Settings",
-      "dataSync": "Data Synchronization",
-      "backups": "Backups",
-      "export": "Export Data",
-      "import": "Import Data",
-      "resetSettings": "Reset Settings",
-      "resetConfirmation": "Are you sure you want to reset all settings?"
     },
     "toasts": {
       "generalSaved": "General settings saved successfully",
@@ -156,7 +121,8 @@
       "error": "An error occurred",
       "empty": "No items found",
       "saving": "Saving...",
-      "processing": "Processing..."
+      "processing": "Processing...",
+      "showing": "Showing"
     },
     "navigation": {
       "dashboard": "Dashboard",
@@ -170,7 +136,7 @@
       "profile": "Profile",
       "logout": "Logout",
       "home": "Home",
-      "pricing": "Free Service",
+      "pricing": "Pricing",
       "blog": "Blog",
       "guides": "Guides",
       "support": "Support",
@@ -178,8 +144,8 @@
       "register": "Register",
       "features": "Features",
       "activities": "Activities",
-      "tourism": "Vacation Rentals",
-      "tourismProperties": "Vacation Properties",
+      "tourism": "Tourism Rentals",
+      "tourismProperties": "Tourism Properties",
       "bookings": "Bookings",
       "import": "Import",
       "info": "Information",
@@ -200,7 +166,7 @@
     "title": "Cookie Settings",
     "privacyMessage": "Your privacy is important",
     "description": "Manage your cookie preferences. Essential cookies are necessary for the site to function.",
-    "usageMessage": "We use cookies to improve your browsing experience, personalize content and ads, provide social media features and analyze our traffic.",
+    "usageMessage": "We use cookies to improve your browsing experience, personalize content and ads, provide social media features, and analyze our traffic.",
     "readMore": "Read our",
     "cookiePolicy": "Cookie Policy",
     "privacyPolicy": "Privacy Policy",
@@ -234,6 +200,9 @@
     "legal": "Legal",
     "cookieSettings": "Cookie Settings",
     "termsOfService": "Terms of Service",
+    "refundPolicy": "Refund Policy",
+    "otherInfo": "Other Info",
+    "legal2": "Legal 2",
     "companyDescription": "The complete solution for rental and property management.",
     "allRightsReserved": "All rights reserved."
   },
@@ -607,19 +576,25 @@
       "refunded": "Refunded"
     },
     "categories": {
-      "rent": "Rent",
-      "deposit": "Deposit",
-      "maintenance": "Maintenance",
-      "utilities": "Utilities",
-      "taxes": "Taxes",
-      "insurance": "Insurance",
-      "management": "Management",
-      "other": "Other"
+      "income": {
+        "rent": "Rent",
+        "deposit": "Deposit",
+        "latePayment": "Late payment",
+        "other": "Other"
+      },
+      "expense": {
+        "maintenance": "Maintenance",
+        "utilities": "Utilities",
+        "tax": "Taxes",
+        "insurance": "Insurance", 
+        "mortgage": "Mortgage",
+        "other": "Other"
+      }
     },
     "paymentMethods": {
       "cash": "Cash",
-      "bankTransfer": "Bank Transfer",
-      "creditCard": "Credit Card",
+      "bankTransfer": "Bank transfer",
+      "creditCard": "Credit card",
       "check": "Check",
       "other": "Other"
     },
@@ -644,7 +619,21 @@
       "attachments": "Attachments",
       "uploadAttachments": "Upload attachments",
       "submit": "Save transaction",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "noProperties": "No properties found",
+      "addPropertyFirst": "Add a property first",
+      "updateSuccess": "Transaction updated",
+      "createSuccess": "Transaction created",
+      "updateError": "Error updating transaction",
+      "createError": "Error creating transaction",
+      "enterAmount": "Enter amount",
+      "enterDescription": "Enter description",
+      "selectUnit": "Select unit",
+      "noTenant": "No tenant",
+      "selectType": "Select type",
+      "selectCategory": "Select category",
+      "addTransactionDesc": "Add a new transaction",
+      "updateTransaction": "Update transaction"
     },
     "confirmation": {
       "deleteTitle": "Delete transaction",
@@ -660,6 +649,52 @@
       "financialDetails": "Financial details",
       "documents": "Documents",
       "history": "History"
+    },
+    "transactionDetails": {
+      "date": "Date",
+      "amount": "Amount",
+      "description": "Description",
+      "type": "Type",
+      "category": "Category",
+      "tenant": "Tenant",
+      "property": "Property"
+    },
+    "filterByType": "Filter by type",
+    "filterByProperty": "Filter by property",
+    "allTypes": "All types",
+    "allProperties": "All properties",
+    "incomes": "Income",
+    "expenses": "Expenses",
+    "noTransactionsFound": "No transactions found",
+    "modifySearchOrAdd": "Modify search criteria or add a new transaction",
+    "tryAgain": "Try again",
+    "connectionError": "Connection error",
+    "menu": {
+      "open": "Open menu",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "confirmDelete": {
+      "title": "Delete transaction",
+      "message": "Are you sure you want to delete this transaction? This action cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete",
+      "success": "Transaction successfully deleted",
+      "error": "Error deleting transaction"
+    },
+    "deleteAll": {
+      "title": "Delete all transactions",
+      "message": "Are you sure you want to delete ALL your transactions? This action cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete all",
+      "success": "{{count}} transactions successfully deleted",
+      "error": "Error deleting transactions"
+    },
+    "count": "{{count}} transactions found",
+    "deleteAllTransactions": "Delete all transactions",
+    "type": {
+      "income": "Income",
+      "expense": "Expense"
     }
   },
   "activities": {
@@ -855,20 +890,70 @@
         "completed": "Completed"
       },
       "form": {
+        "title": "Booking details",
+        "guestInfo": "Guest information",
+        "guestName": "Name",
+        "guestEmail": "Email",
+        "guestPhone": "Phone",
+        "guestCountry": "Country",
+        "selectCountry": "Select country",
+        "bookingDetails": "Booking details",
         "property": "Property",
-        "guestName": "Guest Name",
-        "guestEmail": "Guest Email",
-        "guestPhone": "Guest Phone",
-        "checkIn": "Check-in Date",
-        "checkOut": "Check-out Date",
+        "selectProperty": "Select property",
+        "checkIn": "Check-in date",
+        "checkOut": "Check-out date",
         "adults": "Adults",
         "children": "Children",
-        "amount": "Amount",
-        "deposit": "Deposit",
-        "paymentMethod": "Payment Method",
+        "infants": "Infants",
         "notes": "Notes",
-        "submit": "Save Booking",
+        "notesPlaceholder": "Add any notes or special requests",
+        "pricing": "Pricing",
+        "baseRate": "Base rate",
+        "cleaningFee": "Cleaning fee",
+        "serviceFee": "Service fee",
+        "taxAmount": "Tax",
+        "totalAmount": "Total",
+        "deposit": "Deposit",
+        "payment": "Payment",
+        "paymentMethod": "Payment method",
+        "paymentStatus": "Payment status",
+        "submit": "Save booking",
         "cancel": "Cancel"
+      },
+      "confirmation": {
+        "deleteTitle": "Delete booking",
+        "deleteMessage": "Are you sure you want to delete this booking? This action cannot be undone.",
+        "cancelTitle": "Cancel booking",
+        "cancelMessage": "Are you sure you want to cancel this booking?",
+        "cancel": "Cancel",
+        "confirm": "Confirm"
+      },
+      "details": {
+        "title": "Booking details",
+        "guestInfo": "Guest information",
+        "bookingInfo": "Booking information",
+        "paymentInfo": "Payment information",
+        "createChecklist": "Create checklist",
+        "addNote": "Add note",
+        "sendMessage": "Send message",
+        "actions": "Actions",
+        "checkInGuest": "Check in guest",
+        "checkOutGuest": "Check out guest",
+        "cancelBooking": "Cancel booking",
+        "editBooking": "Edit booking"
+      },
+      "calendar": {
+        "title": "Booking calendar",
+        "today": "Today",
+        "month": "Month",
+        "week": "Week",
+        "day": "Day",
+        "list": "List",
+        "viewAll": "View all",
+        "availability": "Availability",
+        "booked": "Booked",
+        "blocked": "Blocked",
+        "available": "Available"
       }
     },
     "calendar": {
@@ -1496,7 +1581,7 @@
   },
   "landing": {
     "hero": {
-      "title": "Simplify your rental management with Tenoris360",
+      "title": "Simplify your rental management with ",
       "highlight": "FREE",
       "description": "The complete and FREE platform for property owners and managers who want to efficiently manage contracts, tenants, and payments.",
       "cta": {
@@ -1537,6 +1622,40 @@
     "cta": {
       "title": "Ready to simplify your rental management?",
       "description": "Sign up today and discover how our system can help you save time and increase the profitability of your investments."
+    }
+  },
+  "form": {
+    "personalInfo": {
+      "firstname": "First Name",
+      "lastname": "Last Name",
+      "email": "Email",
+      "subject": "Subject",
+      "message": "Message"
+    },
+    "placeholders": {
+      "firstname": "Your first name",
+      "lastname": "Your last name",
+      "email": "Your email",
+      "subject": "Request subject",
+      "message": "Describe your request..."
+    },
+    "buttons": {
+      "submit": "Send Message",
+      "sendAnother": "Send another message"
+    },
+    "success": {
+      "title": "Message Sent!",
+      "description": "Thank you for contacting us. We will respond within 24 business hours."
+    }
+  },
+  "contact": {
+    "title": "Contact Us"
+  },
+  "testimonials": {
+    "title": "What Our Clients Say",
+    "description": "Discover the experiences of those using Tenoris360 to manage their rental properties.",
+    "feedback": {
+      "example": "Tenoris360 has greatly simplified the management of my 5 apartments. The automatic notifications help me not to forget important deadlines."
     }
   }
 } 

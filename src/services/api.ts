@@ -674,6 +674,25 @@ export async function deleteProperty(id: number): Promise<boolean> {
   }
 }
 
+export async function deleteAllProperties(): Promise<{count: number}> {
+  try {
+    const response = await fetch(`${API_URL}/properties/all`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    
+    if (!response.ok) {
+      console.error('Errore nell\'eliminazione di tutte le proprietà:', response.status);
+      throw new Error(`Errore nell'eliminazione di tutte le proprietà: ${response.status}`);
+    }
+    
+    return response.json();
+  } catch (error) {
+    console.error('Exception in deleteAllProperties:', error);
+    throw error;
+  }
+}
+
 export async function createTenant(tenant: Omit<Tenant, 'id'>): Promise<Tenant> {
   try {
     console.log('Tenant data being sent:', tenant);
@@ -946,17 +965,39 @@ export async function deleteTransaction(id: number): Promise<boolean> {
   try {
     const response = await fetch(`${API_URL}/transactions/${id}`, {
       method: 'DELETE',
-      headers: getAuthHeaders()
+      headers: getAuthHeaders(),
     });
-    
+
     if (!response.ok) {
-      console.error('Errore nell\'eliminazione della transazione:', response.status);
-      throw new Error(`Errore nell'eliminazione della transazione: ${response.status}`);
+      const errorData = await response.json();
+      console.error('Errore server deleteTransaction:', errorData);
+      throw new Error(errorData.error || 'Error deleting transaction');
     }
-    
+
     return true;
   } catch (error) {
-    console.error('Exception in deleteTransaction:', error);
+    handleRequestError(error, 'deleteTransaction');
+    return false;
+  }
+}
+
+export async function deleteAllTransactions(): Promise<{count: number}> {
+  try {
+    const response = await fetch(`${API_URL}/transactions/all`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Errore server deleteAllTransactions:', errorData);
+      throw new Error(errorData.error || 'Error deleting all transactions');
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Exception in deleteAllTransactions:', error);
     throw error;
   }
 }
@@ -1060,6 +1101,172 @@ export async function importContractsDirectly(contracts: Omit<Contract, 'id'>[])
     throw error;
   }
 }
+
+// Funzione per l'importazione dei dati a blocchi
+export const importDataInChunks = async (entityType: string, data: any[], chunkSize: number = 50, onProgress?: (progress: number) => void) => {
+  try {
+    // Normalizza il tipo di entità (plurale → singolare)
+    let normalizedEntityType = entityType;
+    
+    // Converti il plurale in singolare
+    if (entityType === "properties") normalizedEntityType = "property";
+    else if (entityType === "tenants") normalizedEntityType = "tenant";
+    else if (entityType === "contracts") normalizedEntityType = "contract";
+    else if (entityType === "transactions") normalizedEntityType = "transaction";
+    else if (entityType === "activities") normalizedEntityType = "activity";
+    // Gestione inversa: se è già singolare, lasciarlo così
+    else if (entityType === "property" || entityType === "tenant" || 
+             entityType === "contract" || entityType === "transaction" || 
+             entityType === "activity") {
+      normalizedEntityType = entityType;
+    }
+    
+    console.log(`Avvio importazione a blocchi per tipo: ${normalizedEntityType} (originale: ${entityType}). Totale record: ${data.length}, Dimensione blocco: ${chunkSize}`);
+    
+    // Dividi i dati in blocchi
+    const chunks = [];
+    for (let i = 0; i < data.length; i += chunkSize) {
+      chunks.push(data.slice(i, i + chunkSize));
+    }
+    
+    console.log(`Creati ${chunks.length} blocchi di dati`);
+    
+    let totalImported = 0;
+    
+    // OTTIMIZZAZIONE: Usa invio parallelo per transazioni
+    if (normalizedEntityType === 'transaction') {
+      // Per transazioni, usiamo processamento parallelo con concurrency limit
+      const concurrencyLimit = 3; // Numero di richieste parallele massime
+      console.log(`Utilizzo processamento parallelo per transazioni (concurrency: ${concurrencyLimit})`);
+      
+      // Prepara array per tenere traccia delle promesse attive
+      let activePromises = [];
+      let completedChunksCount = 0;
+      
+      for (let i = 0; i < chunks.length; i++) {
+        const chunk = chunks[i];
+        const chunkIndex = i;
+        
+        // Crea una funzione di processamento per questo chunk
+        const processChunk = async () => {
+          try {
+            console.log(`Elaborazione parallela blocco ${chunkIndex+1}/${chunks.length} (${chunk.length} record)`);
+            
+            // Usa l'endpoint standard per le transazioni
+            const apiUrl = `${API_URL}/import/${normalizedEntityType}`;
+            
+            const response = await fetch(apiUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...getAuthHeaders()
+              },
+              body: JSON.stringify({ data: chunk }),
+              credentials: 'include'
+            });
+            
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.error || `Errore nel blocco ${chunkIndex+1}`);
+            }
+            
+            const result = await response.json();
+            completedChunksCount++;
+            
+            // Aggiorna progresso
+            if (onProgress) {
+              const currentProgress = Math.round((completedChunksCount / chunks.length) * 100);
+              onProgress(currentProgress);
+            }
+            
+            return result.importedCount || 0;
+          } catch (error) {
+            console.error(`Errore nel blocco ${chunkIndex+1}:`, error);
+            completedChunksCount++;
+            // Aggiorna comunque il progresso
+            if (onProgress) {
+              const currentProgress = Math.round((completedChunksCount / chunks.length) * 100);
+              onProgress(currentProgress);
+            }
+            return 0;
+          }
+        };
+        
+        // Aggiungi questo processo alla lista delle promesse attive
+        activePromises.push(processChunk());
+        
+        // Se raggiunto il limite di concorrenza o ultimo chunk, attendi che alcune finiscano
+        if (activePromises.length >= concurrencyLimit || i === chunks.length - 1) {
+          const results = await Promise.all(activePromises);
+          totalImported += results.reduce((sum, count) => sum + count, 0);
+          // Svuota l'array per il prossimo batch
+          activePromises = [];
+        }
+      }
+    } else {
+      // Per le altre entità, usa processamento sequenziale
+      for (let i = 0; i < chunks.length; i++) {
+        try {
+          const chunk = chunks[i];
+          console.log(`Elaborazione sequenziale blocco ${i+1}/${chunks.length} (${chunk.length} record)`);
+          
+          // MODIFICA: Usa l'endpoint standard /api/import/:entityType invece di /chunk per le transazioni
+          let apiUrl;
+          if (normalizedEntityType === 'transaction') {
+            // Usa l'endpoint standard per le transazioni
+            apiUrl = `${API_URL}/import/${normalizedEntityType}`;
+          } else {
+            // Usa l'endpoint /chunk per le altre entità
+            apiUrl = `${API_URL}/import/${normalizedEntityType}/chunk`;
+          }
+          
+          const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...getAuthHeaders()
+            },
+            body: JSON.stringify({ data: chunk }),
+            credentials: 'include'
+          });
+          
+          if (!response.ok) {
+            let errorData = null;
+            try {
+              errorData = await response.json();
+            } catch (e) {
+              const errorText = await response.text();
+              console.error(`Errore nel blocco ${i+1} (non JSON):`, response.status, errorText);
+            }
+            
+            throw new Error(errorData?.error || `Errore nell'importazione del blocco ${i+1} (${response.status}: ${response.statusText})`);
+          }
+          
+          const result = await response.json();
+          totalImported += result.importedCount || 0;
+          
+          // Aggiorna il progresso
+          if (onProgress) {
+            onProgress(Math.round((i + 1) / chunks.length * 100));
+          }
+        } catch (chunkError) {
+          console.error(`Errore nell'elaborazione del blocco ${i+1}:`, chunkError);
+          // Continua con il blocco successivo invece di interrompere tutto il processo
+        }
+      }
+    }
+    
+    console.log(`Importazione completata: ${totalImported} record importati su ${data.length} totali`);
+    
+    return { 
+      message: `Importazione completata: ${totalImported} record importati`, 
+      importedCount: totalImported 
+    };
+  } catch (error) {
+    console.error('Errore nell\'importazione a blocchi:', error);
+    throw error;
+  }
+};
 
 // Funzione per l'importazione dei dati
 export const importData = async (entityType: string, data: any[]) => {
@@ -1369,7 +1576,8 @@ export const api = {
     getById: getPropertyById,
     create: createProperty,
     update: updateProperty,
-    delete: deleteProperty
+    delete: deleteProperty,
+    deleteAll: deleteAllProperties
   },
   tenants: {
     getAll: getTenants,
@@ -1403,6 +1611,7 @@ export const api = {
     fetchWithTimeout
   },
   import: {
-    data: importData
+    data: importData,
+    dataInChunks: importDataInChunks
   }
 };

@@ -155,4 +155,28 @@ export const deleteProperty = async (req: Request, res: Response) => {
     console.error('Errore durante l\'eliminazione della proprietà:', error);
     res.status(500).json({ error: 'Error deleting property' });
   }
+};
+
+export const deleteAllProperties = async (req: Request, res: Response) => {
+  try {
+    // Ottengo l'user_id dall'utente autenticato
+    const userId = req.user?.id;
+    
+    const result = await executeQuery(async (client) => {
+      return client.query(
+        'DELETE FROM properties WHERE user_id = $1::uuid RETURNING id', 
+        [userId]
+      );
+    });
+    
+    const deletedCount = result.rows.length;
+    
+    res.json({ 
+      message: `${deletedCount} proprietà eliminate con successo`,
+      count: deletedCount
+    });
+  } catch (error) {
+    console.error('Errore durante l\'eliminazione di tutte le proprietà:', error);
+    res.status(500).json({ error: 'Error deleting all properties' });
+  }
 }; 

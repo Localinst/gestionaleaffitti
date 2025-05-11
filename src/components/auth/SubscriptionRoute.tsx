@@ -5,10 +5,22 @@ import { useAuth } from '../../context/AuthContext';
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
+import { getCurrentLanguage } from '@/i18n';
 
 interface SubscriptionRouteProps {
   children: ReactNode;
 }
+
+/**
+ * Componente Navigate personalizzato che preserva i parametri di query
+ */
+const NavigateWithQuery = ({ to, ...props }: { to: string, [key: string]: any }) => {
+  const location = useLocation();
+  const hasSearchParams = to.includes('?');
+  const newTo = hasSearchParams ? to : `${to}${location.search}`;
+  return <Navigate to={newTo} {...props} />;
+};
 
 /**
  * Componente che verifica se l'utente ha un abbonamento attivo.
@@ -21,6 +33,7 @@ export const SubscriptionRoute: React.FC<SubscriptionRouteProps> = ({ children }
   const location = useLocation();
   const [recentlyConfirmed, setRecentlyConfirmed] = useState<boolean>(false);
   const checkPerformed = useRef(false);
+  const { i18n } = useTranslation();
   
   // Controlla se l'utente ha recentemente confermato un abbonamento
   useEffect(() => {
@@ -53,7 +66,9 @@ export const SubscriptionRoute: React.FC<SubscriptionRouteProps> = ({ children }
       description: "Devi effettuare il login per accedere a questa pagina",
       duration: 3000
     });
-    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+    
+    // Reindirizza al login mantenendo i parametri di query
+    return <NavigateWithQuery to="/login" state={{ from: location.pathname }} replace />;
   }
 
   // Se stiamo caricando, mostra un messaggio di caricamento
@@ -76,5 +91,7 @@ export const SubscriptionRoute: React.FC<SubscriptionRouteProps> = ({ children }
     description: "Per accedere a questa funzionalità è necessario un abbonamento attivo",
     duration: 5000
   });
-  return <Navigate to="/pricing" state={{ from: location }} replace />;
+  
+  // Reindirizza alla pagina dei prezzi mantenendo i parametri di query
+  return <NavigateWithQuery to="/pricing" state={{ from: location }} replace />;
 }; 

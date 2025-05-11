@@ -82,7 +82,7 @@ const LandingPage = () => {
           "contratti di locazione"
         ]}
         canonicalUrl="https://tenoris360.com/"
-        hreflang={getHreflangUrls(location.pathname)}
+        hreflang={getHreflangUrls(location.pathname + location.search)}
       />
       <div className="min-h-screen flex flex-col">
         {/* Header/Navigation */}

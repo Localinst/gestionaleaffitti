@@ -6,6 +6,7 @@ import { User } from '@supabase/supabase-js';
 import { login as apiLogin, register as apiRegister, logout as apiLogout } from '@/services/api';
 import axios from 'axios';
 import { getAPIBaseUrl } from '@/services/api';
+import { useNavigateWithQuery } from '@/hooks/useNavigateWithQuery';
 
 // Interfaccia per i dati dell'utente
 interface UserData {
@@ -95,7 +96,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const navigate = useNavigate();
+  const navigate = useNavigateWithQuery();
 
   // Recupera l'utente corrente all'avvio
   useEffect(() => {
@@ -170,12 +171,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       console.log('Tentativo di login con email:', email);
       
-      // Autenticazione tramite il backend
+      // Autenticazione con il backend
       const response = await apiLogin({ email, password });
       
-      // Salva il token JWT nel localStorage
       if (response && response.token) {
-        console.log('Token JWT ricevuto dal server');
+        console.log('Token JWT ricevuto');
         localStorage.setItem('authToken', response.token);
         
         // Se abbiamo ricevuto dati utente dal backend, possiamo usarli
@@ -201,7 +201,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             
             console.log('Stato abbonamento:', hasActiveSubscription ? 'Attivo' : 'Non attivo');
             
-            // Reindirizza in base allo stato dell'abbonamento
+            // Reindirizza in base allo stato dell'abbonamento (il parametro lang sarà preservato)
             if (hasActiveSubscription) {
               navigate('/dashboard');
             } else {

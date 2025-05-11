@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,8 @@ import Papa from 'papaparse'; // Importa PapaParse
 import { api } from "@/services/api";
 import { toast } from "sonner";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Progress } from "@/components/ui/progress";
+import { useTranslation } from "react-i18next"; // Aggiungo l'importazione di useTranslation
 
 // Tipi di entità che possono essere importate
 type EntityType = "property" | "tenant" | "contract" | "transaction";
@@ -28,6 +30,7 @@ const entitySchemas: Record<EntityType, string[]> = {
 type TransactionFormattingMethod = 'sign' | 'label' | 'separate_columns';
 
 export function ExcelImportWizard() {
+  const { t } = useTranslation(); // Aggiungo l'hook useTranslation
   const [step, setStep] = useState(1);
   const [file, setFile] = useState<File | null>(null);
   const [entityType, setEntityType] = useState<EntityType>("property");
@@ -47,6 +50,87 @@ export function ExcelImportWizard() {
   // Nuovi stati per la gestione dei fogli Excel
   const [worksheets, setWorksheets] = useState<string[]>([]);
   const [selectedWorksheet, setSelectedWorksheet] = useState<string>("");
+
+  // Nuovi stati per l'importazione resiliente
+  const [importProgress, setImportProgress] = useState(0);
+  const [isResuming, setIsResuming] = useState(false);
+  const [savedImportState, setSavedImportState] = useState<any>(null);
+
+  // Dopo gli stati
+  const [properties, setProperties] = useState<any[]>([]);
+  const [propertyMap, setPropertyMap] = useState<{ [name: string]: string }>({});
+
+  // Verifica se c'è un'importazione in sospeso
+  useEffect(() => {
+    const checkSavedImport = () => {
+      try {
+        const savedState = localStorage.getItem(`import_state_${entityType}`);
+        if (savedState) {
+          const parsedState = JSON.parse(savedState);
+          if (parsedState.timestamp && (Date.now() - parsedState.timestamp < 24 * 60 * 60 * 1000)) {
+            // Se lo stato salvato è più recente di 24 ore, lo consideriamo valido
+            setSavedImportState(parsedState);
+          } else {
+            // Altrimenti, rimuoviamo lo stato obsoleto
+            localStorage.removeItem(`import_state_${entityType}`);
+          }
+        }
+      } catch (e) {
+        console.error("Errore nel recupero dello stato di importazione salvato:", e);
+        localStorage.removeItem(`import_state_${entityType}`);
+      }
+    };
+    
+    checkSavedImport();
+  }, [entityType]);
+  
+  // Riprendi un'importazione in sospeso
+  const resumeImport = async () => {
+    if (!savedImportState || !savedImportState.data) {
+      toast.error("Nessuno stato di importazione valido trovato");
+      return;
+    }
+    
+    setIsResuming(true);
+    setIsImporting(true);
+    
+    try {
+      const { data, progress } = savedImportState;
+      setImportProgress(progress || 0);
+      
+      console.log(`Ripresa importazione per ${entityType} da ${progress}%. Record rimanenti: ${data.length}`);
+      
+      // Usa l'importazione a blocchi
+      const result = await api.import.dataInChunks(
+        entityType, 
+        data, 
+        50, // dimensione del blocco
+        (progress) => {
+          setImportProgress(progress);
+          // Salva lo stato corrente
+          const remainingData = data.slice(Math.floor(data.length * progress / 100));
+          localStorage.setItem(`import_state_${entityType}`, JSON.stringify({
+            entityType,
+            data: remainingData,
+            progress,
+            timestamp: Date.now()
+          }));
+        }
+      );
+      
+      // Rimuovi lo stato salvato dopo un'importazione riuscita
+      localStorage.removeItem(`import_state_${entityType}`);
+      
+      toast.success(`${result.importedCount} ${entityType}(s) importati con successo!`);
+      setStep(5); // Vai allo step di completamento
+    } catch (error: any) {
+      console.error("Errore durante la ripresa dell'importazione:", error);
+      toast.error(`Errore durante l'importazione: ${error.message || 'Errore sconosciuto'}`);
+    } finally {
+      setIsResuming(false);
+      setIsImporting(false);
+    }
+  };
 
   // Carica il file Excel/CSV e leggi le intestazioni + anteprima
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -283,97 +367,255 @@ export function ExcelImportWizard() {
     toast.success("Mappatura salvata con successo per il tipo: " + entityType);
   };
 
+  // Aggiungi questo nuovo useEffect per caricare le proprietà
+  useEffect(() => {
+    // Carica la lista delle proprietà quando si seleziona il tipo "transaction"
+    if (entityType === "transaction") {
+      const loadProperties = async () => {
+        try {
+          const props = await api.properties.getAll();
+          setProperties(props);
+          
+          // Crea una mappa nome → id per conversione rapida
+          const nameToIdMap: { [name: string]: string } = {};
+          props.forEach(p => {
+            if (p.name) {
+              // Normalizza il nome (lowercase) per match meno sensibile
+              const normalizedName = p.name.toLowerCase().trim();
+              nameToIdMap[normalizedName] = p.id;
+              // Aggiungi anche una versione abbreviata (primi 10 caratteri)
+              if (normalizedName.length > 10) {
+                nameToIdMap[normalizedName.substring(0, 10)] = p.id;
+              }
+              // Gestisci anche nomi con spazi rimossi
+              if (normalizedName.includes(' ')) {
+                nameToIdMap[normalizedName.replace(/\s+/g, '')] = p.id;
+              }
+            }
+            
+            // Includi anche indirizzo come possibile identificativo
+            if (p.address) {
+              const normalizedAddress = p.address.toLowerCase().trim();
+              nameToIdMap[normalizedAddress] = p.id;
+              
+              // Aggiungi anche con la città se disponibile per match più preciso
+              if (p.city) {
+                const addressWithCity = `${normalizedAddress}, ${p.city.toLowerCase().trim()}`;
+                nameToIdMap[addressWithCity] = p.id;
+              }
+            }
+          });
+          
+          console.log("Mappa di conversione proprietà creata:", nameToIdMap);
+          setPropertyMap(nameToIdMap);
+        } catch (error) {
+          console.error("Errore nel caricamento delle proprietà:", error);
+          toast.error("Impossibile caricare l'elenco delle proprietà");
+        }
+      };
+      
+      loadProperties();
+    }
+  }, [entityType]);
+
   // Normalizza i dati delle transazioni prima dell'importazione
   const normalizeTransactionData = (rawData: any[]): any[] => {
     const incomeLblLower = incomeLabel.trim().toLowerCase();
     const expenseLblLower = expenseLabel.trim().toLowerCase();
 
+    console.log(`Normalizzazione di ${rawData.length} transazioni...`);
+    
     return rawData.map((transaction, index) => {
-      const normalizedTransaction = { ...transaction }; // Crea una copia
-
-      if (transactionFormattingMethod === 'separate_columns') {
-        // Gestione delle colonne separate per entrate e uscite
-        const incomeValue = transaction.income_column !== undefined ? transaction.income_column : null;
-        const expenseValue = transaction.expense_column !== undefined ? transaction.expense_column : null;
+      try {
+        const normalizedTransaction: any = {}; // Crea un nuovo oggetto invece di usare spread
         
-        // Determina se è un'entrata o un'uscita e imposta l'importo
-        if (incomeValue !== null && incomeValue !== undefined && incomeValue !== '') {
-          // È un'entrata
-          const amountString = incomeValue.toString().replace(/,/g, '.').replace(/[^0-9.-]/g, '');
-          const parsedAmount = parseFloat(amountString);
-          
-          if (!isNaN(parsedAmount)) {
-            normalizedTransaction.amount = Math.abs(parsedAmount);
-            normalizedTransaction.type = 'income';
-          } else {
-            normalizedTransaction.amount = 0;
-            normalizedTransaction.type = 'income';
+        // Imposta sempre una descrizione valida
+        normalizedTransaction.description = transaction.description || `Transazione ${index+1}`;
+        
+        // Imposta sempre una categoria valida
+        normalizedTransaction.category = transaction.category || "Altro";
+        
+        // GESTIONE DATA: Assicurati che la data sia nel formato corretto YYYY-MM-DD
+        let formattedDate = null;
+        if (transaction.date) {
+          try {
+            // Se è già una stringa in formato ISO, usala direttamente
+            if (typeof transaction.date === 'string' && transaction.date.match(/^\d{4}-\d{2}-\d{2}/)) {
+              formattedDate = transaction.date.split('T')[0]; // Prendi solo la parte della data
+            } 
+            // Se è una data JavaScript
+            else if (transaction.date instanceof Date) {
+              formattedDate = transaction.date.toISOString().split('T')[0];
+            } 
+            // Altrimenti prova a convertirla
+            else {
+              const dateObj = new Date(transaction.date);
+              if (!isNaN(dateObj.getTime())) {
+                formattedDate = dateObj.toISOString().split('T')[0];
+              }
+            }
+          } catch (e) {
+            console.warn(`Riga ${index + 2}: Errore nella conversione della data '${transaction.date}'.`);
           }
-        } else if (expenseValue !== null && expenseValue !== undefined && expenseValue !== '') {
-          // È un'uscita
-          const amountString = expenseValue.toString().replace(/,/g, '.').replace(/[^0-9.-]/g, '');
-          const parsedAmount = parseFloat(amountString);
+        }
+        
+        // Se non abbiamo una data valida, usiamo oggi
+        if (!formattedDate) {
+          formattedDate = new Date().toISOString().split('T')[0];
+          console.warn(`Riga ${index + 2}: Data non valida o mancante. Utilizzata data corrente.`);
+        }
+        
+        normalizedTransaction.date = formattedDate;
+        
+        // GESTIONE AMOUNT E TYPE
+        if (transactionFormattingMethod === 'separate_columns') {
+          // Gestione delle colonne separate per entrate e uscite
+          let amount = 0;
+          let type = 'expense'; // Default
           
-          if (!isNaN(parsedAmount)) {
-            normalizedTransaction.amount = Math.abs(parsedAmount);
-            normalizedTransaction.type = 'expense';
+          const incomeValue = transaction.income_column !== undefined ? transaction.income_column : null;
+          const expenseValue = transaction.expense_column !== undefined ? transaction.expense_column : null;
+          
+          // Determina se è un'entrata o un'uscita e imposta l'importo
+          if (incomeValue !== null && incomeValue !== undefined && incomeValue !== '') {
+            // È un'entrata
+            const amountString = typeof incomeValue === 'string' 
+              ? incomeValue.replace(/,/g, '.').replace(/[^\d.-]/g, '')
+              : String(incomeValue);
+            const parsedAmount = parseFloat(amountString);
+            
+            if (!isNaN(parsedAmount)) {
+              amount = Math.abs(parsedAmount);
+              type = 'income';
+            } else {
+              console.warn(`Riga ${index + 2}: Valore entrata non numerico: '${incomeValue}'`);
+            }
+          } else if (expenseValue !== null && expenseValue !== undefined && expenseValue !== '') {
+            // È un'uscita
+            const amountString = typeof expenseValue === 'string'
+              ? expenseValue.replace(/,/g, '.').replace(/[^\d.-]/g, '')
+              : String(expenseValue);
+            const parsedAmount = parseFloat(amountString);
+            
+            if (!isNaN(parsedAmount)) {
+              amount = Math.abs(parsedAmount);
+              type = 'expense';
+            } else {
+              console.warn(`Riga ${index + 2}: Valore uscita non numerico: '${expenseValue}'`);
+            }
           } else {
-            normalizedTransaction.amount = 0;
-            normalizedTransaction.type = 'expense';
+            console.warn(`Riga ${index + 2}: Nessun valore trovato nelle colonne di entrata/uscita.`);
           }
+          
+          normalizedTransaction.amount = amount;
+          normalizedTransaction.type = type;
         } else {
-          // Nessuno dei due valori presente (non dovrebbe accadere, ma gestiamolo)
-          normalizedTransaction.amount = 0;
-          normalizedTransaction.type = 'expense'; // Default
-          console.warn(`Riga ${index + 2}: Nessun valore trovato nelle colonne di entrata/uscita.`);
+          // Gestione esistente per sign e label
+          // Assicurati che amount sia un numero, prendi il valore assoluto
+          let amount = 0;
+          if (transaction.amount !== undefined && transaction.amount !== null && transaction.amount !== '') {
+            const amountString = typeof transaction.amount === 'string'
+              ? transaction.amount.replace(/,/g, '.').replace(/[^\d.-]/g, '')
+              : String(transaction.amount);
+            const parsedAmount = parseFloat(amountString);
+            if (!isNaN(parsedAmount)) {
+              amount = Math.abs(parsedAmount); // Usa sempre il valore assoluto
+            } else {
+              console.warn(`Riga ${index + 2}: Valore importo non numerico: '${transaction.amount}'`);
+            }
+          } else {
+            console.warn(`Riga ${index + 2}: Importo mancante, utilizzo valore 0.`);
+          }
+          
+          normalizedTransaction.amount = amount;
+
+          // Determina il tipo (income/expense)
+          let type = 'expense'; // Default
+          
+          if (transactionFormattingMethod === 'sign') {
+            // Ottieni il valore originale per determinare il segno
+            const originalAmountString = typeof transaction.amount === 'string'
+              ? transaction.amount.replace(/,/g, '.').replace(/[^\d.-]/g, '')
+              : String(transaction.amount);
+            const originalParsedAmount = parseFloat(originalAmountString);
+            if (!isNaN(originalParsedAmount) && originalParsedAmount < 0) {
+              type = 'expense';
+            } else {
+              type = 'income'; // Positivo o zero è income
+            }
+          } else { // Metodo 'label'
+            const typeString = (transaction.type?.toString() || '').trim().toLowerCase();
+            if (typeString === incomeLblLower) {
+              type = 'income';
+            } else if (typeString === expenseLblLower) {
+              type = 'expense';
+            } else {
+              console.warn(`Riga ${index + 2}: Etichetta tipo transazione '${transaction.type}' non riconosciuta, impostato default 'expense'.`);
+            }
+          }
+          
+          normalizedTransaction.type = type;
         }
         
-        // Rimuovi i campi di supporto che non servono più
-        delete normalizedTransaction.income_column;
-        delete normalizedTransaction.expense_column;
-      } else {
-        // Gestione esistente per sign e label
-        // Assicurati che amount sia un numero, prendi il valore assoluto
-        let amount = 0;
-        if (transaction.amount !== null && transaction.amount !== undefined) {
-          const amountString = transaction.amount.toString().replace(/,/g, '.').replace(/[^0-9.-]/g, '');
-          const parsedAmount = parseFloat(amountString);
-          if (!isNaN(parsedAmount)) {
-            amount = Math.abs(parsedAmount); // Usa sempre il valore assoluto
+        // GESTIONE PROPERTY_ID - Converte il nome della proprietà in ID
+        let propertyId = null;
+        
+        // Controlla se abbiamo un property_id diretto
+        if (transaction.property_id && typeof transaction.property_id === 'string') {
+          // Se sembra un UUID, usalo direttamente
+          if (transaction.property_id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+            propertyId = transaction.property_id;
+            console.log(`Riga ${index + 2}: Trovato property_id in formato UUID: ${propertyId}`);
+          } 
+          // Altrimenti, prova a cercarlo nella mappa per nome
+          else {
+            const normalizedPropertyName = transaction.property_id.toLowerCase().trim();
+            if (propertyMap[normalizedPropertyName]) {
+              propertyId = propertyMap[normalizedPropertyName];
+              console.log(`Riga ${index + 2}: Convertito nome proprietà "${transaction.property_id}" in ID: ${propertyId}`);
+            } else {
+              console.warn(`Riga ${index + 2}: Nome proprietà "${transaction.property_id}" non trovato nel sistema.`);
+            }
           }
         }
-        normalizedTransaction.amount = amount;
-
-        // Determina il tipo (income/expense)
-        if (transactionFormattingMethod === 'sign') {
-          const originalAmountString = transaction.amount?.toString() ?? '0';
-          const originalParsedAmount = parseFloat(originalAmountString.replace(/,/g, '.').replace(/[^0-9.-]/g, ''));
-          if (!isNaN(originalParsedAmount) && originalParsedAmount < 0) {
-            normalizedTransaction.type = 'expense';
-          } else {
-            normalizedTransaction.type = 'income'; // Positivo o zero è income
-          }
-        } else { // Metodo 'label'
-          const typeString = transaction.type?.toString().trim().toLowerCase() ?? '';
-          if (typeString === incomeLblLower) {
-            normalizedTransaction.type = 'income';
-          } else if (typeString === expenseLblLower) {
-            normalizedTransaction.type = 'expense';
-          } else {
-            // Se l'etichetta non corrisponde, cosa fare?
-            console.warn(`Riga ${index + 2}: Etichetta tipo transazione non riconosciuta '${transaction.type}'. Impostata come 'expense' per default.`);
-            normalizedTransaction.type = 'expense'; // Imposta un default o gestisci come errore
+        
+        // Controlla se abbiamo un "property_name" o un campo alternativo
+        if (!propertyId && transaction.property_name) {
+          const normalizedPropertyName = transaction.property_name.toLowerCase().trim();
+          if (propertyMap[normalizedPropertyName]) {
+            propertyId = propertyMap[normalizedPropertyName];
+            console.log(`Riga ${index + 2}: Convertito property_name "${transaction.property_name}" in ID: ${propertyId}`);
           }
         }
+        
+        // Se abbiamo trovato un ID valido, usalo
+        normalizedTransaction.property_id = propertyId;
+        
+        // Gestisci correttamente gli ID - trasformali sempre in null se non validi
+        normalizedTransaction.tenant_id = (transaction.tenant_id && 
+                                         transaction.tenant_id !== "none" && 
+                                         transaction.tenant_id !== "") ? 
+                                         transaction.tenant_id : null;
+        
+        // Log di debug per ogni transazione normalizzata
+        if (index === 0) {
+          console.log("Prima transazione normalizzata:", normalizedTransaction);
+        }
+        
+        return normalizedTransaction;
+      } catch (error) {
+        console.error(`Errore nella normalizzazione della transazione ${index+1}:`, error);
+        // Restituisci una transazione minima valida in caso di errore
+        return {
+          date: new Date().toISOString().split('T')[0],
+          amount: 0,
+          type: 'expense',
+          description: `Transazione ${index+1} (errore normalizzazione)`,
+          category: 'Altro',
+          property_id: null,
+          tenant_id: null
+        };
       }
-
-      // Assicura che altri campi potenzialmente mancanti siano null
-      normalizedTransaction.category = normalizedTransaction.category || null;
-      normalizedTransaction.description = normalizedTransaction.description || null;
-      normalizedTransaction.property_id = normalizedTransaction.property_id || null;
-      normalizedTransaction.tenant_id = normalizedTransaction.tenant_id || null;
-
-      return normalizedTransaction;
     });
   };
 
@@ -381,10 +623,9 @@ export function ExcelImportWizard() {
   const importData = async () => {
     if (!file || !validateMapping()) return;
     setIsImporting(true);
+    setImportProgress(0);
     console.log(`[Import Step 4/5] Inizio importazione per tipo: ${entityType}`); 
-    // ---> Log dello stato mappings all'inizio <--- 
-    console.log("[Import Step 4/5] Mappings allo start di importData:", mappings);
-
+    
     const fileExtension = file.name.split('.').pop()?.toLowerCase();
     let dataToImport: any[] = [];
 
@@ -526,7 +767,7 @@ export function ExcelImportWizard() {
       if (entityType === 'transaction') {
         console.log("[Import Step 4/5] Normalizzazione dati transazioni...");
         const normalizedTransactions = normalizeTransactionData(dataToImport);
-        console.log("[Import Step 4/5] Dati transazioni normalizzati:", normalizedTransactions.length); // Log count
+        console.log("[Import Step 4/5] Dati transazioni normalizzati:", normalizedTransactions.length);
         dataToImport.splice(0, dataToImport.length, ...normalizedTransactions);
       }
 
@@ -538,16 +779,65 @@ export function ExcelImportWizard() {
         return; 
       }
 
-      // ---> INVIO AL BACKEND <---
-      console.log(`[Import Step 4/5] Invio ${dataToImport.length} righe a /import/${entityType}...`);
-      await api.import.data(entityType, dataToImport);
+      // ---> SALVA LO STATO INIZIALE <---
+      localStorage.setItem(`import_state_${entityType}`, JSON.stringify({
+        entityType,
+        data: dataToImport,
+        progress: 0,
+        timestamp: Date.now()
+      }));
 
-      toast.success(`${dataToImport.length} ${entityType}(s) importati con successo! ${skippedRowCount > 0 ? `(${skippedRowCount} righe scartate)` : ''}`);
+      // ---> INVIO AL BACKEND A BLOCCHI <---
+      console.log(`[Import Step 4/5] Invio ${dataToImport.length} righe a blocchi...`);
+      
+      // Assicurati che il tipo sia corretto (singolare)
+      let importEntityType = entityType;
+      // Se è transaction, assicurati che sia usato il singolare
+      if (importEntityType === "transaction" || importEntityType === "transactions") {
+        importEntityType = "transaction"; // Forza al singolare
+        console.log(`[Import Step 4/5] Normalizzato tipo entità a '${importEntityType}'`);
+      }
+
+      // Usa una dimensione di blocco ottimizzata
+      const blockSize = importEntityType === 'transaction' ? 100 : 50;
+      console.log(`[Import Step 4/5] Dimensione blocco impostata a ${blockSize} per ${importEntityType}`);
+
+      // Mostra messaggio all'utente per importazioni grandi
+      if (dataToImport.length > 500) {
+        toast.info(`Importazione di ${dataToImport.length} record in corso... Potrebbero volerci alcuni minuti.`, {
+          duration: 5000,
+        });
+      }
+
+      const result = await api.import.dataInChunks(
+        importEntityType, 
+        dataToImport, 
+        blockSize,
+        (progress) => {
+          setImportProgress(progress);
+          // Aggiorna lo stato salvato con i dati rimanenti
+          const remainingData = dataToImport.slice(Math.floor(dataToImport.length * progress / 100));
+          localStorage.setItem(`import_state_${entityType}`, JSON.stringify({
+            entityType,
+            data: remainingData,
+            progress,
+            timestamp: Date.now()
+          }));
+        }
+      );
+      
+      // Rimuovi lo stato salvato dopo un'importazione riuscita
+      localStorage.removeItem(`import_state_${entityType}`);
+
+      toast.success(`${result.importedCount} ${entityType}(s) importati con successo!`);
       setStep(5); // Vai allo step di completamento
 
     } catch (error: any) {
       console.error("[Import Step 4/5] Errore durante il processo di importazione:", error);
       toast.error(`Errore durante l'importazione: ${error.message || 'Errore sconosciuto'}`);
+      
+      // Lo stato di avanzamento è già stato salvato nei callback di progresso
+      toast.info("Lo stato dell'importazione è stato salvato. Puoi riprendere in seguito.");
     } finally {
       setIsImporting(false); 
       console.log("[Import Step 4/5] Fine processo importazione.");
@@ -675,6 +965,38 @@ export function ExcelImportWizard() {
                   (Se vedi "Fotocamera" o simili, cerca l'opzione "File" o "Sfoglia" per trovare il tuo documento.)
                 </p>
               </div>
+
+              {/* Nello step 1, aggiungo la notifica di importazione in sospeso */}
+              {step === 1 && savedImportState && (
+                <Alert className="mb-4 bg-blue-50">
+                  <AlertCircle className="h-4 w-4 text-blue-600" />
+                  <AlertTitle>Importazione in sospeso</AlertTitle>
+                  <AlertDescription>
+                    Hai un'importazione di {savedImportState.data?.length || 0} record {entityType} in sospeso (progresso: {savedImportState.progress || 0}%).
+                    <div className="mt-2">
+                      <Button variant="outline" size="sm" onClick={resumeImport} disabled={isResuming}>
+                        {isResuming ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Riprendendo...
+                          </>
+                        ) : "Riprendi importazione"}
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="ml-2" 
+                        onClick={() => {
+                          localStorage.removeItem(`import_state_${entityType}`);
+                          setSavedImportState(null);
+                        }}
+                      >
+                        Annulla
+                      </Button>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
           )}
           
@@ -735,16 +1057,31 @@ export function ExcelImportWizard() {
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {entitySchemas[entityType]
-                    .filter(field => !(entityType === 'transaction' && transactionFormattingMethod !== 'separate_columns' && ['income_column', 'expense_column'].includes(field)))
+                    .filter(field => {
+                      // Nascondi il campo amount quando si usano label o colonne separate
+                      if (entityType === 'transaction' && field === 'amount' && 
+                          (transactionFormattingMethod === 'label' || transactionFormattingMethod === 'separate_columns')) {
+                        return false;
+                      }
+                      // Nascondi i campi income_column e expense_column quando non si usa separate_columns
+                      if (entityType === 'transaction' && 
+                          (field === 'income_column' || field === 'expense_column') && 
+                          transactionFormattingMethod !== 'separate_columns') {
+                        return false;
+                      }
+                      return true;
+                    })
                     .map(field => (
                     <div key={field}>
-                      <Label htmlFor={`map-${field}`}>{field.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase())}</Label>
+                      <Label htmlFor={`map-${field}`}>
+                        {t(`import.fields.${field}`, { defaultValue: field.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase()) })}
+                      </Label>
                       <Select value={mappings[field] || 'none'} onValueChange={(value) => setMappings({...mappings, [field]: value === 'none' ? '' : value })}>
                         <SelectTrigger id={`map-${field}`}>
-                          <SelectValue placeholder="Seleziona colonna" />
+                          <SelectValue placeholder={t("import.selectColumn")} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="none">Ignora questo campo</SelectItem>
+                          <SelectItem value="none">{t("import.ignoreField")}</SelectItem>
                           {headers.map(header => (
                             <SelectItem key={header} value={header}>{header}</SelectItem>
                           ))}
@@ -890,6 +1227,50 @@ export function ExcelImportWizard() {
                     {/* Rimosso: Descrizione p "I tuoi dati sono stati importati..." */}
                     {/* Rimosso: Pulsante "Importa un altro file" */}
                </CardContent>
+           )}
+
+           {/* Nello step 4, modifico il pulsante di importazione per mostrare il progresso */}
+           {step === 4 && (
+             <div className="space-y-4">
+               {/* ... existing code ... */}
+               
+               {isImporting && (
+                 <div className="space-y-2 mt-4">
+                   <div className="flex justify-between text-sm text-gray-500">
+                     <span>Importazione in corso...</span>
+                     <span>{importProgress}%</span>
+                   </div>
+                   <Progress value={importProgress} className="h-2" />
+                   <p className="text-xs text-muted-foreground mt-1">
+                     Non chiudere questa finestra o spegnere lo schermo del dispositivo. Se l'importazione si interrompe,
+                     potrai riprenderla in seguito.
+                   </p>
+                 </div>
+               )}
+               
+               <div className="flex justify-end space-x-2 mt-6">
+                 <Button type="button" variant="outline" onClick={goBack} disabled={isImporting}>
+                   Indietro
+                 </Button>
+                 <Button 
+                   type="button" 
+                   onClick={importData} 
+                   disabled={isImporting || !validateMapping()}
+                 >
+                   {isImporting ? (
+                     <>
+                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                       Importazione in corso ({importProgress}%)
+                     </>
+                   ) : (
+                     <>
+                       <Send className="mr-2 h-4 w-4" />
+                       Importa dati
+                     </>
+                   )}
+                 </Button>
+               </div>
+             </div>
            )}
         </CardContent>
       </Card>

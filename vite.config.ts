@@ -30,6 +30,20 @@ export default defineConfig(() => ({
   server: {
     host: "::",
     port: 8080,
+    // Configurazione per il supporto di URL multilingua in sviluppo
+    historyApiFallback: {
+      rewrites: [
+        // Reindirizza tutte le richieste che iniziano con /it, /en, ecc. a index.html
+        { from: /^\/it\/.*/, to: '/index.html' },
+        { from: /^\/en\/.*/, to: '/index.html' },
+        { from: /^\/fr\/.*/, to: '/index.html' },
+        { from: /^\/de\/.*/, to: '/index.html' },
+        { from: /^\/es\/.*/, to: '/index.html' },
+        { from: /^\/en-gb\/.*/, to: '/index.html' },
+        // Reindirizza tutte le altre richieste a index.html
+        { from: /./, to: '/index.html' },
+      ],
+    },
     // Aggiunta configurazione proxy per inoltrare le richieste API al backend
     proxy: {
       // Qualsiasi richiesta che inizi con /api (es. /api/auth/login, /api/admin/users)
@@ -79,6 +93,18 @@ export default defineConfig(() => ({
             fs.copyFileSync('./public/logo.png', './dist/og-image.jpg');
             console.log('File og-image.jpg creato nella cartella dist');
           }
+          
+          // Creare file di reindirizzamento per i percorsi multilingua
+          // Questo è necessario per SPA hostati su server statici
+          const languages = ['it', 'en', 'fr', 'de', 'es', 'en-gb'];
+          languages.forEach(lang => {
+            const langDir = `./dist/${lang}`;
+            if (!fs.existsSync(langDir)) {
+              fs.mkdirSync(langDir, { recursive: true });
+            }
+            fs.copyFileSync('./dist/index.html', `${langDir}/index.html`);
+            console.log(`File index.html copiato nella cartella ${lang}`);
+          });
         } catch (err) {
           console.error('Errore durante la copia dei file:', err);
         }

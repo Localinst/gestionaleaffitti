@@ -112,33 +112,86 @@ function validateContracts(data: any[], errors: string[]): void {
  * Validazione transazioni - verifica solo il formato dei campi presenti
  */
 function validateTransactions(data: any[], errors: string[]): void {
+  console.log(`Validazione di ${data.length} transazioni`);
+  
+  // Logger per le prime 5 transazioni per debug
+  if (data.length > 0) {
+    console.log("Esempio prima transazione:", JSON.stringify(data[0], null, 2));
+  }
+  
+  let infoLog = `Tipo dei campi nella prima transazione:\n`;
+  if (data.length > 0) {
+    Object.keys(data[0]).forEach(key => {
+      infoLog += `- ${key}: ${typeof data[0][key]} (valore: ${JSON.stringify(data[0][key])})\n`;
+    });
+  }
+  console.log(infoLog);
+  
   for (let i = 0; i < data.length; i++) {
     const transaction = data[i];
     const rowNum = i + 1;
     
-    // Verifica formato data
-    if (transaction.date && !isValidDate(transaction.date)) {
-      errors.push(`Riga ${rowNum}: Data transazione non valida`);
-    }
-    
-    // Verifica formato importo
-    if (transaction.amount && isNaN(Number(transaction.amount))) {
-      errors.push(`Riga ${rowNum}: Importo transazione deve essere un numero`);
-    }
-    
-    // Verifica enum tipo
-    if (transaction.type && !['income', 'expense'].includes(transaction.type.toLowerCase())) {
-      errors.push(`Riga ${rowNum}: Tipo transazione non valido. Valori consentiti: income, expense`);
-    }
-    
-    // Verifica formato ID proprietà
-    if (transaction.property_id && isNaN(Number(transaction.property_id))) {
-      errors.push(`Riga ${rowNum}: ID proprietà deve essere un numero`);
-    }
-    
-    // Verifica formato ID inquilino
-    if (transaction.tenant_id && isNaN(Number(transaction.tenant_id))) {
-      errors.push(`Riga ${rowNum}: ID inquilino deve essere un numero`);
+    try {
+      // Verifica formato data (più tollerante)
+      if (transaction.date) {
+        // Converti in oggetto Date se è una stringa
+        const dateObj = new Date(transaction.date);
+        if (isNaN(dateObj.getTime())) {
+          errors.push(`Riga ${rowNum}: Data transazione non valida: '${transaction.date}'`);
+          console.warn(`Transazione ${rowNum}: Data non valida: ${transaction.date}`);
+        } else {
+          // Sostituisci la data con un formato standard ISO se è valida
+          transaction.date = dateObj.toISOString().split('T')[0];
+        }
+      }
+      
+      // Verifica formato importo
+      if (transaction.amount !== undefined) {
+        // Se è una stringa, prova a convertirla in numero
+        if (typeof transaction.amount === 'string') {
+          const cleanedAmount = transaction.amount.replace(/,/g, '.').replace(/[^\d.-]/g, '');
+          const numAmount = parseFloat(cleanedAmount);
+          
+          if (isNaN(numAmount)) {
+            errors.push(`Riga ${rowNum}: Importo transazione deve essere un numero. Valore attuale: '${transaction.amount}'`);
+            console.warn(`Transazione ${rowNum}: Importo non numerico: ${transaction.amount}`);
+          } else {
+            // Sostituisci con il valore numerico
+            transaction.amount = numAmount;
+          }
+        } else if (typeof transaction.amount !== 'number') {
+          errors.push(`Riga ${rowNum}: Importo transazione deve essere un numero. Tipo attuale: ${typeof transaction.amount}`);
+          console.warn(`Transazione ${rowNum}: Importo tipo non valido: ${typeof transaction.amount}`);
+        }
+      }
+      
+      // Verifica enum tipo
+      if (transaction.type && typeof transaction.type === 'string') {
+        const normalizedType = transaction.type.toString().toLowerCase().trim();
+        if (!['income', 'expense'].includes(normalizedType)) {
+          errors.push(`Riga ${rowNum}: Tipo transazione '${transaction.type}' non valido. Valori consentiti: income, expense`);
+          console.warn(`Transazione ${rowNum}: Tipo non valido: ${transaction.type}`);
+        } else {
+          // Normalizza il tipo
+          transaction.type = normalizedType;
+        }
+      }
+      
+      // Verifica property_id e tenant_id (più permissiva, visto che non sono campi obbligatori)
+      if (transaction.property_id !== undefined && transaction.property_id !== null && transaction.property_id !== '') {
+        // Non validare il formato, sarà compito del backend gestire la conversione
+        // Ma segnala comunque a fini di debug
+        console.log(`Transazione ${rowNum}: property_id=${transaction.property_id} (${typeof transaction.property_id})`);
+      }
+      
+      if (transaction.tenant_id !== undefined && transaction.tenant_id !== null && transaction.tenant_id !== '') {
+        // Non validare il formato, sarà compito del backend gestire la conversione
+        // Ma segnala comunque a fini di debug
+        console.log(`Transazione ${rowNum}: tenant_id=${transaction.tenant_id} (${typeof transaction.tenant_id})`);
+      }
+    } catch (e: any) {
+      console.error(`Errore durante la validazione della transazione ${rowNum}:`, e);
+      errors.push(`Riga ${rowNum}: Errore generico nella validazione: ${e.message || 'errore sconosciuto'}`);
     }
   }
 }

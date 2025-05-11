@@ -4,7 +4,8 @@ import {
   getPropertyById, 
   createProperty,
   updateProperty,
-  deleteProperty 
+  deleteProperty,
+  deleteAllProperties
 } from '../controllers/properties';
 import { authenticate } from '../middleware/auth';
 
@@ -17,6 +18,7 @@ router.get('/', getProperties);
 router.get('/:id', getPropertyById);
 router.post('/', createProperty);
 router.put('/:id', updateProperty);
+router.delete('/all', deleteAllProperties);
 router.delete('/:id', deleteProperty);
 
 export { router as propertiesRouter }; 

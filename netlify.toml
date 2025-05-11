@@ -9,11 +9,48 @@
   status = 200
   force = true
 
-# Header per le SPA (Single Page Applications)
+# Reindirizzamento per SPA con supporto multilingua
+[[redirects]]
+  from = "/it/*"
+  to = "/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/en/*"
+  to = "/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/fr/*"
+  to = "/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/de/*"
+  to = "/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/es/*"
+  to = "/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/en-gb/*"
+  to = "/index.html"
+  status = 200
+  force = true
+
+# Reindirizzamento di fallback per SPA
 [[redirects]]
   from = "/*"
   to = "/index.html"
-  status = 200 
+  status = 200
 
 # Questa configurazione aiuta Netlify a rilevare crawler e bot per servire versioni prerendered
 [[headers]]
@@ -23,4 +60,14 @@
 
 # Questa opzione attiva il rilevamento automatico di bot per prerendering
 [context.production]
-  environment = { NETLIFY_EXPERIMENTAL_DETECT_BOTS_AND_DISABLE_CACHE = "true" } 
+  environment = { NETLIFY_EXPERIMENTAL_DETECT_BOTS_AND_DISABLE_CACHE = "true" }
+
+# Configurazione header per sicurezza e ottimizzazione
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.google-analytics.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.tenoris360.com https://www.google-analytics.com;" 
