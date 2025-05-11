@@ -20,7 +20,7 @@
     <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin />
     <link rel="dns-prefetch" href="https://www.google-analytics.com" />
     <title>Tenoris360 | Software Gestione Affitti e Locazioni Immobili</title>
-    <meta name="description" content="Software gestione affitti e gestionale locazioni per proprietari e agenzie immobiliari. Programma gestione immobili in affitto, software contratti di locazione e sistema di gestione locativa completo." />
+    <meta name="description" content="Semplifica la gestione di affitti, inquilini, pagamenti e scadenze. Prova Tenoris360 gratis per 14 giorni, senza carta di credito." />
     <meta name="keywords" content="software gestione affitti, gestionale locazioni, gestionale affitti, software gestione locazione immobili, programma gestione immobili affitto, software affitti, gestione affitti software, software contratti locazione, software contratti di locazione, software di gestione locativa" />
     <meta name="author" content="Giuseppe Totire" />
     <meta name="application-name" content="Tenoris360" />
@@ -247,6 +247,55 @@
       </ol>
     </nav>
     <div id="root"></div>
+    
+    <!-- Contenuto SEO prerendering visibile ai crawler -->
+    <div id="seo-content" style="display:none;">
+      <h1>Gestisci le tue proprietà con semplicità, automazione e controllo</h1>
+      
+      <p>Tenoris360 è il software gestionale per property manager, proprietari e agenzie immobiliari che desiderano automatizzare la gestione di affitti brevi, lunghi e immobili in locazione. Dimentica fogli Excel, WhatsApp e confusione: con Tenoris360 gestisci contratti, scadenze, pagamenti, documenti e inquilini da un'unica piattaforma semplice e veloce.</p>
+      
+      <p><strong>➡️ Provalo gratis per 14 giorni – Nessuna carta richiesta</strong></p>
+      
+      <h2>🧩 Tutto in un'unica piattaforma</h2>
+      <p>Gestione affitti, inquilini, contratti e scadenze. Tieni sotto controllo ogni proprietà con uno strumento semplice, visivo e professionale.</p>
+      
+      <h2>⚡ Automatizza le operazioni ripetitive</h2>
+      <ul>
+        <li>Notifiche automatiche per scadenze</li>
+        <li>Invio email ai locatari</li>
+        <li>Promemoria per pagamenti</li>
+      </ul>
+      
+      <h2>📊 Dashboard intuitiva per il monitoraggio delle entrate</h2>
+      <p>Visualizza in tempo reale quanto guadagni da ogni immobile, filtrando per mese, unità, o inquilino.</p>
+      
+      <h2>🔐 Sicurezza dei dati al primo posto</h2>
+      <p>Tutti i dati sono protetti e salvati in cloud. Niente più documenti sparsi o persi.</p>
+      
+      <h2>Chi siamo</h2>
+      <p>Tenoris360 nasce da chi vive ogni giorno la gestione immobiliare. Abbiamo creato questo gestionale per rendere il lavoro dei property manager più snello, professionale e meno stressante. È pensato per chi ha 2 immobili… o 200.</p>
+      
+      <h2>Domande frequenti</h2>
+      
+      <h3>A chi è utile Tenoris360?</h3>
+      <p>A property manager, agenzie, proprietari privati e chi affitta immobili a lungo o breve termine.</p>
+      
+      <h3>Devo installare qualcosa?</h3>
+      <p>No, è una web app: funziona da browser, anche su smartphone.</p>
+      
+      <h3>Quanto costa Tenoris360?</h3>
+      <p>Puoi provarlo gratis per 14 giorni. Dopo, scegli il piano adatto alle tue esigenze.</p>
+      
+      <h3>Serve la carta di credito per provarlo?</h3>
+      <p>No, puoi testarlo senza impegno e senza inserire dati di pagamento.</p>
+      
+      <footer>
+        <p>Software gestionale per affitti e locazioni – Tenoris360</p>
+        <p>Creato in Italia per property manager italiani.</p>
+        <p>Contatti • Assistenza • Accedi</p>
+      </footer>
+    </div>
+    
     <!-- Indicatore di caricamento e prerendering per i crawler -->
     <div id="prerender-indicator" style="position:absolute; left:-9999px;">
       <h1>Tenoris360 | Software Gestione Affitti e Locazioni Immobili</h1>
@@ -266,6 +315,12 @@
     <script>
       document.addEventListener('DOMContentLoaded', function() {
         document.body.style.visibility = 'visible';
+        
+        // Rimuovi il contenuto SEO dopo il caricamento dell'applicazione
+        const seoContent = document.getElementById('seo-content');
+        if (seoContent) {
+          seoContent.parentNode.removeChild(seoContent);
+        }
       });
       
       if ('PerformanceObserver' in window) {
