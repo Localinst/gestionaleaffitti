@@ -64,6 +64,29 @@ if (!fs.existsSync(distDir)) {
   fs.mkdirSync(distDir, { recursive: true });
 }
 
+// Leggi il file index.html principale per ottenere i nomi dei file CSS e JS
+const mainIndexPath = path.join(distDir, 'index.html');
+let cssFile = '';
+let jsFile = '';
+
+if (fs.existsSync(mainIndexPath)) {
+  const mainIndexContent = fs.readFileSync(mainIndexPath, 'utf8');
+  
+  // Estrai il nome del file CSS
+  const cssMatch = mainIndexContent.match(/<link rel="stylesheet"[^>]*href="\/assets\/([^"]+)"/);
+  if (cssMatch && cssMatch[1]) {
+    cssFile = cssMatch[1];
+    console.log(`Found CSS file: ${cssFile}`);
+  }
+  
+  // Estrai il nome del file JS
+  const jsMatch = mainIndexContent.match(/<script[^>]*src="\/assets\/([^"]+)"/);
+  if (jsMatch && jsMatch[1]) {
+    jsFile = jsMatch[1];
+    console.log(`Found JS file: ${jsFile}`);
+  }
+}
+
 // Crea le pagine per ogni lingua
 languages.forEach(lang => {
   const langDir = path.join(distDir, lang.code);
@@ -75,7 +98,7 @@ languages.forEach(lang => {
   }
   
   // Crea il file HTML per la lingua
-  const htmlContent = createHtmlTemplate(lang, languages);
+  const htmlContent = createHtmlTemplate(lang, languages, cssFile, jsFile);
   
   // Scrivi il file
   const filePath = path.join(langDir, 'index.html');
@@ -469,7 +492,7 @@ function generateSeoContent(lang) {
 }
 
 // Funzione per creare il template HTML
-function createHtmlTemplate(currentLang, allLangs) {
+function createHtmlTemplate(currentLang, allLangs, cssFile, jsFile) {
   // Genera i link hreflang per tutte le lingue
   const hreflangs = allLangs.map(lang => {
     return `  <link rel="alternate" hreflang="${lang.code === 'en-gb' ? 'en-gb' : lang.code}" href="https://tenoris360.com/${lang.code === 'it' ? '' : lang.code + '/'}">`;
@@ -495,9 +518,9 @@ function createHtmlTemplate(currentLang, allLangs) {
 ${hreflangs}
 ${xDefault}
   
-  <!-- Preload main application script and styles -->
-  <link rel="stylesheet" href="${currentLang.code === 'it' ? '' : '../'}assets/index.css">
-  <script type="module" src="${currentLang.code === 'it' ? '' : '../'}assets/index.js"></script>
+  <!-- Preload main application script and styles con percorsi assoluti -->
+  <link rel="stylesheet" href="/assets/${cssFile}">
+  <script type="module" src="/assets/${jsFile}"></script>
 </head>
 <body>
   <div id="root"></div>
