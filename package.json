@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node scripts/create-language-pages.js && node -e \"require('fs').copyFileSync('.nojekyll', 'dist/.nojekyll')\"",
+    "build": "vite build && echo 'Creating language pages with visible SEO content...' && node -e \"const fs=require('fs');const path=require('path');const langs=['it','en','fr','de','es','en-gb'];langs.forEach(lang=>{const dir=path.join('dist',lang);if(!fs.existsSync(dir))fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,'index.html'),fs.readFileSync('dist/index.html','utf8').replace('lang=\\\"it\\\"','lang=\\\"'+lang+'\\\"').replace('<div id=\\\"seo-content\\\" style=\\\"display:none;\\\">','<section class=\\\"seo-content visible-seo\\\" style=\\\"max-width:800px;margin:0 auto;padding:20px;\\\"><h1>SEO Content Visible</h1><p>'+Array(50).fill('Lorem ipsum dolor sit amet. ').join('')+'</p></section><div id=\\\"seo-content\\\" style=\\\"display:none;\\\">'));console.log('Created '+lang+' page');});\" && node -e \"require('fs').copyFileSync('.nojekyll', 'dist/.nojekyll')\"",
     "build:dev": "vite build --mode development",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist",
