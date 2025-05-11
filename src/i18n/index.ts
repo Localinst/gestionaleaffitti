@@ -352,17 +352,27 @@ export const getHreflangUrls = (
     }
   });
   
-  // Aggiungi x-default (utilizzando la versione italiana)
+  // Aggiungi x-default (utilizzando la versione italiana come default solo per le pagine non linguistiche)
+  // Per le pagine che hanno già un prefisso linguistico, x-default dovrebbe puntare alla pagina corrente
   if (useQueryParams) {
     hreflangUrls.push({
       locale: 'x-default',
       url: `${baseUrl}${cleanPath}?lang=it-IT`
     });
   } else {
-    hreflangUrls.push({
-      locale: 'x-default',
-      url: `${baseUrl}${cleanPath === '/' ? '' : cleanPath}`
-    });
+    // Se siamo in una pagina con prefisso linguistico, mantieni la versione corrente per x-default
+    if (currentPrefix) {
+      hreflangUrls.push({
+        locale: 'x-default',
+        url: `${baseUrl}${pathWithoutQuery}`
+      });
+    } else {
+      // Altrimenti usa la versione italiana senza prefisso
+      hreflangUrls.push({
+        locale: 'x-default',
+        url: `${baseUrl}${cleanPath === '/' ? '' : cleanPath}`
+      });
+    }
   }
   
   return hreflangUrls;

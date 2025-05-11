@@ -5,8 +5,8 @@ import { ArrowRight, BarChart3, Building, Home, KeyRound, Users } from "lucide-r
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { LandingNav } from "@/components/layout/LandingNav";
-import SEO from '@/components/SEO';
-import { getHreflangUrls } from '@/i18n';
+import { SEO } from "@/components/SEO";
+import { getHreflangUrls, getCurrentLanguage } from "@/i18n";
 import { useTranslation } from "react-i18next";
 
 const LandingPage = () => {
@@ -15,6 +15,7 @@ const LandingPage = () => {
   const testimonialsRef = useRef<HTMLElement>(null);
   const location = useLocation();
   const { t } = useTranslation();
+  const currentLang = getCurrentLanguage();
 
   useEffect(() => {
     // Gestisce lo scroll alle sezioni quando si accede tramite URL
@@ -68,20 +69,118 @@ const LandingPage = () => {
     }
   ];
 
+  // Ottieni il titolo e la descrizione basati sulla lingua corrente
+  const getSeoTitle = () => {
+    switch(currentLang) {
+      case 'en-US':
+      case 'en-GB':
+        return "Premium Property Management Software for Rentals";
+      case 'fr-FR':
+        return "Logiciel de Gestion Premium pour Locations Immobilières";
+      case 'de-DE':
+        return "Premium-Verwaltungssoftware für Vermietungen und Immobilien";
+      case 'es-ES':
+        return "Software Premium de Gestión de Alquileres e Inmuebles";
+      default:
+        return "Software Gestionale Premium per Affitti e Immobili";
+    }
+  };
+  
+  const getSeoDescription = () => {
+    switch(currentLang) {
+      case 'en-US':
+      case 'en-GB':
+        return "Tenoris360: professional property management software. Simplify the management of properties, tenants, short-term rentals, contracts, payments and reports.";
+      case 'fr-FR':
+        return "Tenoris360: logiciel de gestion immobilière professionnel. Simplifiez la gestion des propriétés, locataires, locations courte durée, contrats, paiements et rapports.";
+      case 'de-DE':
+        return "Tenoris360: Professionelle Immobilienverwaltungssoftware. Vereinfachen Sie die Verwaltung von Immobilien, Mietern, Kurzzeitvermietungen, Verträgen, Zahlungen und Berichten.";
+      case 'es-ES':
+        return "Tenoris360: software de gestión inmobiliaria profesional. Simplifique la gestión de propiedades, inquilinos, alquileres temporales, contratos, pagos e informes.";
+      default:
+        return "Tenoris360: il software gestionale professionale per affitti e immobili. Semplifica la gestione di proprietà, inquilini, B&B, contratti, pagamenti e report.";
+    }
+  };
+  
+  // Ottieni le keywords multilingua
+  const getSeoKeywords = () => {
+    const baseKeywords = [
+      "property management software", 
+      "rental management", 
+      "short term rentals", 
+      "real estate software"
+    ];
+    
+    const keywordsMap = {
+      'it-IT': [
+        "software gestione affitti", 
+        "gestionale immobiliare", 
+        "affitti brevi", 
+        "B&B", 
+        "contratti di locazione"
+      ],
+      'en-US': [
+        "property management software", 
+        "rental management", 
+        "short term rentals", 
+        "vacation rental software", 
+        "lease management"
+      ],
+      'en-GB': [
+        "property management software", 
+        "letting management", 
+        "holiday rentals", 
+        "property software", 
+        "tenancy management"
+      ],
+      'fr-FR': [
+        "logiciel gestion immobilière", 
+        "gestion locative", 
+        "locations courte durée", 
+        "logiciel location", 
+        "contrats de location"
+      ],
+      'de-DE': [
+        "immobilienverwaltungssoftware", 
+        "mietverwaltung", 
+        "kurzzeitvermietung", 
+        "ferienvermietung", 
+        "mietvertragsverwaltung"
+      ],
+      'es-ES': [
+        "software gestión inmobiliaria", 
+        "gestión alquileres", 
+        "alquileres corta estancia", 
+        "software inmobiliario", 
+        "contratos arrendamiento"
+      ]
+    };
+    
+    return keywordsMap[currentLang] || keywordsMap['it-IT'];
+  };
+  
+  // Determina il canonicalUrl appropriato in base alla lingua corrente
+  const getCanonicalUrl = () => {
+    const prefixMap = {
+      'it-IT': '',
+      'en-US': '/en',
+      'en-GB': '/en-gb',
+      'fr-FR': '/fr',
+      'de-DE': '/de',
+      'es-ES': '/es'
+    };
+    
+    const prefix = prefixMap[currentLang] || '';
+    return `https://tenoris360.com${prefix}/`;
+  };
+
   return (
     <>
       <SEO 
-        title="Software Gestionale Premium per Affitti e Immobili"
-        description="Tenoris360: il software gestionale professionale per affitti e immobili. Semplifica la gestione di proprietà, inquilini, B&B, contratti, pagamenti e report."
-        keywords={[
-          "software gestione affitti", 
-          "gestionale immobiliare", 
-          "property management software", 
-          "affitti brevi", 
-          "B&B", 
-          "contratti di locazione"
-        ]}
-        canonicalUrl="https://tenoris360.com/"
+        title={getSeoTitle()}
+        description={getSeoDescription()}
+        keywords={getSeoKeywords()}
+        canonicalUrl={getCanonicalUrl()}
         hreflang={getHreflangUrls(location.pathname + location.search)}
       />
       <div className="min-h-screen flex flex-col">

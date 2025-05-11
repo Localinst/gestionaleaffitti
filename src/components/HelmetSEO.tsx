@@ -25,6 +25,8 @@ export function HelmetSEO({
   const currentPath = location.pathname + location.search;
   const baseUrl = "https://tenoris360.com";
   
+  // Importante: Usa l'URL corrente come canonical per evitare che Bing consideri 
+  // le versioni linguistiche come pagine duplicate
   const fullCanonicalUrl = canonicalUrl || `${baseUrl}${location.pathname}`;
   const fullImageUrl = image.startsWith("http") ? image : `${baseUrl}${image}`;
   
