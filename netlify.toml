@@ -13,9 +13,45 @@
   status = 200
   force = true
 
-# Configurazione per le pagine multilingua (eliminati i redirect, ora serviamo pagine reali)
-# Ogni richiesta a un percorso linguistico specifico viene gestita dalla stessa pagina index.html
-# ma con i meta tag e i contenuti corretti per quella lingua
+# Reindirizzamenti per le lingue senza slash alla fine
+# Questi devono essere prima degli altri reindirizzamenti per avere precedenza
+[[redirects]]
+  from = "/en"
+  to = "/en/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/fr"
+  to = "/fr/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/de"
+  to = "/de/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/es"
+  to = "/es/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/en-gb"
+  to = "/en-gb/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/it"
+  to = "/it/index.html"
+  status = 200
+  force = true
+
+# Configurazione per le pagine multilingua con percorsi più specifici
 [[redirects]]
   from = "/it/*"
   to = "/it/index.html"

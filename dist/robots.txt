@@ -17,6 +17,14 @@ Allow: /*.woff$
 Allow: /*.woff2$
 Allow: /*.ttf$
 
+# Conferma esplicitamente l'accesso alle pagine linguistiche
+Allow: /en/
+Allow: /fr/
+Allow: /de/
+Allow: /es/
+Allow: /en-gb/
+Allow: /it/
+
 # Conferma esplicitamente l'accesso alle pagine pubbliche
 Allow: /blog
 Allow: /blog/*
@@ -32,14 +40,6 @@ Allow: /register
 Allow: /assets/
 
 # Conferma esplicitamente l'accesso alle versioni in altre lingue
-Allow: /en/
-Allow: /en-gb/
-Allow: /fr/
-Allow: /de/
-Allow: /es/
-Allow: /it/
-
-# Conferma esplicitamente accesso alle pagine multilingua
 Allow: /en/blog
 Allow: /en/blog/*
 Allow: /en/guides

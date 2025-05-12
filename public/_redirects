@@ -4,5 +4,21 @@
 # Rotta admin esplicita
 /admin-8b5c127e3f  /index.html  200
 
+# Reindirizzamenti per le pagine linguistiche (senza slash finale)
+/en              /en/index.html          200!
+/fr              /fr/index.html          200!
+/de              /de/index.html          200!
+/es              /es/index.html          200!
+/en-gb           /en-gb/index.html       200!
+/it              /it/index.html          200!
+
+# Reindirizzamenti per percorsi più specifici sotto una lingua
+/en/*            /en/index.html          200
+/fr/*            /fr/index.html          200
+/de/*            /de/index.html          200 
+/es/*            /es/index.html          200
+/en-gb/*         /en-gb/index.html       200
+/it/*            /it/index.html          200 
+
 # SPA fallback
 /*  /index.html  200 
