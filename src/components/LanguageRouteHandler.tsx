@@ -61,9 +61,18 @@ export function LanguageRouteHandler() {
       }
     }
     
+    // Controlla anche window.initialLanguage che viene impostato nel file HTML prerendered
+    const initialLanguage = (window as any).initialLanguage;
+    if (initialLanguage && !matchedLangCode) {
+      console.log(`Found initialLanguage in window: ${initialLanguage}`);
+      matchedLangCode = initialLanguage;
+      foundPrefix = true;
+    }
+    
     if (foundPrefix && matchedLangCode) {
-      // Forza il cambio di lingua basato sul prefisso URL, indipendentemente dalle impostazioni salvate
-      console.log(`Setting language to ${matchedLangCode} based on URL prefix`);
+      // Forza il cambio di lingua basato sul prefisso URL o initialLanguage, 
+      // indipendentemente dalle impostazioni salvate
+      console.log(`Setting language to ${matchedLangCode} based on URL prefix or initialLanguage`);
       
       // Forza il cambio di lingua, anche se è già la stessa
       // Questo è importante perché potrebbe esserci un mismatch tra i18n e le impostazioni salvate
@@ -72,6 +81,18 @@ export function LanguageRouteHandler() {
       // Salva nelle impostazioni per persistenza
       // Questa chiamata diretta è cruciale per assicurarsi che la lingua venga cambiata immediatamente
       changeLanguage(matchedLangCode);
+      
+      // Pulisci localStorage per assicurarsi che non interferisca
+      try {
+        const savedSettings = localStorage.getItem("userSettings");
+        if (savedSettings) {
+          const settings = JSON.parse(savedSettings);
+          settings.language = matchedLangCode;
+          localStorage.setItem("userSettings", JSON.stringify(settings));
+        }
+      } catch (error) {
+        console.error("Errore nell'aggiornamento delle impostazioni:", error);
+      }
     } else {
       console.log(`No matching language prefix found in path: ${currentPath}`);
       

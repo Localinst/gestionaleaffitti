@@ -34,6 +34,13 @@ const resources = {
 
 // Funzione per caricare la lingua dalle impostazioni utente
 export const loadLanguageFromSettings = (): string => {
+  // Prima controlla se esiste window.initialLanguage (impostato nei file HTML prerendered)
+  if (typeof window !== 'undefined' && (window as any).initialLanguage) {
+    const initialLang = (window as any).initialLanguage;
+    console.log(`Using initialLanguage from window: ${initialLang}`);
+    return initialLang;
+  }
+  
   try {
     const savedSettings = localStorage.getItem("userSettings");
     if (savedSettings) {

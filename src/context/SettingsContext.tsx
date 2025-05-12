@@ -65,7 +65,14 @@ interface SettingsProviderProps {
 
 // Funzione per determinare la lingua iniziale
 function getInitialLanguage(): string {
-  // Controlla prima i prefissi di lingua nell'URL
+  // Prima controlla se esiste window.initialLanguage (impostato nei file HTML prerendered)
+  if (typeof window !== 'undefined' && (window as any).initialLanguage) {
+    const initialLang = (window as any).initialLanguage;
+    console.log(`Using initialLanguage from window: ${initialLang}`);
+    return initialLang;
+  }
+
+  // Controlla i prefissi di lingua nell'URL
   const path = window.location.pathname;
   console.log("Getting initial language from path:", path);
   
