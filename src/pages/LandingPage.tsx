@@ -8,6 +8,7 @@ import { LandingNav } from "@/components/layout/LandingNav";
 import { SEO } from "@/components/SEO";
 import { getHreflangUrls, getCurrentLanguage } from "@/i18n";
 import { useTranslation } from "react-i18next";
+import { MainH1 } from '@/context/AppHelmetContext';
 
 const LandingPage = () => {
   const [activeFeature, setActiveFeature] = useState<number>(0);
@@ -192,9 +193,9 @@ const LandingPage = () => {
           <div className="container px-4 md:px-6">
             <div className="grid gap-8 lg:grid-cols-2 lg:gap-16 items-center">
               <div className="flex flex-col gap-4">
-                <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
+                <MainH1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
                   {t("landing.hero.title")} <span className="text-primary">Tenoris360</span>
-                </h1>
+                </MainH1>
                 <p className="text-muted-foreground text-lg md:text-xl">
                   {t("landing.hero.description")}
                 </p>
