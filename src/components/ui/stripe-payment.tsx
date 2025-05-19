@@ -89,10 +89,23 @@ export const StripePayment = ({
 
       // Continua con il checkout per utenti autenticati
       // Effettua la chiamata al backend per creare la sessione di checkout
+      const token = localStorage.getItem('authToken');
+      
+      if (!token) {
+        console.error('Token di autenticazione mancante');
+        toast.error('Errore di autenticazione', { 
+          description: 'Per favore, effettua nuovamente il login.' 
+        });
+        navigate('/login?redirect=subscribe');
+        setIsLoading(null);
+        return;
+      }
+      
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           email: user?.email || '',
