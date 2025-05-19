@@ -5,6 +5,7 @@ import { Loader2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
+import { getAPIBaseUrl } from '@/services/api';
 
 interface PlanOption {
   id: string;
@@ -101,8 +102,19 @@ export const StripePayment = ({
         return;
       }
       
-      const response = await fetch(endpoint, {
+      // Ottieni l'URL base dell'API usando la funzione esistente
+      const apiBaseUrl = getAPIBaseUrl();
+      
+      // Rimuovi '/api' dall'endpoint perché è già incluso in apiBaseUrl
+      const cleanEndpoint = endpoint.startsWith('/api') ? endpoint.substring(4) : endpoint;
+      const fullEndpoint = `${apiBaseUrl}${cleanEndpoint}`;
+      
+      console.log('Invio richiesta checkout a:', fullEndpoint);
+      console.log('Token di autenticazione presente:', !!token);
+      
+      const response = await fetch(fullEndpoint, {
         method: 'POST',
+        credentials: 'include', // Invia i cookie con la richiesta
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
