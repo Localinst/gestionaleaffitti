@@ -165,7 +165,7 @@ function App() {
                                     <AdminDashboard />
                                   </ProtectedRoute>
                                 } 
-                              } 
+                              />
                               
                               {/* Nuove pagine landing - Italiano (default) */}
                               <Route path="/blog" element={<BlogPage />} />

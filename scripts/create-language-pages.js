@@ -451,7 +451,7 @@ function generateSeoContent(lang) {
   // Build hidden SEO section with complete details
   let hiddenSeo = `
   <div id="seo-content" style="display:none;">
-    <h1>${content.h1}</h1>
+    <h2>${content.h1}</h2>
     
     <p>${content.intro}</p>
     

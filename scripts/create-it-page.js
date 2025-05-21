@@ -80,7 +80,7 @@ const htmlContent = `<!DOCTYPE html>
   
   <!-- Contenuto SEO nascosto per i crawler -->
   <div id="seo-content" style="display:none;">
-    <h1>Gestisci le tue proprietà con semplicità, automazione e controllo</h1>
+    <h2>Gestisci le tue proprietà con semplicità, automazione e controllo</h2>
     
     <p>Tenoris360 è il software gestionale per property manager, proprietari e agenzie immobiliari che desiderano automatizzare la gestione di affitti brevi, lunghi e immobili in locazione. Dimentica fogli Excel, WhatsApp e confusione: con Tenoris360 gestisci contratti, scadenze, pagamenti, documenti e inquilini da un'unica piattaforma semplice e veloce.</p>
     
