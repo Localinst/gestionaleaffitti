@@ -11,7 +11,7 @@ import { handleRequestError } from '@/lib/api';
 const getApiUrl = () => {
   // In produzione, usa URL diretto del backend
   if (window.location.hostname !== 'localhost') {
-    return 'https://gestionaleaffitti.onrender.com/api';
+    return 'https://gestionaleaffitti2.onrender.com/api';
   }
   // In sviluppo, usa localhost
   return `${window.location.protocol}//${window.location.hostname}:3000/api`;

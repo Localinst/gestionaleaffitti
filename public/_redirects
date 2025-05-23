@@ -1,5 +1,5 @@
 # Proxy per le chiamate API
-/api/*  https://gestionaleaffitti.onrender.com/api/:splat  200
+/api/*  https://gestionaleaffitti2.onrender.com/api/:splat  200
 
 # Rotta admin esplicita
 /admin-8b5c127e3f  /index.html  200

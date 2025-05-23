@@ -106,7 +106,7 @@ export function getAPIBaseUrl() {
 export function getActualAPIBaseUrl() {
   // In ambiente di produzione, usa l'URL diretto del backend
   if (window.location.hostname !== 'localhost') {
-    return 'https://gestionaleaffitti.onrender.com/api';
+    return 'https://gestionaleaffitti2.onrender.com/api';
   }
   
   // In ambiente di sviluppo locale, usa localhost:3000

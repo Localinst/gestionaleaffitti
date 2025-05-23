@@ -35,7 +35,7 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
   // Funzione per ottenere la base URL dell'API
   const getAPIBaseUrl = () => {
     if (window.location.hostname !== 'localhost') {
-      return 'https://gestionaleaffitti.onrender.com/api';
+      return 'https://gestionaleaffitti2.onrender.com/api';
     }
     return 'http://localhost:3000/api';
   };
