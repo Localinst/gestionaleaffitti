@@ -34,46 +34,30 @@ router.get('/check-subscription-status', authenticate, async (req: Request, res:
       .eq('id', userId)
       .single();
 
-    // Controllo di fallback: se l'utente è connesso, ha un auth token valido, quindi è registrato
-    // Per gli utenti appena creati, forniamo automaticamente un periodo di prova
-    // === INIZIO MISURA TEMPORANEA ===
-    const now = new Date();
-    let createdAt: Date;
-    let createdAtValid = false;
-    
     // Verifica che la data di creazione sia valida
+    let createdAt: Date | null = null;
     if (authResult?.created_at) {
       const tempDate = new Date(authResult.created_at);
       if (!isNaN(tempDate.getTime())) {
         createdAt = tempDate;
-        createdAtValid = true;
-      } else {
-        // Fallback se la data non è valida
-        createdAt = new Date(now);
-        createdAt.setDate(createdAt.getDate() - 1); // Un giorno fa per dare un breve periodo di prova
       }
-    } else {
-      // Se non c'è data di creazione, usiamo il fallback
-      createdAt = new Date(now);
-      createdAt.setDate(createdAt.getDate() - 1); // Un giorno fa
     }
     
-    // Calcola la fine del periodo di prova (14 giorni dalla creazione)
-    const trialEndDate = new Date(createdAt);
-    trialEndDate.setDate(trialEndDate.getDate() + 14);
-    const diffDays = Math.ceil((trialEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    
-    // Se l'utente si è appena registrato, consideralo in periodo di prova
-    if (diffDays > 0) {
-      return res.json({
-        active: true,
-        isTrial: true,
-        daysLeft: diffDays,
-        trialEndDate: trialEndDate.toISOString()
-      });
+    // Se abbiamo una data di creazione valida, controlla il periodo di prova
+    if (createdAt) {
+      const now = new Date();
+      const trialEndDate = new Date(createdAt);
+      trialEndDate.setDate(trialEndDate.getDate() + 14);
+      const diffDays = Math.ceil((trialEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      if (diffDays > 0) {
+        return res.json({
+          active: true,
+          isTrial: true,
+          daysLeft: diffDays,
+          trialEndDate: trialEndDate.toISOString()
+        });
+      }
     }
-    // === FINE MISURA TEMPORANEA ===
-    
 
     // Query diretta al database usando pool (accesso a auth.users)
     const { error, data } = await supabase.rpc('check_trial_period', { 
