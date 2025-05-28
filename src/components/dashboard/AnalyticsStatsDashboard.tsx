@@ -80,6 +80,18 @@ interface AnalyticsData {
 // Colori per i grafici
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
+// Funzione per formattare una stringa tipo "533619s" in formato leggibile
+function formatSecondsString(str: string) {
+  const seconds = parseInt(str.replace('s', ''), 10);
+  if (isNaN(seconds)) return str;
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
+}
+
 const AnalyticsStatsDashboard = () => {
   const [timeRange, setTimeRange] = useState('7d');
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
@@ -277,7 +289,7 @@ const AnalyticsStatsDashboard = () => {
                     />
                     <YAxis />
                     <Tooltip 
-                      formatter={(value) => [formatNumber(value), ""]}
+                      formatter={(value) => [formatNumber(Number(value)), ""]}
                       labelFormatter={(date) => {
                         const d = new Date(date);
                         return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
@@ -325,8 +337,8 @@ const AnalyticsStatsDashboard = () => {
                         <span className="font-medium">{page.name}</span>
                       </div>
                       <div className="flex space-x-4 text-sm">
-                        <span>{formatNumber(page.views)}</span>
-                        <span className="text-muted-foreground">{page.avg_time}</span>
+                        <span>{formatNumber(Number(page.views))}</span>
+                        <span className="text-muted-foreground">{formatSecondsString(page.avg_time)}</span>
                       </div>
                     </div>
                   ))}
