@@ -25,7 +25,13 @@ const AdminSessions: React.FC = () => {
   const fetchSessions = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/sessions");
+      const token = localStorage.getItem('authToken');
+      const res = await fetch("/api/admin/sessions", {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      });
       const data = await res.json();
       setSessions(data);
     } catch (e) {
