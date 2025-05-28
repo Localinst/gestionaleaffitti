@@ -327,8 +327,7 @@ const AnalyticsStatsDashboard = () => {
               )}
             </CardContent>
           </Card>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
                 <CardTitle>Pagine Più Visitate</CardTitle>
@@ -351,7 +350,6 @@ const AnalyticsStatsDashboard = () => {
                 </div>
               </CardContent>
             </Card>
-
             <Card>
               <CardHeader>
                 <CardTitle>Distribuzione Geografica</CardTitle>
@@ -372,7 +370,12 @@ const AnalyticsStatsDashboard = () => {
                 </div>
               </CardContent>
             </Card>
-
+          </div>
+        </TabsContent>
+        
+        {/* Tab Dispositivi */}
+        <TabsContent value="devices" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
                 <CardTitle>Dispositivi</CardTitle>
@@ -393,9 +396,6 @@ const AnalyticsStatsDashboard = () => {
                 </div>
               </CardContent>
             </Card>
-          </div>
-
-          <div className="mt-6">
             <Card>
               <CardHeader>
                 <CardTitle>Browser</CardTitle>
@@ -414,81 +414,6 @@ const AnalyticsStatsDashboard = () => {
                     <span className="text-muted-foreground">Nessun dato sui browser disponibile</span>
                   )}
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-        
-        {/* Tab Dispositivi */}
-        <TabsContent value="devices" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Dispositivi</CardTitle>
-                <CardDescription>Distribuzione per tipo di dispositivo</CardDescription>
-              </CardHeader>
-              <CardContent className="h-64">
-                {analyticsData.devices.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={analyticsData.devices}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        paddingAngle={1}
-                        dataKey="value"
-                        label={({name, percent}) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {analyticsData.devices.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value) => [`${value}%`, 'Percentuale']} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <p className="text-muted-foreground">Nessun dato sui dispositivi disponibile</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Browser</CardTitle>
-                <CardDescription>Distribuzione per browser utilizzato</CardDescription>
-              </CardHeader>
-              <CardContent className="h-64">
-                {analyticsData.browsers.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={analyticsData.browsers}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        paddingAngle={1}
-                        dataKey="value"
-                        label={({name, percent}) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {analyticsData.browsers.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value) => [`${value}%`, 'Percentuale']} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <p className="text-muted-foreground">Nessun dato sui browser disponibile</p>
-                  </div>
-                )}
               </CardContent>
             </Card>
           </div>
