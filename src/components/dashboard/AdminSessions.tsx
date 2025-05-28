@@ -26,7 +26,7 @@ const AdminSessions: React.FC = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('authToken');
-      const res = await fetch("/api/admin/sessions", {
+      const res = await fetch("https://gestionaleaffitti2.onrender.com/api/admin/sessions", {
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json"
