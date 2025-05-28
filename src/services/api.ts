@@ -1613,5 +1613,23 @@ export const api = {
   import: {
     data: importData,
     dataInChunks: importDataInChunks
-  }
+  },
+  deleteAllTenants: deleteAllTenants
 };
+
+export async function deleteAllTenants(): Promise<{count: number}> {
+  try {
+    const response = await fetch(`${API_URL}/tenants/all`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) {
+      console.error('Errore nell\'eliminazione di tutti gli inquilini:', response.status);
+      throw new Error(`Errore nell'eliminazione di tutti gli inquilini: ${response.status}`);
+    }
+    return response.json();
+  } catch (error) {
+    console.error('Exception in deleteAllTenants:', error);
+    throw error;
+  }
+}
