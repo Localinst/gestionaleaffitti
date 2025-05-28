@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import AnalyticsStatsDashboard from "@/components/dashboard/AnalyticsStatsDashboard";
 import PerformanceAnalyticsDashboard from "@/components/dashboard/PerformanceAnalyticsDashboard";
+import AdminSessions from "@/components/dashboard/AdminSessions";
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("analytics");
@@ -39,6 +40,10 @@ const AdminDashboard = () => {
           <Activity className="h-4 w-4 mr-2" />
           Performance
         </Button>
+        <Button onClick={() => setActiveTab("sessions")} variant={activeTab === "sessions" ? "default" : "outline"} className="w-full md:w-auto">
+          <User className="h-4 w-4 mr-2" />
+          Sessioni
+        </Button>
         <Button onClick={generatePDF} variant="outline" className="w-full md:w-auto ml-auto">
           <ArrowDownToLine className="h-4 w-4 mr-2" />
           Esporta Report
@@ -50,6 +55,7 @@ const AdminDashboard = () => {
           <CardContent className="p-6">
             {activeTab === "analytics" && <AnalyticsStatsDashboard />}
             {activeTab === "performance" && <PerformanceAnalyticsDashboard />}
+            {activeTab === "sessions" && <AdminSessions />}
           </CardContent>
         </Card>
       </div>
