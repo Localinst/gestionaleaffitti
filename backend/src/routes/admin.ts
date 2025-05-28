@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { authenticate, authorize } from '../middleware/auth';
 import { supabase } from '../lib/supabase'; // Client backend con service_role
+import { getAdminSessions } from '../controllers/admin';
 
 // Interfaccia per la richiesta autenticata (potrebbe già esistere altrove)
 interface AuthenticatedRequest extends Request {
@@ -55,5 +56,7 @@ router.get('/users', async (req: AuthenticatedRequest, res: Response) => {
     res.status(500).json({ error: 'Errore server imprevisto.', details: error.message });
   }
 });
+
+router.get('/sessions', getAdminSessions);
 
 export default router; 
