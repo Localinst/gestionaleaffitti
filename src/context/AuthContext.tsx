@@ -152,6 +152,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setUser(userData);
         setIsAuthenticated(true);
         setIsLoading(false);
+        // Salvo anche in localStorage per il tracking
+        localStorage.setItem('currentUser', JSON.stringify(userData));
       } catch (error) {
         console.error('Errore durante il parsing dei dati utente:', error);
         handleLogout();
@@ -189,6 +191,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           
           setUser(userData);
           setIsAuthenticated(true);
+          // Salvo anche in localStorage per il tracking
+          localStorage.setItem('currentUser', JSON.stringify(userData));
           console.log('Login effettuato con successo per:', userData.name);
           
           toast.success('Login effettuato con successo', {
@@ -440,6 +444,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       // Pulisci il localStorage e lo stato
       localStorage.removeItem('authToken');
+      localStorage.removeItem('currentUser');
       setUser(null);
       setIsAuthenticated(false);
       

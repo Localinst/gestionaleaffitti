@@ -21,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getTenants, getProperties } from "@/services/api";
+import { getTenants, getProperties, deleteAllTenants } from "@/services/api";
 import { AddTenantForm } from "./AddTenantForm";
 import { Tenant, Property } from "@/services/api";
 import { useNavigate } from 'react-router-dom';
@@ -100,13 +100,27 @@ export default function TenantsPage() {
           title={t("tenants.title")}
           description={t("tenants.description")}
         />
-        <Button 
-          className="flex items-center gap-2"
-          onClick={() => setIsAddTenantOpen(true)}
-        >
-          <Plus className="h-4 w-4" />
-          <span>{t("tenants.addTenant")}</span>
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            className="flex items-center gap-2 bg-destructive text-white"
+            onClick={async () => {
+              if (window.confirm('Sei sicuro di voler eliminare tutti gli inquilini?')) {
+                await deleteAllTenants();
+                await loadTenants();
+              }
+            }}
+          >
+            <Trash2 className="h-4 w-4" />
+            <span>Elimina tutti gli inquilini</span>
+          </Button>
+          <Button 
+            className="flex items-center gap-2"
+            onClick={() => setIsAddTenantOpen(true)}
+          >
+            <Plus className="h-4 w-4" />
+            <span>{t("tenants.addTenant")}</span>
+          </Button>
+        </div>
       </div>
 
       <div className="mb-8 flex gap-4 w-full max-w-sm">
