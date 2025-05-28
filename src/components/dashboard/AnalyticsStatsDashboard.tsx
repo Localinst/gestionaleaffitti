@@ -92,6 +92,12 @@ function formatSecondsString(str: string) {
   return `${s}s`;
 }
 
+// Funzione per calcolare la percentuale
+function getPercentage(value: number, total: number) {
+  if (!total || total === 0) return '0%';
+  return ((value / total) * 100).toFixed(1) + '%';
+}
+
 const AnalyticsStatsDashboard = () => {
   const [timeRange, setTimeRange] = useState('7d');
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
@@ -262,7 +268,7 @@ const AnalyticsStatsDashboard = () => {
               <CardTitle>Andamento Visite</CardTitle>
               <CardDescription>Visualizzazioni pagine e visitatori unici nel tempo</CardDescription>
             </CardHeader>
-            <CardContent className="h-80">
+            <CardContent className="h-[500px]">
               {analyticsData.pageViews && analyticsData.pageViews.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart
@@ -322,7 +328,7 @@ const AnalyticsStatsDashboard = () => {
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card>
               <CardHeader>
                 <CardTitle>Pagine Più Visitate</CardTitle>
@@ -351,33 +357,63 @@ const AnalyticsStatsDashboard = () => {
                 <CardTitle>Distribuzione Geografica</CardTitle>
                 <CardDescription>Città di provenienza degli utenti</CardDescription>
               </CardHeader>
-              <CardContent className="h-64">
-                {analyticsData.geoData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={analyticsData.geoData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        paddingAngle={1}
-                        dataKey="value"
-                        label={({name, percent}) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {analyticsData.geoData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value) => [`${value}%`, 'Percentuale']} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <p className="text-muted-foreground">Nessun dato geografico disponibile</p>
-                  </div>
-                )}
+              <CardContent>
+                <div className="space-y-2">
+                  {analyticsData.geoData && analyticsData.geoData.length > 0 ? (
+                    analyticsData.geoData.map((geo, i) => (
+                      <div key={i} className="flex justify-between items-center">
+                        <span>{geo.name}</span>
+                        <span>{formatNumber(Number(geo.value))} ({getPercentage(Number(geo.value), analyticsData.totalViews)})</span>
+                      </div>
+                    ))
+                  ) : (
+                    <span className="text-muted-foreground">Nessun dato geografico disponibile</span>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Dispositivi</CardTitle>
+                <CardDescription>Distribuzione per tipo di dispositivo</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {analyticsData.devices && analyticsData.devices.length > 0 ? (
+                    analyticsData.devices.map((dev, i) => (
+                      <div key={i} className="flex justify-between items-center">
+                        <span>{dev.name}</span>
+                        <span>{formatNumber(Number(dev.value))} ({getPercentage(Number(dev.value), analyticsData.totalViews)})</span>
+                      </div>
+                    ))
+                  ) : (
+                    <span className="text-muted-foreground">Nessun dato sui dispositivi disponibile</span>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Browser</CardTitle>
+                <CardDescription>Distribuzione per browser utilizzato</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {analyticsData.browsers && analyticsData.browsers.length > 0 ? (
+                    analyticsData.browsers.map((browser, i) => (
+                      <div key={i} className="flex justify-between items-center">
+                        <span>{browser.name}</span>
+                        <span>{formatNumber(Number(browser.value))} ({getPercentage(Number(browser.value), analyticsData.totalViews)})</span>
+                      </div>
+                    ))
+                  ) : (
+                    <span className="text-muted-foreground">Nessun dato sui browser disponibile</span>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </div>
