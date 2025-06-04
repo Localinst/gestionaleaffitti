@@ -279,4 +279,28 @@ export const deleteTenant = async (req: Request, res: Response) => {
     console.error('Errore nell\'eliminazione dell\'inquilino:', error);
     res.status(500).json({ error: 'Error deleting tenant' });
   }
+};
+
+export const deleteAllTenants = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Utente non autenticato' });
+    }
+    // Elimina tutti gli inquilini associati alle proprietà dell'utente
+    const result = await executeQuery(async (client) => {
+      return client.query(
+        `DELETE FROM tenants WHERE property_id IN (SELECT id FROM properties WHERE user_id = $1::uuid) RETURNING id`,
+        [userId]
+      );
+    });
+    const deletedCount = result.rows.length;
+    res.json({
+      message: `${deletedCount} inquilini eliminati con successo`,
+      count: deletedCount
+    });
+  } catch (error) {
+    console.error('Errore durante l\'eliminazione di tutti gli inquilini:', error);
+    res.status(500).json({ error: 'Error deleting all tenants' });
+  }
 }; 

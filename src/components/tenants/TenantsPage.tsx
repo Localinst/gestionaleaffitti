@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Search, Users, MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import { Plus, Search, Users, MoreHorizontal, Edit, Trash2, AlertTriangle } from "lucide-react";
 import { 
   AppLayout, 
   PageHeader, 
@@ -27,6 +27,18 @@ import { Tenant, Property } from "@/services/api";
 import { useNavigate } from 'react-router-dom';
 import { usePageTutorial } from '@/hooks';
 import { useTranslation } from "react-i18next";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 export default function TenantsPage() {
   const { t } = useTranslation();
@@ -38,6 +50,8 @@ export default function TenantsPage() {
   const [isAddTenantOpen, setIsAddTenantOpen] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
   const navigate = useNavigate();
+  const [deleteAllDialogOpen, setDeleteAllDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   // Aggiungo l'hook per il tutorial
   usePageTutorial();
@@ -93,6 +107,27 @@ export default function TenantsPage() {
       )
     : [];
 
+  const deleteAllMutation = useMutation({
+    mutationFn: () => deleteAllTenants(),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['tenants'] });
+      toast.success(`${data.count} inquilini eliminati con successo`);
+      setDeleteAllDialogOpen(false);
+    },
+    onError: (error) => {
+      console.error("Error deleting all tenants:", error);
+      toast.error("Errore durante l'eliminazione di tutti gli inquilini");
+    }
+  });
+
+  const handleDeleteAll = () => {
+    setDeleteAllDialogOpen(true);
+  };
+
+  const confirmDeleteAll = async () => {
+    deleteAllMutation.mutate();
+  };
+
   return (
     <AppLayout>
       <div className="flex justify-between items-center px-2">
@@ -103,12 +138,7 @@ export default function TenantsPage() {
         <div className="flex gap-2">
           <Button 
             className="flex items-center gap-2 bg-destructive text-white"
-            onClick={async () => {
-              if (window.confirm('Sei sicuro di voler eliminare tutti gli inquilini?')) {
-                await deleteAllTenants();
-                await loadTenants();
-              }
-            }}
+            onClick={handleDeleteAll}
           >
             <Trash2 className="h-4 w-4" />
             <span>Elimina tutti gli inquilini</span>
@@ -212,6 +242,31 @@ export default function TenantsPage() {
         open={isAddTenantOpen} 
         onOpenChange={setIsAddTenantOpen}
       />
+
+      <AlertDialog open={deleteAllDialogOpen} onOpenChange={setDeleteAllDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              Sei sicuro di voler eliminare TUTTI gli inquilini?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="mt-4">
+              <p className="font-bold mb-2">ATTENZIONE: Questa è un'azione irreversibile!</p>
+              <p>Stai per eliminare tutti gli inquilini presenti nel sistema.</p>
+              <p>Questa azione non può essere annullata.</p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annulla</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDeleteAll} 
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              Elimina tutti gli inquilini
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }

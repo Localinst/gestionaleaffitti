@@ -75,15 +75,15 @@ const LandingPage = () => {
     switch(currentLang) {
       case 'en-US':
       case 'en-GB':
-        return "Premium Property Management Software for Rentals";
+        return "Simplify your rental management with Tenoris360";
       case 'fr-FR':
-        return "Logiciel de Gestion Premium pour Locations Immobilières";
+        return "Simplifiez votre gestion locative avec Tenoris360";
       case 'de-DE':
-        return "Premium-Verwaltungssoftware für Vermietungen und Immobilien";
+        return "Vereinfachen Sie Ihr Mietmanagement mit Tenoris360";
       case 'es-ES':
-        return "Software Premium de Gestión de Alquileres e Inmuebles";
+        return "Simplifique la gestión de su alquiler con Tenoris360";
       default:
-        return "Software Gestionale Premium per Affitti e Immobili";
+        return "Semplifica la gestione dei tuoi affitti con Tenoris360";
     }
   };
   
@@ -378,7 +378,25 @@ const LandingPage = () => {
             </div>
           </div>
         </section>
-
+        <section className="relative py-24 overflow-hidden bg-gradient-to-b from-primary to-blue-700 text-primary-foreground">
+  <div className="container px-4 md:px-6 text-center">
+    <h2 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl mb-8">
+      Perché scegliere Tenoris360?
+    </h2>
+    <p className="mb-6 text-lg md:text-xl max-w-[800px] mx-auto">
+      Tenoris360 è il gestionale per affitti e immobili pensato per proprietari, agenzie e property manager. 
+      Con la nostra piattaforma puoi gestire facilmente contratti, pagamenti, scadenze, comunicazioni con gli inquilini e molto altro.
+    </p>
+    <p className="mb-6 text-lg md:text-xl max-w-[800px] mx-auto">
+      Automatizza le attività ripetitive, tieni tutto sotto controllo e risparmia tempo prezioso. 
+      La nostra soluzione è adatta sia per affitti brevi che per locazioni tradizionali, con integrazione ai principali portali e strumenti di pagamento.
+    </p>
+    <p className="text-lg md:text-xl max-w-[800px] mx-auto">
+      Il nostro team di esperti è sempre a disposizione per supportarti e aiutarti a ottenere il massimo dal tuo investimento immobiliare. 
+      Prova subito Tenoris360 e scopri come possiamo semplificare la gestione dei tuoi immobili!
+    </p>
+  </div>
+</section>
         {/* Testimonials Section */}
         <section id="testimonials" ref={testimonialsRef} className="py-20 bg-background">
           <div className="container px-4 md:px-6">
