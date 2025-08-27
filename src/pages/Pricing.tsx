@@ -35,6 +35,21 @@ const Pricing: React.FC = () => {
   ];
 
   const planOptions = [
+     {
+      id: "plan-free",
+      name: "Piano Gratuito",
+      description: "Ideale per chi inizia",
+      price: "GRATIS",
+      features: [
+        "Gestione completa delle proprietà",
+        "Gestione inquilini illimitati",
+        "Tracciamento pagamenti automatico",
+        "Dashboard analitica",
+        "Supporto email"
+      ],
+      // ID prezzo Stripe per il piano mensile
+      priceId: "price_free",
+    },
     {
       id: "plan-monthly",
       name: "Piano Mensile",

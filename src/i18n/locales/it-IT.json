@@ -1473,8 +1473,8 @@
   "landing": {
     "hero": {
       "title": "Semplifica la gestione dei tuoi affitti con ",
-      "highlight": "GRATIS",
-      "description": "La piattaforma completa e GRATUITA per proprietari e gestori di immobili che vogliono gestire in modo efficiente contratti, inquilini e pagamenti.",
+      "highlight": "Piani",
+      "description": "La piattaforma completa per proprietari e gestori di immobili che vogliono gestire in modo efficiente contratti, inquilini e pagamenti.",
       "cta": {
         "register": "Inizia Gratis",
         "learnMore": "Scopri di più"
@@ -1510,7 +1510,7 @@
     },
     "nav": {
       "features": "Funzionalità",
-      "pricing": "Gratuito",
+      "pricing": "PIANI",
       "testimonials": "Testimonianze",
       "login": "Accedi",
       "register": "Registrati",

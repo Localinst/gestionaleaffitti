@@ -41,6 +41,21 @@ export const StripePayment = ({
   const handleCheckout = async (plan: PlanOption) => {
     try {
       setIsLoading(plan.priceId);
+
+      // Se il piano è il piano gratuito, reindirizza direttamente alla registrazione
+      // (comportamento richiesto: cliccando su `plan-free` si va alla pagina di registrazione)
+      if (plan.id === 'plan-free') {
+        // Salva la selezione nel localStorage per ricordare il piano scelto durante la registrazione
+        localStorage.setItem('selectedPlan', JSON.stringify({
+          id: plan.id,
+          priceId: plan.priceId,
+          name: plan.name,
+        }));
+
+        navigate('/register?plan=plan-free');
+        setIsLoading(null);
+        return;
+      }
       
       console.log('Avvio checkout per piano:', {
         id: plan.id,
