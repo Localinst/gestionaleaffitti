@@ -61,6 +61,27 @@ export const register = async (req: Request, res: Response) => {
       defaultRole // Passa il ruolo predefinito
     );
 
+    // Imposta lo stato di sottoscrizione a trialing per i nuovi utenti
+    try {
+      const { error: updateError } = await supabase.auth.admin.updateUserById(
+        data.user.id,
+        {
+          // Marca l'utente come in prova; la logica che calcola i 14 giorni
+          // utilizza la data di creazione e/o questi campi per determinare lo stato
+          user_metadata: {
+            ...data.user.user_metadata,
+            subscription_status: 'trialing'
+          }
+        }
+      );
+
+      if (updateError) {
+        console.warn('Non è stato possibile impostare lo stato trial per il nuovo utente:', updateError);
+      }
+    } catch (err) {
+      console.error('Errore durante l\'impostazione dello stato trial:', err);
+    }
+
     // Invia la risposta con il token e il ruolo predefinito
     res.status(201).json({
       message: 'Registrazione completata con successo',

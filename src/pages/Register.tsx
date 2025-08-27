@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Eye, EyeOff, UserPlus } from "lucide-react";
 
+import { useAuth } from '@/context/AuthContext';
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -48,6 +49,7 @@ export default function Register() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { register: registerUser } = useAuth();
 
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
@@ -70,16 +72,10 @@ export default function Register() {
 
   const onSubmit = async (values: z.infer<typeof registerSchema>) => {
     try {
-      // In a real app, this would connect to your authentication backend
-      console.log("Registration attempt with:", values);
-      
-      // Simulate registration success
-      toast({
-        title: "Registrazione completata",
-        description: "Il tuo account è stato creato con successo",
-      });
-      
-      onRegisterSuccess();
+      console.log('Registration attempt with:', values);
+      // Usa la funzione di registrazione del contesto AuthContext
+      await registerUser(values.fullName, values.email, values.password);
+      // AuthContext.register gestisce toast e redirect
     } catch (error) {
       console.error("Registration error:", error);
       toast({
