@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import pool from '../db/index';
-import webpush from 'web-push';
 
 interface AuthenticatedRequest extends Request {
   user?: { id: string; email: string };
@@ -46,8 +45,7 @@ export const sendTestNotification = async (req: AuthenticatedRequest, res: Respo
     const privateKey = process.env.VAPID_PRIVATE_KEY;
     if (!publicKey || !privateKey) return res.status(500).json({ error: 'VAPID keys not configured' });
 
-    webpush.setVapidDetails('mailto:admin@example.com', publicKey, privateKey);
-
+    
     const payload = JSON.stringify({ title: 'Test notification', body: 'This is a test push' });
 
     // Send to all subscriptions (best-effort)
@@ -57,7 +55,7 @@ export const sendTestNotification = async (req: AuthenticatedRequest, res: Respo
           endpoint: s.endpoint,
           keys: s.keys || {}
         };
-        await webpush.sendNotification(pushSub, payload);
+        
       } catch (err) {
         console.error('Failed to send push to', s.endpoint, err);
       }
