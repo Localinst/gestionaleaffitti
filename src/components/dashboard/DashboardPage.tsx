@@ -508,10 +508,13 @@ function IncomeChart() {
           {showNet ? "Netto" : "Lordo"}
         </Toggle>
       </div>
-      <CardContent>
+      <CardContent className="pt-0 pl-2 sm:pl-6">
         <div className="h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={data}>
+            <ComposedChart
+              data={data}
+              margin={{ top: 0, right: 10, left: isMobile ? 0 : 20, bottom: 0 }}
+            >
               <defs>
                 <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
@@ -534,7 +537,8 @@ function IncomeChart() {
                 height={20}
                 tickFormatter={(value) => isMobile ? '' : value}
               />
-              <YAxis 
+              <YAxis
+                width={isMobile ? 56 : 80}
                 tickFormatter={(value) => `€${value}`}
                 tickLine={false}
                 axisLine={{ stroke: '#e5e7eb' }}
@@ -902,7 +906,7 @@ export default function DashboardPage() {
   // Utilizziamo il nostro hook ottimizzato con una strategia di caching aggressiva
   // per i dati che non cambiano frequentemente
   const { data: properties, isLoading: isLoadingProperties } = useOptimizedQuery(
-    queryKeys.properties.list, 
+  Array.from(queryKeys.properties.list), 
     () => api.properties.getAll(),
     { cachingStrategy: 'aggressive' }
   );
@@ -910,7 +914,7 @@ export default function DashboardPage() {
   // Per i dati di riepilogo che possono cambiare più spesso
   // usiamo una strategia normale
   const { data: dashboardSummary, isLoading: isLoadingSummary } = useOptimizedQuery(
-    queryKeys.dashboard.summary, 
+  Array.from(queryKeys.dashboard.summary), 
     () => api.dashboard.getSummary(),
     { cachingStrategy: 'normal' }
   );
@@ -918,7 +922,7 @@ export default function DashboardPage() {
   // Per le transazioni, che possono cambiare più frequentemente
   // usiamo una strategia di caching minima
   const { data: transactions, isLoading: isLoadingTransactions } = useOptimizedQuery(
-    queryKeys.transactions.list, 
+  Array.from(queryKeys.transactions.list), 
     () => api.transactions.getAll(),
     { cachingStrategy: 'minimal' }
   );

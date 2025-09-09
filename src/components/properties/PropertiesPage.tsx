@@ -152,7 +152,7 @@ export default function PropertiesPage() {
          title={t("properties.title")}
          description={t("properties.description")}
         />
-          <div className="flex justify-between mb-6">
+          <div className="flex justify-around gap-2 mb-6">
             <Button 
               onClick={() => {
                 setSelectedProperty(null);
@@ -162,7 +162,7 @@ export default function PropertiesPage() {
               className="h-9"
               data-tutorial="properties-add"
             >
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="mr-1 h-4 w-4" />
               {t("properties.addProperty")}
             </Button>
             
@@ -173,7 +173,7 @@ export default function PropertiesPage() {
                 size="sm" 
                 className="h-9"
               >
-                <Trash2 className="mr-2 h-4 w-4" />
+                <Trash2 className="mr-1 h-4 w-4" />
                 Elimina tutte le proprietà
               </Button>
             )}

@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Activity, api } from '@/services/api';
+import { generateActivitiesFromContracts } from '@/lib/activities';
 import { PageHeader, SectionHeader } from '@/components/layout/AppLayout';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
@@ -48,6 +49,25 @@ const ActivitiesPage = () => {
       setLoading(true);
       const data = await api.activities.getAll();
       setActivities(data);
+      // client-side: mostra toast per attività in scadenza entro 7 giorni
+      try {
+        const now = new Date();
+        const soon = new Date();
+        soon.setDate(now.getDate() + 7);
+        const upcoming = data.filter((a: Activity) => {
+          const d = new Date(a.date);
+          return d >= now && d <= soon && a.status === 'pending';
+        });
+        if (upcoming.length > 0) {
+          toast({
+            title: t('activities.notifications.upcomingTitle', { count: upcoming.length }),
+            description: t('activities.notifications.upcomingDesc'),
+          });
+        }
+      } catch (e) {
+        // non-blocking
+        console.error('Error checking upcoming activities for notifications', e);
+      }
     } catch (error) {
       console.error('Errore nel caricamento delle attività:', error);
       toast({
@@ -76,8 +96,8 @@ const ActivitiesPage = () => {
           tenantsData.map(t => ({ id: t.id, name: t.name }))
         );
         
-        // Carica attività
-        await loadActivities();
+  // Carica attività
+  await loadActivities();
       } catch (error) {
         console.error('Errore nel caricamento dei dati:', error);
         toast({
@@ -90,6 +110,25 @@ const ActivitiesPage = () => {
     
     loadData();
   }, [toast, t]);
+
+  // Rigenera attività da contratti (stesso comportamento del dashboard)
+  const handleRegenerate = async () => {
+    try {
+      const created = await generateActivitiesFromContracts();
+      await loadActivities();
+      toast({
+        title: t('activities.success.regenerated'),
+        description: t('activities.success.regeneratedDesc', { count: created.length }),
+      });
+    } catch (error) {
+      console.error('Errore nella rigenerazione delle attività:', error);
+      toast({
+        variant: 'destructive',
+        title: t('errors.general'),
+        description: t('activities.errors.regenerate'),
+      });
+    }
+  };
 
   // Gestione form
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -238,10 +277,17 @@ const ActivitiesPage = () => {
   return (
     <AppLayout>
       <div className="container mx-auto p-2 py-6 space-y-6">
-        <PageHeader 
-          title="Attività" 
-          description="Gestisci e inserisci manualmente le attività del tuo immobile" 
-        />
+        <div className="flex items-center justify-between">
+          <PageHeader 
+            title="Attività" 
+            description="Gestisci e inserisci manualmente le attività del tuo immobile" 
+          />
+          <div className="ml-4">
+            <Button onClick={handleRegenerate} variant="outline">
+              Rigenera attività
+            </Button>
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Form inserimento attività */}

@@ -1046,6 +1046,41 @@ export async function updateTransaction(id: number, transaction: Partial<Transac
   }
 }
 
+// Notifications API
+export async function subscribePushNotification(subscription: any): Promise<{ ok: boolean }> {
+  try {
+    const response = await fetch(`${API_URL}/notifications/subscribe`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(subscription)
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      throw new Error(err?.error || `Errore nella sottoscrizione push: ${response.status}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('Exception in subscribePushNotification:', error);
+    throw error;
+  }
+}
+
+export async function sendTestPush(): Promise<any> {
+  const response = await fetch(`${API_URL}/notifications/send-test`, {
+    method: 'POST',
+    headers: getAuthHeaders()
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => null);
+    throw new Error(error?.error || 'Errore nell\'invio del test');
+  }
+
+  return response.json();
+}
+
 // Funzione alternativa per l'importazione di inquilini che bypassa il problema di autorizzazione
 export async function importTenantsDirectly(tenants: Omit<Tenant, 'id'>[]): Promise<any> {
   try {
@@ -1603,6 +1638,10 @@ export const api = {
     getAll: getActivities,
     create: createActivity,
     updateStatus: updateActivityStatus
+  },
+  notifications: {
+    subscribe: subscribePushNotification,
+    sendTest: sendTestPush
   },
   dashboard: {
     getSummary: getDashboardSummary

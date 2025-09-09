@@ -19,6 +19,7 @@ import { startSyncService } from './services/sync-service';
 import paymentsRouter from './routes/payments';
 import adminRouter from './routes/admin';
 import analyticsRoutes from './routes/analytics';
+import notificationsRouter from './routes/notifications';
 
 // Definisci solo requestId, timedout è già definito da connect-timeout
 declare global {
@@ -187,6 +188,7 @@ app.use('/api/dashboard', authenticate, isSubscribed, dashboardRouter);
 app.use('/api/reports', authenticate, isSubscribed, reportsRouter);
 app.use('/api/contracts', authenticate, isSubscribed, contractsRouter);
 app.use('/api/activities', authenticate, isSubscribed, activitiesRouter);
+app.use('/api/notifications', authenticate, notificationsRouter);
 app.use('/api/tourism', authenticate, isSubscribed, tourismRouter);
 app.use('/api/integrations', authenticate, isSubscribed, integrationsRouter);
 app.use('/api/import', authenticate, isSubscribed, importRouter);

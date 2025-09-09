@@ -10,6 +10,8 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
+import { registerServiceWorkerAndSubscribe } from '@/lib/push';
+import { api } from '@/services/api';
 import { useSettings, FontSize } from "@/context/SettingsContext";
 import { useTranslation } from "react-i18next";
 
@@ -24,6 +26,28 @@ export default function SettingsPage() {
   
   const handleSaveNotifications = () => {
     toast.success(t("settings.toasts.notificationsSaved"));
+  };
+
+  // When user enables push notifications, request permission and subscribe
+  const handleTogglePush = async (checked: boolean) => {
+    updateSettings({ pushNotifications: checked });
+    if (checked) {
+      try {
+        const vapid = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || (window as any).__VAPID_PUBLIC__;
+        if (!vapid) {
+          toast.error(t('settings.notifications.vapidMissing'));
+          return;
+        }
+        const sub = await registerServiceWorkerAndSubscribe(vapid as string);
+        // Send subscription to backend
+        await api.notifications.subscribe(sub);
+        toast.success(t('settings.notifications.pushEnabled'));
+      } catch (err: any) {
+        console.error('Push subscribe error', err);
+        toast.error(t('settings.notifications.pushFailed'));
+        updateSettings({ pushNotifications: false });
+      }
+    }
   };
   
   const handleSaveAppearance = () => {
@@ -180,7 +204,7 @@ export default function SettingsPage() {
                       <Switch 
                         id="pushNotifications" 
                         checked={settings.pushNotifications}
-                        onCheckedChange={(checked) => updateSettings({ pushNotifications: checked })}
+                        onCheckedChange={(checked) => handleTogglePush(Boolean(checked))}
                         disabled={!settings.notificationsEnabled}
                       />
                     </div>

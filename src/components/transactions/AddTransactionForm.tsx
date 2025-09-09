@@ -360,7 +360,7 @@ export function AddTransactionForm({
               name="unit_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("contracts.form.unit")}</FormLabel>
+                  <FormLabel>{t("transactions.form.unit")}</FormLabel>
                   <Select 
                     value={field.value} 
                     onValueChange={(value) => {

@@ -218,7 +218,7 @@ export function Sidebar({ forceOpen, onClose }: SidebarProps = {}) {
                 alt="tenoris360 Logo" 
                 className="h-8 mr-2" 
               />
-              <h2 className="text-xl font-semibold">tenoris360</h2>
+              <h2 className="text-xl font-semibold">Tenoris360</h2>
             </div>
             {onClose && (
               <Button

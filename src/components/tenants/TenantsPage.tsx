@@ -135,7 +135,11 @@ export default function TenantsPage() {
           title={t("tenants.title")}
           description={t("tenants.description")}
         />
-        <div className="flex gap-2">
+        
+      </div>
+
+      
+    <div className="flex ml-2 gap-2">
           <Button 
             className="flex items-center gap-2 bg-destructive text-white"
             onClick={handleDeleteAll}
@@ -151,9 +155,7 @@ export default function TenantsPage() {
             <span>{t("tenants.addTenant")}</span>
           </Button>
         </div>
-      </div>
-
-      <div className="mb-8 flex gap-4 w-full max-w-sm">
+        <div className="mb-8 mt-4 flex gap-4 w-full max-w-sm">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -164,7 +166,6 @@ export default function TenantsPage() {
           />
         </div>
       </div>
-
       {loading ? (
         <div>{t("common.status.loading")}</div>
       ) : error ? (
