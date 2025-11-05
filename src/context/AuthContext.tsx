@@ -401,8 +401,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
           } else {
             // Se l'utente non stava cercando di abbonarsi, reindirizza
-            // alla pagina di pricing protetta invece che alla dashboard
-            navigate('/subscribe');
+            // alla dashboard (l'utente avrà il periodo di prova di 30 giorni)
+            navigate('/dashboard');
           }
         } else {
           throw new Error('Dati utente mancanti nella risposta');

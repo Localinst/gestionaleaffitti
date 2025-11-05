@@ -156,9 +156,9 @@ const ProtectedPricing: React.FC = () => {
 
       <main className="container max-w-6xl mx-auto py-16 px-4">
         <div className="flex flex-col items-center text-center mb-12">
-          <h1 className="text-4xl font-bold tracking-tighter mb-4">{t('pricing.title')}</h1>
+          <h1 className="text-4xl font-bold tracking-tighter mb-4">Piani e Prezzi</h1>
           <p className="text-xl text-muted-foreground max-w-3xl">
-            {t('pricing.description')}
+            Scegli il piano che meglio si adatta alle tue esigenze e inizia a gestire le tue proprietà in modo efficiente con Tenoris360.
           </p>
         </div>
         

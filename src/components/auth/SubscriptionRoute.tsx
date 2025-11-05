@@ -95,5 +95,5 @@ export const SubscriptionRoute: React.FC<SubscriptionRouteProps> = ({ children }
   });
   
   // Reindirizza alla pagina di subscribe mantenendo i parametri di query
-  return <NavigateWithQuery to="/subscribe" state={{ from: location }} replace />;
+  return <NavigateWithQuery to="/dashboard" state={{ from: location }} replace />;
 }; 
