@@ -189,9 +189,9 @@ export const isSubscribed = async (req: Request, res: Response, next: NextFuncti
         throw new Error('Impossibile determinare una data di creazione valida');
       }
       
-      // Calcola la fine del periodo di prova (14 giorni dalla creazione)
+      // Calcola la fine del periodo di prova (30 giorni dalla creazione)
       const trialEndDate = new Date(createdAt);
-      trialEndDate.setDate(trialEndDate.getDate() + 14);
+      trialEndDate.setDate(trialEndDate.getDate() + 30);
       
       // Se l'utente è nel periodo di prova (creato meno di 14 giorni fa)
       if (now <= trialEndDate) {

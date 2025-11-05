@@ -28,7 +28,7 @@ const NavigateWithQuery = ({ to, ...props }: { to: string, [key: string]: any })
  * Se l'utente è autenticato ma non ha un abbonamento attivo, viene reindirizzato alla pagina per l'acquisto.
  */
 export const SubscriptionRoute: React.FC<SubscriptionRouteProps> = ({ children }) => {
-  const { hasActiveSubscription, isInTrialPeriod, isLoading, checkSubscriptionStatus } = useSubscription();
+  const { hasActiveSubscription, isInTrialPeriod, trialDaysRemaining, isLoading, checkSubscriptionStatus } = useSubscription();
   const { user } = useAuth();
   const location = useLocation();
   const [recentlyConfirmed, setRecentlyConfirmed] = useState<boolean>(false);
@@ -88,10 +88,12 @@ export const SubscriptionRoute: React.FC<SubscriptionRouteProps> = ({ children }
 
   // Se l'utente non ha un abbonamento attivo e non è nel periodo di prova, reindirizza alla pagina dei prezzi
   toast.info("Abbonamento richiesto", {
-    description: "Per accedere a questa funzionalità è necessario un abbonamento attivo",
+    description: isInTrialPeriod ? 
+      `Hai ancora ${trialDaysRemaining} giorni di prova gratuita` : 
+      "Per accedere a questa funzionalità è necessario un abbonamento attivo",
     duration: 5000
   });
   
-  // Reindirizza alla pagina dei prezzi mantenendo i parametri di query
-  return <NavigateWithQuery to="/pricing" state={{ from: location }} replace />;
+  // Reindirizza alla pagina di subscribe mantenendo i parametri di query
+  return <NavigateWithQuery to="/subscribe" state={{ from: location }} replace />;
 }; 

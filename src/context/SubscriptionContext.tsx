@@ -97,20 +97,21 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
         const daysLeft = response.data?.daysLeft || 0;
         const trialEndDate = response.data?.trialEndDate;
         
-        // Se l'utente ha un abbonamento attivo
-        if (isActive && !isTrial) {
-          setHasActiveSubscription(true);
-          setIsInTrialPeriod(false);
-          setTrialDaysRemaining(0);
-        } 
-        // Se l'utente è nel periodo di prova
-        else if (isActive && isTrial) {
-          setHasActiveSubscription(false);
-          setIsInTrialPeriod(true);
-          setTrialDaysRemaining(daysLeft);
-        }
-        // Se il periodo di prova è scaduto e non c'è abbonamento
-        else {
+        // Se l'utente ha un abbonamento attivo o è nel periodo di prova
+        if (isActive) {
+          if (isTrial) {
+            // Nel periodo di prova
+            setHasActiveSubscription(false);
+            setIsInTrialPeriod(true);
+            setTrialDaysRemaining(daysLeft);
+          } else {
+            // Abbonamento pagante attivo
+            setHasActiveSubscription(true);
+            setIsInTrialPeriod(false);
+            setTrialDaysRemaining(0);
+          }
+        } else {
+          // Nessun abbonamento attivo né periodo di prova
           setHasActiveSubscription(false);
           setIsInTrialPeriod(false);
           setTrialDaysRemaining(0);
