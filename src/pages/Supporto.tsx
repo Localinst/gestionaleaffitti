@@ -1,7 +1,6 @@
 import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, CheckCircle, HelpCircle, Mail, MessageSquare, Phone } from "lucide-react";
-import emailjs from '@emailjs/browser';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -69,30 +68,34 @@ const SupportoPage = () => {
     setIsLoading(true);
     
     try {
-      // Nota: Per far funzionare EmailJS, è necessario creare un account su emailjs.com
-      // e sostituire questi valori con quelli del tuo account
-      // In un'applicazione reale, questi valori dovrebbero essere in variabili d'ambiente
-      const serviceId = 'YOUR_SERVICE_ID'; // sostituire con il tuo service ID
-      const templateId = 'YOUR_TEMPLATE_ID'; // sostituire con il tuo template ID
-      const publicKey = 'YOUR_PUBLIC_KEY'; // sostituire con la tua public key
+      const webhookUrl = import.meta.env.VITE_SUPPORT_WEBHOOK_URL;
       
-      const templateParams = {
-        from_name: `${formData.firstname} ${formData.lastname}`,
-        from_email: formData.email,
+      if (!webhookUrl) {
+        throw new Error("Webhook URL non configurato nelle variabili d'ambiente");
+      }
+      
+      const payload = {
+        firstname: formData.firstname,
+        lastname: formData.lastname,
+        email: formData.email,
         subject: formData.subject,
         message: formData.message,
-        to_email: 'tenoris360help@gmail.com'
+        timestamp: new Date().toISOString()
       };
       
-      // Per ora solo simuliamo l'invio
-      // In produzione, decommentare questa riga:
-      // await emailjs.send(serviceId, templateId, templateParams, publicKey);
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
       
-      console.log("Invio email a tenoris360help@gmail.com");
-      console.log("Dati del form:", templateParams);
+      if (!response.ok) {
+        throw new Error(`Webhook error: ${response.statusText}`);
+      }
       
-      // Simuliamo un ritardo di invio
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log("Dati inviati al webhook:", payload);
       
       toast({
         title: "Messaggio inviato con successo",
