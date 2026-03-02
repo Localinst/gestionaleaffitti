@@ -881,17 +881,35 @@ export default function ReportPage() {
     
     // Limita il numero di elementi visualizzati in base al filtro temporale
     // Assicura che il mese corrente sia sempre incluso
-    const limitedData = timeFilter === "3months" ? sortedData.slice(-3) :
-                        timeFilter === "6months" ? sortedData.slice(-6) :
-                        timeFilter === "specific-year" ? sortedData :
-                        sortedData.slice(-12);
+    let limitedData = sortedData;
+    
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    
+    if (timeFilter === "3months") {
+      // Ultimi 3 mesi incluso il mese corrente
+      const startDate = new Date(currentYear, currentMonth - 2, 1); // 3 mesi fa
+      const endDate = new Date(currentYear, currentMonth + 1, 0); // fine mese corrente
+      limitedData = ensureMonthlyData(sortedData, startDate, endDate).slice(-3);
+    } else if (timeFilter === "6months") {
+      // Ultimi 6 mesi incluso il mese corrente
+      const startDate = new Date(currentYear, currentMonth - 5, 1); // 6 mesi fa
+      const endDate = new Date(currentYear, currentMonth + 1, 0); // fine mese corrente
+      limitedData = ensureMonthlyData(sortedData, startDate, endDate).slice(-6);
+    } else if (timeFilter === "year") {
+      // Ultimi 12 mesi incluso il mese corrente
+      const startDate = new Date(currentYear - 1, currentMonth, 1); // 12 mesi fa
+      const endDate = new Date(currentYear, currentMonth + 1, 0); // fine mese corrente
+      limitedData = ensureMonthlyData(sortedData, startDate, endDate).slice(-12);
+    }
+    // Per "specific-year" manteniamo sortedData com'è (già filtrato per quell'anno)
     
     console.log("ReportPage - limitedData da passare al grafico:", limitedData);
     
     // Ottieni gli anni disponibili per il selettore (se necessario)
     // Includi sempre l'anno corrente anche se non ci sono dati
     // Generiamo un range di anni da quando l'app è stata creata fino a oggi
-    const currentYear = new Date().getFullYear();
     const earliestYear = 2020; // Assumiamo che l'app sia stata creata nel 2020
     
     // Estrai gli anni dai dati disponibili

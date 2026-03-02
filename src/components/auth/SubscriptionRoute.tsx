@@ -60,6 +60,20 @@ export const SubscriptionRoute: React.FC<SubscriptionRouteProps> = ({ children }
     }
   }, [user, checkSubscriptionStatus]);
 
+  // Se il token non è più valido (rimosso dal localStorage), torna al login
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (user && !token && checkPerformed.current) {
+      console.log('SubscriptionRoute: Token scaduto, reindirizzamento al login');
+      toast.error("Sessione scaduta", {
+        description: "Il tuo token di accesso è scaduto. Effettua di nuovo il login.",
+        duration: 3000
+      });
+      // Questo farà triggerare il ProtectedRoute che reindirizza al login
+      window.location.href = '/login';
+    }
+  }, [user]);
+
   // Se l'utente non è autenticato, reindirizza al login
   if (!user) {
     toast.error("Accesso negato", {
@@ -87,13 +101,12 @@ export const SubscriptionRoute: React.FC<SubscriptionRouteProps> = ({ children }
   }
 
   // Se l'utente non ha un abbonamento attivo e non è nel periodo di prova, reindirizza alla pagina dei prezzi
+  // NON reindirizzare a /dashboard che causerebbe un loop infinito
   toast.info("Abbonamento richiesto", {
-    description: isInTrialPeriod ? 
-      `Hai ancora ${trialDaysRemaining} giorni di prova gratuita` : 
-      "Per accedere a questa funzionalità è necessario un abbonamento attivo",
-    duration: 5000
+    description: "Per accedere a questa funzionalità è necessario un abbonamento attivo",
+    duration: 3000
   });
   
-  // Reindirizza alla pagina di subscribe mantenendo i parametri di query
-  return <NavigateWithQuery to="/dashboard" state={{ from: location }} replace />;
+  // Reindirizza alla pagina dei prezzi (non al dashboard) mantenendo i parametri di query
+  return <NavigateWithQuery to="/pricing" state={{ from: location }} replace />;
 }; 

@@ -193,10 +193,10 @@ function IncomeChart() {
     if (timeFilter === "specific-year") {
       endDate = new Date(selectedYear, 11, 31, 23, 59, 59);
     } else {
-      endDate = new Date();
+      // Imposta la fine al termine del mese corrente per includere tutto il mese
+      const today = new Date();
+      endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59);
     }
-
-    console.log(`Filtrando transazioni dal ${startDate.toISOString()} al ${endDate.toISOString()}`);
     
     // Filtra le transazioni
     return allTransactions.filter(transaction => {
@@ -219,7 +219,6 @@ function IncomeChart() {
     
     // Filtra le transazioni in base al periodo selezionato
     const filteredTransactions = filterDataByTimeRange(transactions);
-    console.log("Transazioni filtrate:", filteredTransactions.length);
     
     // Oggetto per memorizzare i totali mensili
     const monthlyTotals: { [key: string]: { month: string, income: number, expenses: number, net: number } } = {};
@@ -230,27 +229,33 @@ function IncomeChart() {
     const currentMonth = today.getMonth();
     
     let startMonth: Date;
+    let endMonth: Date;
     let monthsToDisplay: number;
     
     switch(timeFilter) {
       case "3months":
         startMonth = new Date(currentYear, currentMonth - 2, 1);
+        endMonth = new Date(currentYear, currentMonth + 1, 0);
         monthsToDisplay = 3;
         break;
       case "6months":
         startMonth = new Date(currentYear, currentMonth - 5, 1);
+        endMonth = new Date(currentYear, currentMonth + 1, 0);
         monthsToDisplay = 6;
         break;
       case "year":
         startMonth = new Date(currentYear, currentMonth - 11, 1);
+        endMonth = new Date(currentYear, currentMonth + 1, 0);
         monthsToDisplay = 12;
         break;
       case "specific-year":
         startMonth = new Date(selectedYear, 0, 1);
+        endMonth = new Date(selectedYear, 11, 31, 23, 59, 59);
         monthsToDisplay = 12;
         break;
       default:
         startMonth = new Date(currentYear, currentMonth - 11, 1);
+        endMonth = new Date(currentYear, currentMonth + 1, 0);
         monthsToDisplay = 12;
     }
     

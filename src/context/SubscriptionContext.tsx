@@ -80,6 +80,7 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
           setHasActiveSubscription(false);
           setIsInTrialPeriod(false);
           setTrialDaysRemaining(0);
+          checkedInSession.current = true;
           return false;
         }
         
@@ -125,6 +126,19 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
     } catch (error) {
       console.error('Errore durante la verifica dello stato dell\'abbonamento:', error);
       
+      // Gestiamo specificamente gli errori 401 (token scaduto o non valido)
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        console.warn('Token di autenticazione scaduto o non valido');
+        setHasActiveSubscription(false);
+        setIsInTrialPeriod(false);
+        setTrialDaysRemaining(0);
+        checkedInSession.current = true; // Imposta a true per evitare loop
+        // Rimuovi il token scaduto
+        localStorage.removeItem('authToken');
+        // Opzionale: redirecta al login (questo dovrebbe essere gestito dal AuthContext)
+        return false;
+      }
+      
       // Gestiamo specificamente gli errori 403 relativi all'abbonamento
       if (handleSubscriptionError(error)) {
         return false;
@@ -135,17 +149,20 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
       if (serverIsDown) {
         console.warn('Server non raggiungibile, accesso temporaneo consentito');
         setHasActiveSubscription(true);
+        checkedInSession.current = true;
         return true;
       }
       
       if (force) {
         setHasActiveSubscription(true);
+        checkedInSession.current = true;
         return true;
       }
       
       setHasActiveSubscription(false);
       setIsInTrialPeriod(false);
       setTrialDaysRemaining(0);
+      checkedInSession.current = true; // Imposta a true anche in caso di errore per evitare loop
       return false;
     } finally {
       setIsLoading(false);
