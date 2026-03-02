@@ -210,18 +210,18 @@ async function setupTransactionPooler() {
     host_type: 'ip4', // Forza il resolver DNS a usare IPv4
     ssl: { rejectUnauthorized: false },  // Potrebbe essere necessario per alcuni provider
     // Configurazione del pool
-    max: 20, // aumentato il numero massimo di connessioni
-    min: 1,  // aumentato il numero minimo di connessioni
-    idleTimeoutMillis: 5000, // aumentato timeout di inattività a 5 secondi
-    connectionTimeoutMillis: 10000, // aumentato timeout di connessione a 10 secondi
-    maxUses: 500, // drasticamente ridotto il numero massimo di query per connessione
-    statement_timeout: 20000, // aumentato timeout delle query (20 secondi)
-    query_timeout: 20000, // aumentato timeout delle query (20 secondi)
-    allowExitOnIdle: true, // permette al pool di chiudersi quando è inattivo
+    max: 50, // Aumentato a 50 connessioni per gestire più richieste simultanee
+    min: 5,  // Mantieni minimo 5 connessioni pronte
+    idleTimeoutMillis: 30000, // Aumentato a 30 secondi (default pg è 30000)
+    connectionTimeoutMillis: 30000, // Aumentato a 30 secondi per Render
+    maxUses: 1000, // Aumentato numero max di query per connessione
+    statement_timeout: 30000, // Aumentato timeout delle query a 30 secondi
+    query_timeout: 30000, // Aumentato timeout delle query a 30 secondi
+    allowExitOnIdle: false, // Non chiudere il pool quando inattivo
     // Ricicla proattivamente le connessioni per evitare connessioni zombie
-    idlePingInterval: 10000, // Verifica connessioni inattive ogni 10 secondi
-    connectionRetryCount: 5, // Aumentato i tentativi di riconnessione
-    connectionRetryDelay: 2000 // Aumentato attesa tra tentativi in ms
+    idlePingInterval: 30000, // Verifica connessioni inattive ogni 30 secondi
+    connectionRetryCount: 3, // Mantenere i tentativi
+    connectionRetryDelay: 3000 // Aumentato attesa tra tentativi a 3 secondi
   };
   
   console.log('Configurato per utilizzare il Transaction Pooler (compatibile con IPv4)');

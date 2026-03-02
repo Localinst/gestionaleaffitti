@@ -36,8 +36,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:8080';
 
-// Timeout globale per le richieste (20 secondi)
-app.use(timeout('20s'));
+// Timeout globale per le richieste (40 secondi per permettere query lunghe)
+app.use(timeout('40s'));
 app.use(haltOnTimedout);
 
 // Configura il middleware per salvare il rawBody per Stripe
