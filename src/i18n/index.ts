@@ -37,7 +37,6 @@ export const loadLanguageFromSettings = (): string => {
   // Prima controlla se esiste window.initialLanguage (impostato nei file HTML prerendered)
   if (typeof window !== 'undefined' && (window as any).initialLanguage) {
     const initialLang = (window as any).initialLanguage;
-    console.log(`Using initialLanguage from window: ${initialLang}`);
     return initialLang;
   }
   
@@ -101,8 +100,6 @@ i18n
 // Funzione per cambiare lingua dinamicamente
 export const changeLanguage = (language: string) => {
   try {
-    console.log(`Changing language to: ${language}`);
-    
     // Normalizza il codice lingua
     let normalizedLanguage = language;
     
@@ -120,7 +117,6 @@ export const changeLanguage = (language: string) => {
     // Se è un codice alternativo, usare quello normalizzato
     if (languageMap[language.toLowerCase()]) {
       normalizedLanguage = languageMap[language.toLowerCase()];
-      console.log(`Normalized language code from ${language} to ${normalizedLanguage}`);
     }
     
     // Verifica se è una lingua supportata
@@ -131,7 +127,6 @@ export const changeLanguage = (language: string) => {
     
     // Cambia la lingua in i18next
     i18n.changeLanguage(normalizedLanguage);
-    console.log(`i18n language set to: ${normalizedLanguage}`);
     
     // Salva l'impostazione della lingua nelle userSettings di localStorage
     const savedSettings = localStorage.getItem("userSettings");
@@ -139,7 +134,6 @@ export const changeLanguage = (language: string) => {
       const settings = JSON.parse(savedSettings) as UserSettings;
       settings.language = normalizedLanguage;
       localStorage.setItem("userSettings", JSON.stringify(settings));
-      console.log(`Saved language ${normalizedLanguage} to userSettings`);
     } else {
       // Se non esistono impostazioni, crea un nuovo oggetto con solo la lingua
       const newSettings: UserSettings = {
@@ -157,7 +151,6 @@ export const changeLanguage = (language: string) => {
         systemNotifications: true
       };
       localStorage.setItem("userSettings", JSON.stringify(newSettings));
-      console.log(`Created new userSettings with language ${normalizedLanguage}`);
     }
     
     // Optional: aggiorna il parametro di query nell'URL (utile per le pagine pubbliche)
@@ -169,11 +162,6 @@ export const changeLanguage = (language: string) => {
       const hasLanguagePrefix = languagePrefixes.some(prefix => 
         path === prefix || path.startsWith(`${prefix}/`)
       );
-      
-      // Se non siamo in un URL con prefisso, possiamo considerare di aggiungere il parametro
-      if (!hasLanguagePrefix) {
-        console.log(`Path ${path} does not have a language prefix, not modifying URL`);
-      }
     }
   } catch (error) {
     console.error("Errore nel salvataggio della lingua:", error);

@@ -68,13 +68,11 @@ function getInitialLanguage(): string {
   // Prima controlla se esiste window.initialLanguage (impostato nei file HTML prerendered)
   if (typeof window !== 'undefined' && (window as any).initialLanguage) {
     const initialLang = (window as any).initialLanguage;
-    console.log(`Using initialLanguage from window: ${initialLang}`);
     return initialLang;
   }
 
   // Controlla i prefissi di lingua nell'URL
   const path = window.location.pathname;
-  console.log("Getting initial language from path:", path);
   
   const langPrefixes = {
     '/en': 'en-US',
@@ -88,12 +86,9 @@ function getInitialLanguage(): string {
   for (const [prefix, lang] of Object.entries(langPrefixes)) {
     // Controlla se il path è esattamente il prefisso o inizia con il prefisso seguito da /
     if (path === prefix || path.startsWith(`${prefix}/`)) {
-      console.log(`Found language prefix ${prefix} in URL, setting language to ${lang}`);
       return lang;
     }
   }
-  
-  console.log("No language prefix found in URL, trying localStorage");
   
   // Se non c'è un prefisso nell'URL, prova a leggere da localStorage
   try {
@@ -101,7 +96,6 @@ function getInitialLanguage(): string {
     if (savedSettings) {
       const parsedSettings = JSON.parse(savedSettings);
       if (parsedSettings.language) {
-        console.log(`Using language from localStorage: ${parsedSettings.language}`);
         return parsedSettings.language;
       }
     }
@@ -110,7 +104,6 @@ function getInitialLanguage(): string {
   }
   
   // Altrimenti ritorna il valore predefinito
-  console.log(`Using default language: ${defaultSettings.language}`);
   return defaultSettings.language;
 }
 

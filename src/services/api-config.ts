@@ -1,9 +1,6 @@
 // Configurazione dell'URL API di base
 function getAPIBaseUrl() {
-  // Per debugging, mostra sempre quale URL viene usato
-  const result = getActualAPIBaseUrl();
-  console.log('API Base URL configurato:', result);
-  return result;
+  return getActualAPIBaseUrl();
 }
 
 // La funzione interna che determina l'URL effettivo

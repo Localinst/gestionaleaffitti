@@ -146,8 +146,6 @@ export function setupAxiosInterceptors() {
 // URL base dell'API
 const API_URL = getAPIBaseUrl();
 
-console.log('API Base URL:', API_URL);
-
 // Interfacce per l'autenticazione
 export interface AuthUser {
   id: number;
@@ -541,7 +539,6 @@ async function fetchWithTimeout(url: string, options: RequestInit, timeout = 150
 
 // API Dashboard con timeout
 export async function getDashboardSummary(): Promise<DashboardSummaryResponse> {
-  console.log('Iniziando richiesta dashboard summary...');
   const startTime = Date.now();
   
   try {
@@ -551,10 +548,6 @@ export async function getDashboardSummary(): Promise<DashboardSummaryResponse> {
       getRequestOptions(),
       15000 // 15 secondi di timeout
     );
-    
-    // Log del tempo di risposta
-    const responseTime = Date.now() - startTime;
-    console.log(`Risposta ricevuta in ${responseTime}ms`);
     
     if (!response.ok) {
       handleApiError('dashboard/summary', response.status, null);

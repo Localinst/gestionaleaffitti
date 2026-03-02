@@ -68,30 +68,15 @@ const SupportoPage = () => {
     setIsLoading(true);
     
     try {
-      // Leggi la webhook URL dal backend
-      const configResponse = await fetch('/api/config/webhook-url');
-      
-      if (!configResponse.ok) {
-        throw new Error('Impossibile recuperare la configurazione webhook');
-      }
-      
-      const config = await configResponse.json();
-      const webhookUrl = config.webhookUrl;
-      
-      if (!webhookUrl) {
-        throw new Error("Webhook URL non configurato");
-      }
-      
       const payload = {
         firstname: formData.firstname,
         lastname: formData.lastname,
         email: formData.email,
         subject: formData.subject,
-        message: formData.message,
-        timestamp: new Date().toISOString()
+        message: formData.message
       };
       
-      const response = await fetch(webhookUrl, {
+      const response = await fetch('/api/support/send', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -100,10 +85,9 @@ const SupportoPage = () => {
       });
       
       if (!response.ok) {
-        throw new Error(`Webhook error: ${response.statusText}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Errore nell\'invio del messaggio');
       }
-      
-      console.log("Dati inviati al webhook:", payload);
       
       toast({
         title: "Messaggio inviato con successo",

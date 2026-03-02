@@ -118,7 +118,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const userData = decodeJwtToken(token);
         
         if (userData) {
-          console.log('Utente autenticato dal token JWT:', userData);
           setUser(userData);
           setIsAuthenticated(true);
         } else {

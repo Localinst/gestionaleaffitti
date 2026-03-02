@@ -27,8 +27,6 @@ export const useAnalytics = () => {
     // Implementazione semplificata che non usa la definizione locale di gtag
     window.gtag?.('js', new Date());
     window.gtag?.('config', 'G-ZNFK6CQ3LM');
-    
-    console.log("Google Analytics inizializzato");
   };
 
   // Track page views
@@ -36,7 +34,6 @@ export const useAnalytics = () => {
     // Traccia in Google Analytics se c'è il consenso
     if (hasConsent("analytics")) {
       window.gtag?.('config', 'G-ZNFK6CQ3LM', { 'page_path': path });
-      console.log(`Pageview tracciato in GA: ${path}`);
     }
 
     // Traccia per l'analytics locale e server
@@ -50,8 +47,6 @@ export const useAnalytics = () => {
     // Qui verrebbe normalmente il codice per inizializzare Facebook Pixel o altri strumenti di marketing
     // Ad esempio:
     // !function(f,b,e,v,n,t,s) {...} // Facebook Pixel
-    
-    console.log("Strumenti di marketing inizializzati");
   };
 
   /**

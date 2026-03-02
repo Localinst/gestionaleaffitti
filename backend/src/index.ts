@@ -172,15 +172,48 @@ app.get('/api/cors-test', (req, res) => {
 app.use('/api/auth', authRouter);
 app.use('/api/payments', paymentsRouter);
 
-// Endpoint pubblico per la configurazione
-app.get('/api/config/webhook-url', (req, res) => {
-  const webhookUrl = process.env.SUPPORT_WEBHOOK_URL;
-  
-  if (!webhookUrl) {
-    return res.status(400).json({ error: 'Webhook URL non configurato' });
+// Endpoint pubblico per inviare messaggi di supporto
+app.post('/api/support/send', async (req: Request, res: Response) => {
+  try {
+    const { firstname, lastname, email, subject, message } = req.body;
+    
+    if (!firstname || !lastname || !email || !subject || !message) {
+      return res.status(400).json({ error: 'Campi obbligatori mancanti' });
+    }
+    
+    const webhookUrl = process.env.SUPPORT_WEBHOOK_URL;
+    
+    if (!webhookUrl) {
+      console.error('SUPPORT_WEBHOOK_URL non configurato');
+      return res.status(500).json({ error: 'Webhook non configurato' });
+    }
+    
+    // Invia il messaggio al webhook (Discord o altro)
+    const discordPayload = {
+      content: `**Nuovo messaggio di supporto**\n\n**Nome:** ${firstname} ${lastname}\n**Email:** ${email}\n**Oggetto:** ${subject}\n\n**Messaggio:**\n${message}`,
+      username: 'Tenoris360 Support'
+    };
+    
+    const webhookResponse = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(discordPayload)
+    });
+    
+    if (!webhookResponse.ok) {
+      console.error(`Webhook error: ${webhookResponse.statusText}`);
+      return res.status(500).json({ error: 'Errore nell\'invio del messaggio' });
+    }
+    
+    console.log(`Messaggio di supporto inviato da ${email}`);
+    res.json({ success: true, message: 'Messaggio inviato con successo' });
+    
+  } catch (error) {
+    console.error('Errore nell\'invio del messaggio:', error);
+    res.status(500).json({ error: 'Errore nell\'elaborazione della richiesta' });
   }
-  
-  res.json({ webhookUrl });
 });
 
 // Rotte specifiche (mettere prima quelle più specifiche se ci sono overlap)

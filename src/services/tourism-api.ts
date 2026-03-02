@@ -20,8 +20,6 @@ const getApiUrl = () => {
 // URL base dell'API
 const API_URL = getApiUrl();
 
-console.log('Tourism API URL:', API_URL);
-
 export const tourismApi = {
   // API per la gestione delle prenotazioni
   bookings: {
