@@ -68,10 +68,18 @@ const SupportoPage = () => {
     setIsLoading(true);
     
     try {
-      const webhookUrl = import.meta.env.VITE_SUPPORT_WEBHOOK_URL;
+      // Leggi la webhook URL dal backend
+      const configResponse = await fetch('/api/config/webhook-url');
+      
+      if (!configResponse.ok) {
+        throw new Error('Impossibile recuperare la configurazione webhook');
+      }
+      
+      const config = await configResponse.json();
+      const webhookUrl = config.webhookUrl;
       
       if (!webhookUrl) {
-        throw new Error("Webhook URL non configurato nelle variabili d'ambiente");
+        throw new Error("Webhook URL non configurato");
       }
       
       const payload = {

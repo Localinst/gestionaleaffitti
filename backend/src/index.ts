@@ -172,6 +172,17 @@ app.get('/api/cors-test', (req, res) => {
 app.use('/api/auth', authRouter);
 app.use('/api/payments', paymentsRouter);
 
+// Endpoint pubblico per la configurazione
+app.get('/api/config/webhook-url', (req, res) => {
+  const webhookUrl = process.env.SUPPORT_WEBHOOK_URL;
+  
+  if (!webhookUrl) {
+    return res.status(400).json({ error: 'Webhook URL non configurato' });
+  }
+  
+  res.json({ webhookUrl });
+});
+
 // Rotte specifiche (mettere prima quelle più specifiche se ci sono overlap)
 // Esempio: app.use('/api/integrations', integrationsRouter);
 
