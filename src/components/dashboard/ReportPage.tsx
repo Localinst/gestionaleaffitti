@@ -880,6 +880,7 @@ export default function ReportPage() {
     console.log("ReportPage - sortedData dopo l'ordinamento:", sortedData);
     
     // Limita il numero di elementi visualizzati in base al filtro temporale
+    // Assicura che il mese corrente sia sempre incluso
     const limitedData = timeFilter === "3months" ? sortedData.slice(-3) :
                         timeFilter === "6months" ? sortedData.slice(-6) :
                         timeFilter === "specific-year" ? sortedData :
@@ -888,9 +889,15 @@ export default function ReportPage() {
     console.log("ReportPage - limitedData da passare al grafico:", limitedData);
     
     // Ottieni gli anni disponibili per il selettore (se necessario)
-    const availableYears = Array.from(
+    // Includi sempre l'anno corrente anche se non ci sono dati
+    // Generiamo un range di anni da quando l'app è stata creata fino a oggi
+    const currentYear = new Date().getFullYear();
+    const earliestYear = 2020; // Assumiamo che l'app sia stata creata nel 2020
+    
+    // Estrai gli anni dai dati disponibili
+    const dataYears = Array.from(
       new Set(
-        formattedData  // Utilizziamo formattedData invece di financialData
+        limitedData  // Utilizziamo limitedData che include il mese corrente
           .map(item => {
             if (typeof item.date === 'string') {
               // Assumiamo che il formato sia "MMM YYYY"
@@ -899,16 +906,20 @@ export default function ReportPage() {
                 return parseInt(parts[1]);
               }
             }
-            return new Date().getFullYear();
+            return null;
           })
-          .filter(year => !isNaN(year))
+          .filter((year): year is number => year !== null && !isNaN(year))
       )
-    ).sort((a, b) => b - a); // Ordine decrescente
+    );
     
-    if (availableYears.length === 0) {
-      // Se non ci sono anni disponibili, usa l'anno corrente
-      availableYears.push(new Date().getFullYear());
-    }
+    // Combina gli anni dai dati con un range completo da earliestYear a currentYear
+    const availableYears = Array.from(
+      new Set([
+        ...dataYears,
+        // Includi tutti gli anni dal 2020 al corrente
+        ...Array.from({ length: currentYear - earliestYear + 1 }, (_, i) => earliestYear + i)
+      ])
+    ).sort((a, b) => b - a); // Ordine decrescente
     
     // Otteniamo il titolo in base al filtro temporale selezionato
     let timeFilterTitle = "";
