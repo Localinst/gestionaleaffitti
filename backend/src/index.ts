@@ -238,7 +238,7 @@ app.use('/api/integrations', authenticate, isSubscribed, integrationsRouter);
 app.use('/api/import', authenticate, isSubscribed, importRouter);
 app.use('/api/analytics', analyticsRoutes);
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Server configurato per accettare richieste da origini definite nella lista allowedOrigins`);
   

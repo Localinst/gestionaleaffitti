@@ -374,7 +374,8 @@ router.get('/property-detail/:propertyId', async (req: Request, res: Response) =
   const client = await pool.connect();
   try {
     const { propertyId } = req.params;
-    const { startDate, endDate } = req.query;
+    const startDate = typeof req.query.startDate === 'string' ? req.query.startDate : undefined;
+    const endDate = typeof req.query.endDate === 'string' ? req.query.endDate : undefined;
     const userId = req.user?.id;
     
     console.log('Richiesta dettagli proprietà:', { propertyId, startDate, endDate, userId });
