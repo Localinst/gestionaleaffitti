@@ -299,12 +299,12 @@ export const updateSeasonalRate = async (req: AuthenticatedRequest, res: Respons
       return res.json(result.rows[0]);
     }
     
-    // Completa la query di aggiornamento
+
     updateQuery += updateFields.join(', ');
     updateQuery += ` WHERE id = $${paramCount++} AND user_id = $${paramCount++} RETURNING *`;
     updateParams.push(id, userId);
     
-    // Esegui l'aggiornamento
+    
     const result = await executeQuery(async (client) => {
       return client.query(updateQuery, updateParams);
     });
@@ -316,15 +316,13 @@ export const updateSeasonalRate = async (req: AuthenticatedRequest, res: Respons
   }
 };
 
-/**
- * Elimina una tariffa stagionale.
- */
+
 export const deleteSeasonalRate = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
     const userId = req.user?.id;
     
-    // Verifica se l'utente è autenticato
+   
     if (!userId) {
       return res.status(401).json({ error: 'Utente non autenticato' });
     }

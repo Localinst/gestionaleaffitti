@@ -996,24 +996,18 @@ export default function DashboardPage() {
         // Salva nel localStorage per riferimento futuro
         localStorage.setItem(`report_${annoFiscale}`, JSON.stringify(reportCompleto));
         
-        // Genera il file XBRL (eXtensible Business Reporting Language)
-        const xbrlContent = generaXBRL(reportCompleto, annoFiscale);
+        // Genera il file HTML con tabelle leggibili
+        const htmlContent = generaBilancioHTML(reportCompleto, annoFiscale);
         
         // Notifica l'utente che il report è pronto
         toast.success("Report completato", {
-          description: "Il bilancio in formato XBRL è pronto per il download"
+          description: "Il bilancio è pronto per la visualizzazione"
         });
         
-        // Scarica il file XBRL
-        const blob = new Blob([xbrlContent], { type: 'application/xml' });
+        // Apri il report in una nuova finestra
+        const blob = new Blob([htmlContent], { type: 'text/html; charset=utf-8' });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `bilancio_xbrl_${annoFiscale}.xml`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        window.open(url, '_blank');
         
       } catch (error) {
         console.error("Errore nella generazione del report:", error);
@@ -1049,6 +1043,14 @@ export default function DashboardPage() {
           .filter(t => t.type === 'expense' && t.category === 'Rental')
           .reduce((sum, t) => sum + parseFloat(t.amount), 0),
         
+        costiPulizie: transazioni
+          .filter(t => t.type === 'expense' && t.category === 'Pulizie')
+          .reduce((sum, t) => sum + parseFloat(t.amount), 0),
+        
+        costiLavanderia: transazioni
+          .filter(t => t.type === 'expense' && t.category === 'Lavanderia')
+          .reduce((sum, t) => sum + parseFloat(t.amount), 0),
+        
         imposteIndirette: transazioni
           .filter(t => t.type === 'expense' && t.category === 'Taxes')
           .reduce((sum, t) => sum + parseFloat(t.amount), 0),
@@ -1077,6 +1079,8 @@ export default function DashboardPage() {
         contoEconomico.costiMateriePrime + 
         contoEconomico.costiServizi +
         contoEconomico.costiGodimentoBeniTerzi +
+        contoEconomico.costiPulizie +
+        contoEconomico.costiLavanderia +
         contoEconomico.imposteIndirette +
         contoEconomico.oneriDiversiGestione;
       
@@ -1122,7 +1126,7 @@ export default function DashboardPage() {
         .filter(t => t.type === 'income' && t.status === 'pending')
         .reduce((sum, t) => sum + parseFloat(t.amount), 0);
       
-      // Calcola la liquidità (ATTIVO)
+      // Calcola la liquidità (ATTIVO) - saldo di cassa calcolato dalle transazioni
       const liquidita = transazioni
         .filter(t => t.status === 'completed')
         .reduce((sum, t) => {
@@ -1134,6 +1138,11 @@ export default function DashboardPage() {
       const debitiFornitori = transazioni
         .filter(t => t.type === 'expense' && t.status === 'pending')
         .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+      
+      // Calcolo del Patrimonio Netto come differenza tra Attivo e Passivo
+      const totaleAttivo = valoreImmobili + creditiClienti + Math.max(liquidita, 0);
+      const totalePassivoExclPatrimonio = debitiFornitori;
+      const patrimonioNetto = totaleAttivo - totalePassivoExclPatrimonio;
       
       // Struttura dello stato patrimoniale secondo principi contabili italiani
       return {
@@ -1152,22 +1161,22 @@ export default function DashboardPage() {
               totaleCrediti: creditiClienti
             },
             disponibilitaLiquide: {
-              depositiBancari: liquidita > 0 ? liquidita : 0,
-              totaleLiquidita: liquidita > 0 ? liquidita : 0
+              depositiBancari: Math.max(liquidita, 0),
+              totaleLiquidita: Math.max(liquidita, 0)
             },
-            totaleAttivoCircolante: creditiClienti + (liquidita > 0 ? liquidita : 0)
+            totaleAttivoCircolante: creditiClienti + Math.max(liquidita, 0)
           },
           
-          totaleAttivo: valoreImmobili + creditiClienti + (liquidita > 0 ? liquidita : 0)
+          totaleAttivo: totaleAttivo
         },
         
         // PASSIVO
         passivo: {
           // A) PATRIMONIO NETTO
           patrimonioNetto: {
-            capitali: valoreImmobili,
-            utiliPerditaEsercizio: liquidita, // Semplificazione
-            totalePatrimonioNetto: valoreImmobili + liquidita
+            capitali: Math.max(patrimonioNetto, 0),
+            utiliPerditaEsercizio: 0,
+            totalePatrimonioNetto: Math.max(patrimonioNetto, 0)
           },
           
           // D) DEBITI
@@ -1176,12 +1185,381 @@ export default function DashboardPage() {
             totaleDebiti: debitiFornitori
           },
           
-          totalePassivo: (valoreImmobili + liquidita) + debitiFornitori
+          totalePassivo: Math.max(patrimonioNetto, 0) + debitiFornitori
         }
       };
     };
     
-    // Funzione per generare il file XBRL standard italiano
+    // Funzione per generare HTML con tabelle leggibili
+    const generaBilancioHTML = (report, annoFiscale) => {
+      const ce = report.contoEconomico;
+      const sp = report.statoPatrimoniale;
+      
+      const formatMoney = (num) => {
+        return new Intl.NumberFormat('it-IT', {
+          style: 'currency',
+          currency: 'EUR',
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }).format(num || 0);
+      };
+      
+      const dataGenerazione = new Date(report.dataGenerazione).toLocaleDateString('it-IT');
+      
+      return `<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bilancio d'esercizio ${annoFiscale}</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+      color: #333;
+    }
+    
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: white;
+      padding: 40px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      border-bottom: 2px solid #0066cc;
+      padding-bottom: 20px;
+    }
+    
+    .header h1 {
+      font-size: 24px;
+      margin-bottom: 10px;
+      color: #0066cc;
+    }
+    
+    .header p {
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .section {
+      margin-bottom: 40px;
+    }
+    
+    .section h2 {
+      font-size: 18px;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #ddd;
+      color: #0066cc;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    
+    table thead {
+      background: #f9f9f9;
+    }
+    
+    table th {
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 2px solid #ddd;
+      font-size: 13px;
+      color: #333;
+    }
+    
+    table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #eee;
+      font-size: 13px;
+    }
+    
+    table tr:hover {
+      background: #f9f9f9;
+    }
+    
+    .label {
+      font-weight: 500;
+      color: #333;
+    }
+    
+    .amount {
+      text-align: right;
+      font-weight: 500;
+      color: #0066cc;
+      font-size: 14px;
+      font-family: 'Courier New', monospace;
+    }
+    
+    .total-row {
+      background: #f0f0f0;
+      font-weight: bold;
+    }
+    
+    .total-row td {
+      border-top: 2px solid #999;
+      border-bottom: 2px solid #999;
+      padding: 12px;
+    }
+    
+    .subtitle {
+      font-weight: 600;
+      background: #f9f9f9;
+      padding: 8px 12px;
+      border-left: 3px solid #0066cc;
+      margin-top: 15px;
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
+    
+    .positive {
+      color: #28a745;
+    }
+    
+    .negative {
+      color: #dc3545;
+    }
+    
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #ddd;
+      font-size: 12px;
+      color: #999;
+    }
+    
+    @media print {
+      body { background: white; }
+      .container { box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Bilancio d'esercizio ${annoFiscale}</h1>
+      <p>Periodo: ${report.periodoRiferimento.dal} - ${report.periodoRiferimento.al}</p>
+      <p>Generato il ${dataGenerazione}</p>
+    </div>
+    
+    <!-- CONTO ECONOMICO -->
+    <div class="section">
+      <h2>Conto Economico</h2>
+      
+      <div class="subtitle">A) VALORE DELLA PRODUZIONE</div>
+      <table>
+        <tr>
+          <td class="label">Ricavi da vendite e prestazioni</td>
+          <td class="amount">${formatMoney(ce.valoreProduzioneRicavi)}</td>
+        </tr>
+        <tr>
+          <td class="label">Altri ricavi e proventi</td>
+          <td class="amount">${formatMoney(ce.altriRicavi)}</td>
+        </tr>
+        <tr class="total-row">
+          <td class="label">TOTALE VALORE DELLA PRODUZIONE</td>
+          <td class="amount">${formatMoney(ce.totaleValoreProduzione)}</td>
+        </tr>
+      </table>
+      
+      <div class="subtitle">B) COSTI DELLA PRODUZIONE</div>
+      <table>
+        <tr>
+          <td class="label">Costi materie prime</td>
+          <td class="amount">${formatMoney(ce.costiMateriePrime)}</td>
+        </tr>
+        <tr>
+          <td class="label">Costi per servizi</td>
+          <td class="amount">${formatMoney(ce.costiServizi)}</td>
+        </tr>
+        <tr>
+          <td class="label">Costi godimento beni di terzi</td>
+          <td class="amount">${formatMoney(ce.costiGodimentoBeniTerzi)}</td>
+        </tr>
+        <tr>
+          <td class="label">Costi pulizie</td>
+          <td class="amount">${formatMoney(ce.costiPulizie)}</td>
+        </tr>
+        <tr>
+          <td class="label">Costi lavanderia</td>
+          <td class="amount">${formatMoney(ce.costiLavanderia)}</td>
+        </tr>
+        <tr>
+          <td class="label">Imposte indirette</td>
+          <td class="amount">${formatMoney(ce.imposteIndirette)}</td>
+        </tr>
+        <tr>
+          <td class="label">Oneri diversi di gestione</td>
+          <td class="amount">${formatMoney(ce.oneriDiversiGestione)}</td>
+        </tr>
+        <tr class="total-row">
+          <td class="label">TOTALE COSTI DELLA PRODUZIONE</td>
+          <td class="amount">${formatMoney(ce.totaleCostiProduzione)}</td>
+        </tr>
+      </table>
+      
+      <table>
+        <tr class="total-row">
+          <td class="label">DIFFERENZA VALORE E COSTI DELLA PRODUZIONE</td>
+          <td class="amount">${formatMoney(ce.differenzaValoreCosti)}</td>
+        </tr>
+      </table>
+      
+      <div class="subtitle">C) PROVENTI E ONERI FINANZIARI</div>
+      <table>
+        <tr>
+          <td class="label">Proventi finanziari</td>
+          <td class="amount">${formatMoney(ce.proventiFinanziari)}</td>
+        </tr>
+        <tr>
+          <td class="label">Oneri finanziari</td>
+          <td class="amount">${formatMoney(ce.oneriFinanziari)}</td>
+        </tr>
+        <tr class="total-row">
+          <td class="label">TOTALE PROVENTI E ONERI FINANZIARI</td>
+          <td class="amount">${formatMoney(ce.totaleProventioneriFinanziari)}</td>
+        </tr>
+      </table>
+      
+      <table>
+        <tr>
+          <td class="label">Risultato prima delle imposte</td>
+          <td class="amount">${formatMoney(ce.risultatoPrimaImposte)}</td>
+        </tr>
+        <tr>
+          <td class="label">Imposte sul reddito dell'esercizio</td>
+          <td class="amount">${formatMoney(ce.imposteReddito)}</td>
+        </tr>
+        <tr class="total-row">
+          <td class="label">UTILE (PERDITA) DELL'ESERCIZIO</td>
+          <td class="amount ${ce.utileEsercizio >= 0 ? 'positive' : 'negative'}">${formatMoney(ce.utileEsercizio)}</td>
+        </tr>
+      </table>
+    </div>
+    
+    <!-- STATO PATRIMONIALE -->
+    <div class="section">
+      <h2>Stato Patrimoniale</h2>
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+        <!-- ATTIVO -->
+        <div>
+          <h3 style="color: #0066cc; margin-bottom: 15px; font-size: 16px;">ATTIVO</h3>
+          
+          <div class="subtitle">B) IMMOBILIZZAZIONI</div>
+          <table>
+            <tr>
+              <td class="label">Immobili materiali</td>
+              <td class="amount">${formatMoney(sp.attivo.immobilizzazioni.immobiliMateriali)}</td>
+            </tr>
+            <tr class="total-row">
+              <td class="label">TOTALE IMMOBILIZZAZIONI</td>
+              <td class="amount">${formatMoney(sp.attivo.immobilizzazioni.totaleImmobilizzazioni)}</td>
+            </tr>
+          </table>
+          
+          <div class="subtitle">C) ATTIVO CIRCOLANTE</div>
+          <table>
+            <tr>
+              <td class="label">Crediti verso clienti</td>
+              <td class="amount">${formatMoney(sp.attivo.attivoCircolante.crediti.creditiVersoClienti)}</td>
+            </tr>
+            <tr>
+              <td class="label">Disponibilità liquide</td>
+              <td class="amount">${formatMoney(sp.attivo.attivoCircolante.disponibilitaLiquide.depositiBancari)}</td>
+            </tr>
+            <tr class="total-row">
+              <td class="label">TOTALE ATTIVO CIRCOLANTE</td>
+              <td class="amount">${formatMoney(sp.attivo.attivoCircolante.totaleAttivoCircolante)}</td>
+            </tr>
+          </table>
+          
+          <table style="margin-top: 20px;">
+            <tr class="total-row">
+              <td class="label">TOTALE ATTIVO</td>
+              <td class="amount">${formatMoney(sp.attivo.totaleAttivo)}</td>
+            </tr>
+          </table>
+        </div>
+        
+        <!-- PASSIVO -->
+        <div>
+          <h3 style="color: #0066cc; margin-bottom: 15px; font-size: 16px;">PASSIVO</h3>
+          
+          <div class="subtitle">A) PATRIMONIO NETTO</div>
+          <table>
+            <tr>
+              <td class="label">Capitale</td>
+              <td class="amount">${formatMoney(sp.passivo.patrimonioNetto.capitali)}</td>
+            </tr>
+            <tr>
+              <td class="label">Utili/Perdite esercizio</td>
+              <td class="amount">${formatMoney(sp.passivo.patrimonioNetto.utiliPerditaEsercizio)}</td>
+            </tr>
+            <tr class="total-row">
+              <td class="label">TOTALE PATRIMONIO NETTO</td>
+              <td class="amount">${formatMoney(sp.passivo.patrimonioNetto.totalePatrimonioNetto)}</td>
+            </tr>
+          </table>
+          
+          <div class="subtitle">D) DEBITI</div>
+          <table>
+            <tr>
+              <td class="label">Debiti verso fornitori</td>
+              <td class="amount">${formatMoney(sp.passivo.debiti.debitiVersoFornitori)}</td>
+            </tr>
+            <tr class="total-row">
+              <td class="label">TOTALE DEBITI</td>
+              <td class="amount">${formatMoney(sp.passivo.debiti.totaleDebiti)}</td>
+            </tr>
+          </table>
+          
+          <table style="margin-top: 20px;">
+            <tr class="total-row">
+              <td class="label">TOTALE PASSIVO</td>
+              <td class="amount">${formatMoney(sp.passivo.totalePassivo)}</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+      
+      <!-- VERIFICA EQUAZIONE CONTABILE -->
+      <table style="margin-top: 30px;">
+        <tr style="background: ${sp.attivo.totaleAttivo === sp.passivo.totalePassivo ? '#d4edda' : '#f8d7da'};">
+          <td class="label"><strong>VERIFICA: Totale Attivo = Totale Passivo</strong></td>
+          <td class="amount"><strong>${sp.attivo.totaleAttivo === sp.passivo.totalePassivo ? '✓ EQUILIBRIO' : '⚠ SQUILIBRIO'}</strong></td>
+        </tr>
+      </table>
+    </div>
+    
+    <div class="footer">
+      <p>Questo bilancio è stato generato automaticamente dal sistema di gestione affitti.</p>
+      <p>Per questioni legali o normative, consultare un commercialista abilitato.</p>
+    </div>
+  </div>
+</body>
+</html>`;
+    };
+    
+    // Funzione per generare il file XBRL (commentata - non più usata)
+    /*
     const generaXBRL = (report, annoFiscale) => {
       const dataInizio = report.periodoRiferimento.dal;
       const dataFine = report.periodoRiferimento.al;
@@ -1274,6 +1652,7 @@ export default function DashboardPage() {
 
       return xbrlContent;
     };
+    */
     
     // Avvia la generazione del report
     generaReportCompleto();

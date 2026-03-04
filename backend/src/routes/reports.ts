@@ -369,6 +369,182 @@ router.get('/properties', async (req: Request, res: Response) => {
   }
 });
 
+// Endpoint per ottenere i dettagli di una proprietà specifica
+router.get('/property-detail/:propertyId', async (req: Request, res: Response) => {
+  const client = await pool.connect();
+  try {
+    const { propertyId } = req.params;
+    const { startDate, endDate } = req.query;
+    const userId = req.user?.id;
+    
+    console.log('Richiesta dettagli proprietà:', { propertyId, startDate, endDate, userId });
+    
+    // Verifica che la proprietà appartiene all'utente
+    const propertyCheck = await client.query(
+      'SELECT id, name, units, unit_names FROM properties WHERE id = $1 AND user_id = $2',
+      [propertyId, userId]
+    );
+    
+    if (propertyCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Proprietà non trovata' });
+    }
+    
+    const property = propertyCheck.rows[0];
+    
+    // Query per ottenere il dettaglio dei costi per categoria
+    let costQuery = `
+      SELECT 
+        t.category,
+        COUNT(*) as count,
+        COALESCE(SUM(t.amount), 0) as total,
+        COALESCE(AVG(t.amount), 0) as avg
+      FROM transactions t
+      WHERE t.property_id = $1 AND t.type = 'expense'
+    `;
+    
+    const costParams = [propertyId];
+    let paramIndex = 2;
+    
+    if (startDate) {
+      costQuery += ` AND t.date >= $${paramIndex}`;
+      costParams.push(startDate);
+      paramIndex++;
+    }
+    
+    if (endDate) {
+      costQuery += ` AND t.date <= $${paramIndex}`;
+      costParams.push(endDate);
+    }
+    
+    costQuery += ` GROUP BY t.category ORDER BY total DESC`;
+    
+    const costResult = await client.query(costQuery, costParams);
+    
+    // Query per ottenere i totali di entrate e uscite
+    let summaryQuery = `
+      SELECT 
+        COALESCE(SUM(CASE WHEN t.type = 'income' THEN t.amount ELSE 0 END), 0) AS income,
+        COALESCE(SUM(CASE WHEN t.type = 'expense' THEN t.amount ELSE 0 END), 0) AS expenses
+      FROM transactions t
+      WHERE t.property_id = $1
+    `;
+    
+    const summaryParams = [propertyId];
+    paramIndex = 2;
+    
+    if (startDate) {
+      summaryQuery += ` AND t.date >= $${paramIndex}`;
+      summaryParams.push(startDate);
+      paramIndex++;
+    }
+    
+    if (endDate) {
+      summaryQuery += ` AND t.date <= $${paramIndex}`;
+      summaryParams.push(endDate);
+    }
+    
+    const summaryResult = await client.query(summaryQuery, summaryParams);
+    const income = parseFloat(summaryResult.rows[0].income) || 0;
+    const expenses = parseFloat(summaryResult.rows[0].expenses) || 0;
+    const net = income - expenses;
+    
+    // Query per ottenere gli inquilini attuali
+    const tenantQuery = `
+      SELECT 
+        t.id,
+        t.name,
+        t.email,
+        t.phone,
+        t.unit,
+        t.status,
+        c.start_date,
+        c.end_date,
+        c.rent_amount
+      FROM tenants t
+      LEFT JOIN contracts c ON t.id = c.tenant_id
+      WHERE t.property_id = $1 AND t.status = 'active'
+      ORDER BY t.name ASC
+    `;
+    
+    const tenantResult = await client.query(tenantQuery, [propertyId]);
+    
+    // Query per ottenere la manutenzione (ultimi 12 mesi)
+    const maintenanceQuery = `
+      SELECT 
+        date,
+        amount,
+        description,
+        category
+      FROM transactions
+      WHERE property_id = $1 AND type = 'expense' AND (category = 'Manutenzione' OR category = 'Maintenance')
+      ORDER BY date DESC
+      LIMIT 20
+    `;
+    
+    const maintenanceResult = await client.query(maintenanceQuery, [propertyId]);
+    
+    // Calcola l'occupancy rate
+    const occupancyRate = Math.min(100, Math.round((tenantResult.rows.length / (property.units || 1)) * 100));
+    
+    // Compila la risposta
+    res.json({
+      property: {
+        id: property.id,
+        name: property.name,
+        units: property.units,
+        unitNames: property.unit_names
+      },
+      summary: {
+        income,
+        expenses,
+        net,
+        occupancyRate,
+        netMarginPercent: income > 0 ? ((net / income) * 100).toFixed(2) : 0,
+        tenantCount: tenantResult.rows.length
+      },
+      costsByCategory: costResult.rows.map(row => ({
+        category: row.category,
+        count: row.count,
+        total: parseFloat(row.total),
+        average: parseFloat(row.avg)
+      })),
+      currentTenants: tenantResult.rows.map(row => ({
+        id: row.id,
+        name: row.name,
+        email: row.email,
+        phone: row.phone,
+        unit: row.unit,
+        status: row.status,
+        startDate: row.start_date,
+        endDate: row.end_date,
+        rentAmount: parseFloat(row.rent_amount) || 0
+      })),
+      recentMaintenance: maintenanceResult.rows.map(row => ({
+        date: row.date,
+        amount: parseFloat(row.amount),
+        description: row.description,
+        category: row.category
+      }))
+    });
+    
+  } catch (error) {
+    console.error('Errore nel recupero dei dettagli della proprietà:', error);
+    res.status(500).json({ 
+      error: 'Errore durante il recupero dei dettagli della proprietà',
+      details: process.env.NODE_ENV === 'development' ? (error as any).message : undefined
+    });
+  } finally {
+    try {
+      if (client) {
+        client.release();
+        console.log('Client rilasciato al pool in /property-detail');
+      }
+    } catch (releaseError) {
+      console.error('Errore nel rilascio del client:', releaseError);
+    }
+  }
+});
+
 // Endpoint per esportare i report
 router.get('/export/:format', async (req: Request, res: Response) => {
   const client = await pool.connect();

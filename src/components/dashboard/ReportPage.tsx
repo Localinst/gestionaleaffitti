@@ -22,6 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { toast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,6 +30,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import IncomeChart from "./IncomeChart";
+import { PropertyDetailSelector } from "./PropertyDetailSelector";
 
 // Interfaccia per i dati finanziari
 interface FinancialData {
@@ -269,6 +271,47 @@ interface PropertyPerformanceData {
   occupancyRate: number;
 }
 
+// Interfaccia per i dati dettagliati di una proprietà
+interface PropertyDetailData {
+  property: {
+    id: number;
+    name: string;
+    units: number;
+    unitNames?: string[];
+  };
+  summary: {
+    income: number;
+    expenses: number;
+    net: number;
+    occupancyRate: number;
+    netMarginPercent: string | number;
+    tenantCount: number;
+  };
+  costsByCategory: Array<{
+    category: string;
+    count: number;
+    total: number;
+    average: number;
+  }>;
+  currentTenants: Array<{
+    id: number;
+    name: string;
+    email: string;
+    phone: string;
+    unit: string;
+    status: string;
+    startDate: string;
+    endDate: string;
+    rentAmount: number;
+  }>;
+  recentMaintenance: Array<{
+    date: string;
+    amount: number;
+    description: string;
+    category: string;
+  }>;
+}
+
 // Funzione per ottenere il nome del mese in italiano
 function getItalianMonthName(monthIndex: number): string {
   const italianMonths = [
@@ -357,11 +400,14 @@ export default function ReportPage() {
   const [financialData, setFinancialData] = useState<FinancialData[]>([]);
   const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
   const [propertyData, setPropertyData] = useState<PropertyPerformanceData[]>([]);
+  const [selectedPropertyForDetail, setSelectedPropertyForDetail] = useState<string | null>(null);
+  const [propertyDetail, setPropertyDetail] = useState<PropertyDetailData | null>(null);
   
   // Stati per gestire il caricamento
   const [loadingFinancial, setLoadingFinancial] = useState(false);
   const [loadingSummary, setLoadingSummary] = useState(false);
   const [loadingProperty, setLoadingProperty] = useState(false);
+  const [loadingPropertyDetail, setLoadingPropertyDetail] = useState(false);
   
   // Stato per verificare se il componente è montato
   const [componentMounted, setComponentMounted] = useState(true);
@@ -770,6 +816,47 @@ export default function ReportPage() {
 
     loadPropertyData();
   }, [filters.periodType, filters.propertyId, filters.startDate?.getTime(), filters.endDate?.getTime()]);
+  
+  // Carica i dettagli di una proprietà specifica
+  useEffect(() => {
+    if (!selectedPropertyForDetail) {
+      setPropertyDetail(null);
+      return;
+    }
+    
+    async function loadPropertyDetail() {
+      try {
+        setLoadingPropertyDetail(true);
+        
+        const params: any = {};
+        if (filters.startDate) {
+          params.startDate = filters.startDate.toISOString().split('T')[0];
+        }
+        if (filters.endDate) {
+          params.endDate = filters.endDate.toISOString().split('T')[0];
+        }
+        
+        const data = await api.reports.getPropertyDetail(selectedPropertyForDetail, params);
+        
+        if (componentMounted) {
+          setPropertyDetail(data);
+        }
+      } catch (error) {
+        console.error('Errore nel caricamento dei dettagli della proprietà:', error);
+        toast({
+          title: "Errore di connessione",
+          description: "Impossibile caricare i dettagli della proprietà.",
+          variant: "destructive"
+        });
+      } finally {
+        if (componentMounted) {
+          setLoadingPropertyDetail(false);
+        }
+      }
+    }
+    
+    loadPropertyDetail();
+  }, [selectedPropertyForDetail, filters.startDate?.getTime(), filters.endDate?.getTime()]);
   
   // Funzione per esportare il report
   const handleExport = async (fileFormat: string) => {
@@ -1234,6 +1321,187 @@ export default function ReportPage() {
     );
   };
 
+  // Renderizza il dettaglio di una proprietà specifica
+  const renderPropertyDetail = () => {
+    if (loadingPropertyDetail) {
+      return (
+        <div className="h-[400px] w-full flex items-center justify-center">
+          <div className="h-10 w-10 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+        </div>
+      );
+    }
+
+    if (!propertyDetail) {
+      return (
+        <div className="text-center py-12">
+          <Building2 className="h-12 w-12 mx-auto mb-4 opacity-20" />
+          <p className="text-muted-foreground">Seleziona una proprietà per visualizzare i dettagli</p>
+        </div>
+      );
+    }
+
+    const { property, summary, costsByCategory, currentTenants, recentMaintenance } = propertyDetail;
+
+    return (
+      <div className="space-y-6">
+        {/* Intestazione proprietà e riepilogo */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl">{property.name}</CardTitle>
+            <CardDescription>
+              {property.units} unità {property.unitNames && property.unitNames.length > 0 ? `(${property.unitNames.join(', ')})` : ''}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Entrate</p>
+              <p className="text-2xl font-bold text-green-600">€{summary.income.toLocaleString()}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Uscite</p>
+              <p className="text-2xl font-bold text-red-500">€{summary.expenses.toLocaleString()}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Margine Netto</p>
+              <p className={`text-2xl font-bold ${summary.net >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                €{summary.net.toLocaleString()}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Margine %</p>
+              <p className={`text-2xl font-bold ${parseFloat(summary.netMarginPercent as string) >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                {summary.netMarginPercent}%
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Occupancy</p>
+              <p className="text-2xl font-bold">{summary.occupancyRate}%</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Inquilini Attuali</p>
+              <p className="text-2xl font-bold">{summary.tenantCount}/{property.units}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Breakdown Costi per Categoria */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <PieChart className="h-5 w-5 text-primary" />
+              Breakdown Costi per Categoria
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="border-b">
+                  <tr className="text-left">
+                    <th className="pb-2 font-semibold">Categoria</th>
+                    <th className="pb-2 font-semibold text-right">Numero</th>
+                    <th className="pb-2 font-semibold text-right">Totale</th>
+                    <th className="pb-2 font-semibold text-right">Media</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {costsByCategory.length > 0 ? (
+                    costsByCategory.map((cost) => (
+                      <tr key={cost.category} className="border-b last:border-0">
+                        <td className="py-3">{cost.category}</td>
+                        <td className="py-3 text-right">{cost.count}</td>
+                        <td className="py-3 text-right font-medium">€{cost.total.toLocaleString()}</td>
+                        <td className="py-3 text-right">€{cost.average.toLocaleString()}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={4} className="py-4 text-center text-muted-foreground">
+                        Nessun costo registrato
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Inquilini Attuali */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              Inquilini Attuali
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {currentTenants.length > 0 ? (
+              <div className="space-y-4">
+                {currentTenants.map((tenant) => (
+                  <div key={tenant.id} className="border rounded-lg p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <p className="font-semibold">{tenant.name}</p>
+                        <p className="text-sm text-muted-foreground">Unità: {tenant.unit}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold">€{tenant.rentAmount.toLocaleString()}/mese</p>
+                        <p className={`text-sm font-medium ${tenant.status === 'active' ? 'text-green-600' : 'text-orange-600'}`}>
+                          {tenant.status === 'active' ? 'Attivo' : tenant.status === 'late' ? 'In Ritardo' : 'Sospeso'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-sm text-muted-foreground space-y-1">
+                      <p>📧 {tenant.email}</p>
+                      <p>📱 {tenant.phone}</p>
+                      {tenant.startDate && tenant.endDate && (
+                        <p>📅 {new Date(tenant.startDate).toLocaleDateString('it-IT')} - {new Date(tenant.endDate).toLocaleDateString('it-IT')}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground">Nessun inquilino attivo</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Manutenzione Recente */}
+        {recentMaintenance.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-primary" />
+                Manutenzione Recente
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <table className="w-full text-sm">
+                <thead className="border-b">
+                  <tr className="text-left">
+                    <th className="pb-2 font-semibold">Data</th>
+                    <th className="pb-2 font-semibold">Descrizione</th>
+                    <th className="pb-2 font-semibold text-right">Importo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentMaintenance.map((maintenance, idx) => (
+                    <tr key={idx} className="border-b last:border-0">
+                      <td className="py-3">{new Date(maintenance.date).toLocaleDateString('it-IT')}</td>
+                      <td className="py-3">{maintenance.description}</td>
+                      <td className="py-3 text-right font-medium">€{maintenance.amount.toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    );
+  };
+
   return (
     <AppLayout>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
@@ -1271,6 +1539,7 @@ export default function ReportPage() {
             <TabsTrigger value="summary">Riepilogo</TabsTrigger>
             <TabsTrigger value="financial">Finanziario</TabsTrigger>
             <TabsTrigger value="properties">Proprietà</TabsTrigger>
+            <TabsTrigger value="detail">Per Immobile</TabsTrigger>
           </TabsList>
           
           <TabsContent value="summary" className="space-y-6">
@@ -1287,6 +1556,24 @@ export default function ReportPage() {
           
           <TabsContent value="properties" className="space-y-6">
             {renderPropertyPerformance()}
+          </TabsContent>
+          
+          <TabsContent value="detail" className="space-y-6">
+            {propertyData && propertyData.length > 0 ? (
+              <PropertyDetailSelector 
+                propertyData={propertyData}
+                startDate={filters.startDate}
+                endDate={filters.endDate}
+              />
+            ) : (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="h-32 flex items-center justify-center">
+                    <p className="text-muted-foreground">Nessuna proprietà disponibile</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>

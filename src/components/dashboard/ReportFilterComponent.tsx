@@ -12,7 +12,7 @@ import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 // Tipi di periodo predefiniti
-type PeriodType = "week" | "month" | "year" | "all" | "custom";
+type PeriodType = "week" | "month" | "year" | "year12" | "all" | "custom";
 
 // Interfaccia per la proprietà
 interface Property {
@@ -94,6 +94,13 @@ export function ReportFilterComponent({ onFiltersChange }: ReportFilterComponent
         startDate = startOfYear(now);
         endDate = endOfYear(now);
         break;
+      case "year12":
+        // Ultimi 12 mesi
+        startDate = new Date();
+        startDate.setMonth(startDate.getMonth() - 12);
+        startDate.setDate(1);
+        endDate = now;
+        break;
       case "all":
         // Imposta la data di inizio a 24 mesi fa e la data di fine a oggi
         startDate = new Date();
@@ -139,6 +146,7 @@ export function ReportFilterComponent({ onFiltersChange }: ReportFilterComponent
       week: "Questa settimana",
       month: "Ultimi 30 giorni",
       year: "Quest'anno",
+      year12: "Ultimi 12 mesi",
     };
     
     return labels[filters.periodType] || "Periodo personalizzato";
@@ -187,6 +195,7 @@ export function ReportFilterComponent({ onFiltersChange }: ReportFilterComponent
                   <SelectItem value="week">Questa settimana</SelectItem>
                   <SelectItem value="month">Questo mese</SelectItem>
                   <SelectItem value="year">Quest'anno</SelectItem>
+                  <SelectItem value="year12">Ultimi 12 mesi</SelectItem>
                   <SelectItem value="all">Ultimi 24 mesi</SelectItem>
                   <SelectItem value="custom">Personalizzato</SelectItem>
                 </SelectContent>

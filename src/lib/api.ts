@@ -335,6 +335,16 @@ export const api = {
         return handleRequestError('reports/getFinancialData', error);
       }
     },
+    getPropertyDetail: async (propertyId: string | number, params: any) => {
+      try {
+        const res = await fetchWithTimeout(`${API_URL}/reports/property-detail/${propertyId}${formatQueryParams(params)}`, {
+          headers: getAuthHeaders()
+        });
+        return res.json();
+      } catch (error) {
+        return handleRequestError('reports/getPropertyDetail', error);
+      }
+    },
     exportReport: async (format: string, params: any) => {
       try {
         const res = await fetchWithTimeout(`${API_URL}/reports/export/${format}${formatQueryParams(params)}`, {
