@@ -33,7 +33,7 @@ declare global {
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = parseInt(process.env.PORT || '3000', 10);
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:8080';
 
 // Timeout globale per le richieste (40 secondi per permettere query lunghe)
@@ -238,7 +238,7 @@ app.use('/api/integrations', authenticate, isSubscribed, integrationsRouter);
 app.use('/api/import', authenticate, isSubscribed, importRouter);
 app.use('/api/analytics', analyticsRoutes);
 
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Server configurato per accettare richieste da origini definite nella lista allowedOrigins`);
   
