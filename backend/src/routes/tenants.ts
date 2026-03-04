@@ -15,10 +15,10 @@ const router = Router();
 router.use(authenticate);
 
 router.get('/', getTenants);
-router.get('/:id', getTenantById);
 router.post('/', createTenant);
+router.get('/:id', getTenantById);
 router.put('/:id', updateTenant);
-router.delete('/:id', deleteTenant);
 router.delete('/all', deleteAllTenants);
+router.delete('/:id', deleteTenant);
 
 export { router as tenantsRouter }; 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { useNavigate } from "react-router-dom";
 import { Receipt } from "lucide-react";
@@ -88,14 +89,17 @@ const transactionCategories = {
 export function AddTransactionForm({ 
   open, 
   onOpenChange,
-  transaction
+  transaction,
+  onSuccess
 }: { 
   open: boolean; 
   onOpenChange: (open: boolean) => void;
   transaction?: any;
+  onSuccess?: () => void;
 }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [properties, setProperties] = useState([]);
   const [unitOptions, setUnitOptions] = useState<UnitOption[]>([]);
@@ -325,9 +329,17 @@ export function AddTransactionForm({
         });
       }
       
+      // Invalida le query per forzare il refresh
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      
+      // Chiama il callback onSuccess se fornito
+      if (onSuccess) {
+        onSuccess();
+      }
+      
       form.reset();
       onOpenChange(false);
-      navigate("/transactions");
     } catch (apiError: any) {
       console.error("Errore API:", apiError);
       const errorMessage = apiError.message || t("errors.general");

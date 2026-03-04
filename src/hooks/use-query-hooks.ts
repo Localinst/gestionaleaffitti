@@ -3,7 +3,11 @@ import { api } from '@/services/api';
 
 // Chiavi di query per React Query
 export const queryKeys = {
-  properties: ['properties'],
+  properties: {
+    all: ['properties'],
+    list: ['properties', 'list'],
+    detail: (id: string) => ['properties', 'detail', id],
+  },
   propertyById: (id: string) => ['properties', id],
   tenants: ['tenants'],
   tenantsByProperty: (propertyId: string) => ['tenants', 'property', propertyId],
@@ -23,7 +27,7 @@ export const queryKeys = {
 // Hook per ottenere tutte le proprietà
 export function useProperties() {
   return useQuery({
-    queryKey: queryKeys.properties,
+    queryKey: queryKeys.properties.list,
     queryFn: () => api.properties.getAll(),
   });
 }

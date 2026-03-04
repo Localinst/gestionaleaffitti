@@ -12,6 +12,7 @@ import { PlusCircle, Search, Building2, ArrowRight, Calendar, Users, ExternalLin
 import { AddPropertyForm } from '@/components/properties/AddPropertyForm';
 import { PropertyDetailDialog } from '@/components/properties/PropertyDetailDialog';
 import { Badge } from '@/components/ui/badge';
+import { isTouristicProperty } from '@/lib/tourism-utils';
 
 export default function PropertiesPage() {
   const [properties, setProperties] = useState<Property[]>([]);
@@ -49,7 +50,7 @@ export default function PropertiesPage() {
       const data = await api.properties.getAll();
       
       // Filtra solo le proprietà di tipo turistico
-      const tourismProperties = data.filter(p => p.is_tourism);
+      const tourismProperties = data.filter(p => isTouristicProperty(p));
       
       setProperties(tourismProperties);
       setFilteredProperties(tourismProperties);

@@ -10,6 +10,9 @@ export interface Property {
   current_value: number;
   image_url?: string;
   unit_names?: string[] | string;
+  is_tourism?: boolean;
+  max_guests?: number;
+  tourism_units?: number[] | string; // Array degli indici delle unità in locazione turistica
   created_at?: string;
   updated_at?: string;
   description?: string;
@@ -717,6 +720,26 @@ export async function createTenant(tenant: Omit<Tenant, 'id'>): Promise<Tenant> 
     return response.json();
   } catch (error) {
     console.error('Exception in createTenant:', error);
+    throw error;
+  }
+}
+
+export async function updateTenant(id: number | string, tenant: Partial<Tenant>): Promise<Tenant> {
+  try {
+    const response = await fetch(`${API_URL}/tenants/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(tenant)
+    });
+    
+    if (!response.ok) {
+      console.error('Errore nell\'aggiornamento dell\'inquilino:', response.status);
+      throw new Error(`Errore nell'aggiornamento dell'inquilino: ${response.status}`);
+    }
+    
+    return response.json();
+  } catch (error) {
+    console.error('Exception in updateTenant:', error);
     throw error;
   }
 }

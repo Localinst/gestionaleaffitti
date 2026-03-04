@@ -8,6 +8,7 @@ import { Calendar, Euro, Users } from 'lucide-react';
 import { Booking } from '@/types/tourism';
 import { Property } from '@/services/api';
 import { tourismApi } from '@/services/tourism-api';
+import { isTouristicProperty } from '@/lib/tourism-utils';
 
 import { 
   Form, 
@@ -250,7 +251,7 @@ export function BookingForm({ booking, properties, onSubmit, onCancel }: Booking
                           <CommandEmpty>Nessuna proprietà trovata.</CommandEmpty>
                           <CommandGroup>
                             {properties
-                              .filter(property => property.is_tourism)
+                              .filter(property => isTouristicProperty(property))
                               .map((property) => (
                                 <CommandItem
                                   key={property.id}

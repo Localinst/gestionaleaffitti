@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { useNavigate } from "react-router-dom";
 import { FileText } from "lucide-react";
@@ -58,6 +59,7 @@ export function AddContractForm({
   onContractAdded?: () => void;
 }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [properties, setProperties] = useState<Property[]>([]);
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [selectedProperty, setSelectedProperty] = useState<string>("");
@@ -137,6 +139,10 @@ export function AddContractForm({
     try {
       // Utilizziamo la funzione createContract dell'API
       await api.contracts.create(contractData);
+      
+      // Invalida le query per forzare il refresh
+      queryClient.invalidateQueries({ queryKey: ['contracts'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       
       toast.success("Contratto aggiunto con successo");
       onOpenChange(false);

@@ -49,6 +49,7 @@ export default function TenantsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddTenantOpen, setIsAddTenantOpen] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
   const navigate = useNavigate();
   const [deleteAllDialogOpen, setDeleteAllDialogOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -126,6 +127,12 @@ export default function TenantsPage() {
 
   const confirmDeleteAll = async () => {
     deleteAllMutation.mutate();
+  };
+
+  const handleEditTenant = (tenant: Tenant) => {
+    setSelectedTenant(tenant);
+    setIsEditMode(true);
+    setIsAddTenantOpen(true);
   };
 
   return (
@@ -221,7 +228,7 @@ export default function TenantsPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleEditTenant(tenant)}>
                           <Edit className="mr-2 h-4 w-4" />
                           <span>{t("common.actions.edit")}</span>
                         </DropdownMenuItem>
@@ -241,7 +248,14 @@ export default function TenantsPage() {
 
       <AddTenantForm 
         open={isAddTenantOpen} 
-        onOpenChange={setIsAddTenantOpen}
+        onOpenChange={(open) => {
+          setIsAddTenantOpen(open);
+          if (!open) {
+            setSelectedTenant(null);
+            setIsEditMode(false);
+          }
+        }}
+        tenant={isEditMode ? selectedTenant || undefined : undefined}
       />
 
       <AlertDialog open={deleteAllDialogOpen} onOpenChange={setDeleteAllDialogOpen}>

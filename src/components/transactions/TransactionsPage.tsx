@@ -586,6 +586,10 @@ export default function TransactionsPage() {
       <AddTransactionForm 
         open={isAddTransactionOpen} 
         onOpenChange={setIsAddTransactionOpen}
+        onSuccess={() => {
+          loadData();
+          setSelectedTransaction(null);
+        }}
       />
       
       {selectedTransaction && (
@@ -593,6 +597,10 @@ export default function TransactionsPage() {
           open={isEditTransactionOpen} 
           onOpenChange={setIsEditTransactionOpen}
           transaction={selectedTransaction}
+          onSuccess={() => {
+            loadData();
+            setSelectedTransaction(null);
+          }}
         />
       )}
       

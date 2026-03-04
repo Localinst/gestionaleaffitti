@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { useNavigate } from "react-router-dom";
 import { Users } from "lucide-react";
 import { toast } from "sonner";
-import { createTenant, getProperties } from "@/services/api";
+import { createTenant, updateTenant, getProperties } from "@/services/api";
 import type { Property, Tenant } from "@/services/api";
 
 import {
@@ -54,15 +55,19 @@ type TenantFormValues = z.infer<typeof tenantFormSchema>;
 
 export function AddTenantForm({ 
   open, 
-  onOpenChange 
+  onOpenChange,
+  tenant
 }: { 
   open: boolean; 
   onOpenChange: (open: boolean) => void;
+  tenant?: Tenant;
 }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [properties, setProperties] = useState<Property[]>([]);
   const [unitOptions, setUnitOptions] = useState<UnitOption[]>([]);
+  const isEditing = !!tenant;
   
   useEffect(() => {
     async function loadProperties() {
@@ -130,12 +135,31 @@ export function AddTenantForm({
   const form = useForm<TenantFormValues>({
     resolver: zodResolver(tenantFormSchema),
     defaultValues: {
-      unit_id: "",
-      name: "",
-      email: "",
-      phone: "",
+      unit_id: isEditing && tenant ? `${tenant.property_id}::${tenant.unit || "0"}` : "",
+      name: isEditing && tenant ? tenant.name : "",
+      email: isEditing && tenant ? tenant.email : "",
+      phone: isEditing && tenant ? tenant.phone : "",
     },
   });
+
+  // Reinizializza il form quando il tenant cambia (per l'edit)
+  useEffect(() => {
+    if (isEditing && tenant && unitOptions.length > 0) {
+      form.reset({
+        unit_id: `${tenant.property_id}::${tenant.unit || "0"}`,
+        name: tenant.name,
+        email: tenant.email || "",
+        phone: tenant.phone || "",
+      });
+    } else if (!isEditing) {
+      form.reset({
+        unit_id: "",
+        name: "",
+        email: "",
+        phone: "",
+      });
+    }
+  }, [tenant, isEditing, unitOptions.length, form]);
 
   const onSubmit = async (data: TenantFormValues) => {
     try {
@@ -146,33 +170,40 @@ export function AddTenantForm({
       
       console.log("propertyId:", propertyId, "unitIndex:", unitIndex);
       
-      const tenantData: Omit<Tenant, 'id'> = {
+      const tenantData = {
         property_id: propertyId,
         name: data.name,
         email: data.email || "",
         phone: data.phone || "",
         unit: unitIndex || "0",
-        status: "active"
+        status: isEditing ? tenant?.status : "active"
       };
       
-      console.log("Dati inquilino da salvare:", tenantData);
+      console.log(`Dati inquilino da ${isEditing ? 'aggiornare' : 'salvare'}:`, tenantData);
 
-      // Salviamo l'inquilino
-      const tenant = await createTenant(tenantData);
+      // Salviamo o aggiorniamo l'inquilino
+      if (isEditing && tenant) {
+        await updateTenant(tenant.id, tenantData);
+        toast.success("Inquilino aggiornato con successo", {
+          description: `${data.name} è stato aggiornato.`,
+        });
+      } else {
+        await createTenant(tenantData as Omit<Tenant, 'id'>);
+        toast.success("Inquilino aggiunto con successo", {
+          description: `${data.name} è stato aggiunto come inquilino.`,
+        });
+      }
       
-      toast.success("Inquilino aggiunto con successo", {
-        description: `${data.name} è stato aggiunto come inquilino.`,
-      });
+      // Invalida le query per forzare il refresh
+      queryClient.invalidateQueries({ queryKey: ['tenants'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       
       form.reset();
       onOpenChange(false);
-      
-      // Reindirizza alla dashboard per vedere l'aggiornamento
-      navigate("/dashboard");
 
     } catch (error) {
-      console.error("Errore durante l'aggiunta dell'inquilino:", error);
-      toast.error("Errore durante l'aggiunta dell'inquilino", {
+      console.error(`Errore durante l'${isEditing ? 'aggiornamento' : 'aggiunta'} dell'inquilino:`, error);
+      toast.error(`Errore durante l'${isEditing ? 'aggiornamento' : 'aggiunta'} dell'inquilino`, {
         description: "Si è verificato un errore. Riprova più tardi.",
       });
     } finally {
@@ -186,10 +217,12 @@ export function AddTenantForm({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Aggiungi Nuovo Inquilino
+            {isEditing ? 'Modifica Inquilino' : 'Aggiungi Nuovo Inquilino'}
           </DialogTitle>
           <DialogDescription>
-            Inserisci i dettagli per aggiungere un nuovo inquilino.
+            {isEditing 
+              ? 'Modifica i dettagli dell\'inquilino.'
+              : 'Inserisci i dettagli per aggiungere un nuovo inquilino.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -269,7 +302,9 @@ export function AddTenantForm({
 
             <DialogFooter className="pt-4">
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Aggiunta in corso..." : "Aggiungi Inquilino"}
+                {isSubmitting 
+                  ? (isEditing ? "Aggiornamento in corso..." : "Aggiunta in corso...")
+                  : (isEditing ? "Salva Modifiche" : "Aggiungi Inquilino")}
               </Button>
             </DialogFooter>
           </form>

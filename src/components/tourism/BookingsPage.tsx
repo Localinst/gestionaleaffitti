@@ -10,6 +10,7 @@ import { tourismApi } from '@/services/tourism-api';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { BookingForm } from './BookingForm';
 import { AvailabilityCalendar } from './AvailabilityCalendar';
+import { isTouristicProperty } from '@/lib/tourism-utils';
 
 import {
   Card,
@@ -80,7 +81,7 @@ export default function BookingsPage() {
       ]);
       
       // Filtra solo le proprietà di tipo turistico
-      const tourismProperties = propertiesData.filter(p => p.is_tourism);
+      const tourismProperties = propertiesData.filter(p => isTouristicProperty(p));
       
       setProperties(tourismProperties);
       setBookings(bookingsData);

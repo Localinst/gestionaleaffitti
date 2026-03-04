@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
+import { isTouristicProperty } from '@/lib/tourism-utils';
 
 export default function PropertyDetails() {
   const { propertyId } = useParams<{ propertyId: string }>();
@@ -36,7 +37,7 @@ export default function PropertyDetails() {
       const data = await api.properties.getById(propertyId || '');
       
       // Verifica che sia una proprietà di tipo turistico
-      if (!data.is_tourism) {
+      if (!isTouristicProperty(data)) {
         toast.error('Questa non è una proprietà turistica');
         navigate('/tourism/properties');
         return;

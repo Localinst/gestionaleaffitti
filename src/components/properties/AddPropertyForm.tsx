@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
+import { useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
@@ -26,6 +26,7 @@ const formSchema = z.object({
   unitNames: z.array(z.string()).optional(),
   is_tourism: z.boolean().default(false),
   max_guests: z.coerce.number().min(0).optional(),
+  tourismUnits: z.array(z.number()).optional(), // Indici delle unità in locazione turistica
 });
 
 // Tipo per i valori del form
@@ -36,14 +37,27 @@ interface PropertyFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   property?: Property; // Proprietà esistente da modificare (opzionale)
+  onSuccess?: () => void; // Callback chiamato dopo successo
 }
 
 // Componente principale
-export function AddPropertyForm({ open, onOpenChange, property }: PropertyFormProps) {
+export function AddPropertyForm({ open, onOpenChange, property, onSuccess }: PropertyFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [unitCount, setUnitCount] = useState(property?.units || 1);
   const [isTourism, setIsTourism] = useState(property?.is_tourism || false);
-  const navigate = useNavigate();
+  const [tourismUnits, setTourismUnits] = useState<number[]>(() => {
+    if (!property?.tourism_units) return [];
+    if (Array.isArray(property.tourism_units)) {
+      return property.tourism_units;
+    }
+    try {
+      const parsed = JSON.parse(property.tourism_units as string);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  });
+  const queryClient = useQueryClient();
   const isEditing = !!property;
 
   // Inizializza il form
@@ -58,6 +72,7 @@ export function AddPropertyForm({ open, onOpenChange, property }: PropertyFormPr
       unitNames: getInitialUnitNames(property),
       is_tourism: property?.is_tourism || false,
       max_guests: property?.max_guests || 0,
+      tourismUnits: tourismUnits,
     },
   });
 
@@ -106,13 +121,23 @@ export function AddPropertyForm({ open, onOpenChange, property }: PropertyFormPr
           // Se abbiamo diminuito il numero di unità, riduciamo l'array
           const newNames = currentNames.slice(0, units);
           form.setValue("unitNames", newNames);
+          
+          // Rimuovi le unità che non esistono più da tourismUnits
+          const updatedTourismUnits = tourismUnits.filter(idx => idx < units);
+          setTourismUnits(updatedTourismUnits);
+          form.setValue("tourismUnits", updatedTourismUnits);
         }
       } else if (name === "is_tourism") {
         setIsTourism(!!value.is_tourism);
+        // Se disabiliti il turismo per tutta la proprietà, svuota tourismUnits
+        if (!value.is_tourism) {
+          setTourismUnits([]);
+          form.setValue("tourismUnits", []);
+        }
       }
     });
     return () => subscription.unsubscribe();
-  }, [form]);
+  }, [form, tourismUnits]);
 
   // Gestione dell'invio del form
   const onSubmit = async (data: PropertyFormValues) => {
@@ -130,6 +155,9 @@ export function AddPropertyForm({ open, onOpenChange, property }: PropertyFormPr
         data.unitNames = [...unitNames, ...Array(data.units - unitNames.length).fill("")];
       }
       
+      // Se il turismo è disabilitato, svuota tourismUnits
+      const finalTourismUnits = data.is_tourism ? (data.tourismUnits || []) : [];
+      
       const propertyData = {
         name: data.name,
         address: data.address,
@@ -139,7 +167,8 @@ export function AddPropertyForm({ open, onOpenChange, property }: PropertyFormPr
         unitNames: data.unitNames || [],
         image_url: property?.image_url || "",
         is_tourism: data.is_tourism,
-        max_guests: data.is_tourism ? data.max_guests : 0
+        max_guests: data.is_tourism && finalTourismUnits.length > 0 ? data.max_guests : 0,
+        tourismUnits: finalTourismUnits.length > 0 ? finalTourismUnits : [],
       };
       
       if (isEditing && property) {
@@ -156,9 +185,16 @@ export function AddPropertyForm({ open, onOpenChange, property }: PropertyFormPr
         });
       }
       
+      // Invalida la query per forzare il refresh e aspetta che si ricarichino
+      await queryClient.invalidateQueries({ queryKey: ['properties', 'list'] });
+      
+      // Chiama il callback di successo se fornito
+      if (onSuccess) {
+        onSuccess();
+      }
+      
       form.reset();
       onOpenChange(false);
-      navigate("/properties");
     } catch (error) {
       console.error(`Errore durante ${isEditing ? 'l\'aggiornamento' : 'l\'aggiunta'} della proprietà:`, error);
       toast.error(`Errore durante ${isEditing ? 'l\'aggiornamento' : 'l\'aggiunta'} della proprietà`, {
@@ -193,6 +229,48 @@ export function AddPropertyForm({ open, onOpenChange, property }: PropertyFormPr
       <div className="space-y-3 mt-3 p-3 border rounded-md">
         <h3 className="text-sm font-medium">Dettagli delle unità</h3>
         {fields}
+      </div>
+    );
+  };
+
+  // Genera checkbox per selezionare quali unità sono in locazione turistica
+  const renderTourismUnitCheckboxes = () => {
+    if (!isTourism || unitCount <= 1) return null;
+    
+    return (
+      <div className="space-y-3 mt-4 p-3 border rounded-md bg-blue-50">
+        <h3 className="text-sm font-medium">Quali unità mettere in locazione turistica?</h3>
+        <div className="grid grid-cols-2 gap-3">
+          {Array.from({ length: unitCount }).map((_, index) => {
+            const unitName = form.getValues(`unitNames.${index}`) || `Unità ${index + 1}`;
+            const isChecked = tourismUnits.includes(index);
+            
+            return (
+              <div key={index} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`tourism-unit-${index}`}
+                  checked={isChecked}
+                  onCheckedChange={(checked) => {
+                    let newTourismUnits: number[];
+                    if (checked) {
+                      newTourismUnits = [...tourismUnits, index].sort((a, b) => a - b);
+                    } else {
+                      newTourismUnits = tourismUnits.filter(idx => idx !== index);
+                    }
+                    setTourismUnits(newTourismUnits);
+                    form.setValue("tourismUnits", newTourismUnits);
+                  }}
+                />
+                <label htmlFor={`tourism-unit-${index}`} className="text-sm cursor-pointer">
+                  {unitName}
+                </label>
+              </div>
+            );
+          })}
+        </div>
+        <p className="text-xs text-gray-600 mt-2">
+          Seleziona almeno una unità per attivare la locazione turistica
+        </p>
       </div>
     );
   };
@@ -351,6 +429,8 @@ export function AddPropertyForm({ open, onOpenChange, property }: PropertyFormPr
                   )}
                 />
               )}
+
+              {isTourism && renderTourismUnitCheckboxes()}
             </div>
 
             <div className="flex justify-end space-x-2 pt-4">

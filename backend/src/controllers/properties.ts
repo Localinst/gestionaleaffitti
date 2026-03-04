@@ -80,7 +80,7 @@ export const getPropertyById = async (req: Request, res: Response) => {
 
 export const createProperty = async (req: Request, res: Response) => {
   try {
-    const { name, address, city, type, units, unitNames, is_tourism, max_guests } = req.body;
+    const { name, address, city, type, units, unitNames, is_tourism, max_guests, tourismUnits } = req.body;
     // Ottengo l'user_id dall'utente autenticato
     const userId = req.user?.id;
     
@@ -90,10 +90,16 @@ export const createProperty = async (req: Request, res: Response) => {
       unitNamesJson = JSON.stringify(unitNames);
     }
     
+    // Preparo le unità in locazione turistica come array JSON
+    let tourismUnitsJson: string | null = null;
+    if (is_tourism && tourismUnits && Array.isArray(tourismUnits) && tourismUnits.length > 0) {
+      tourismUnitsJson = JSON.stringify(tourismUnits);
+    }
+    
     const result = await executeQuery(async (client) => {
       return client.query(
-        'INSERT INTO properties (name, address, city, type, units, value, image_url, unit_names, user_id, is_tourism, max_guests) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *',
-        [name, address, city, type, units, 0, null, unitNamesJson, userId, is_tourism || false, max_guests || 0]
+        'INSERT INTO properties (name, address, city, type, units, value, image_url, unit_names, user_id, is_tourism, max_guests, tourism_units) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *',
+        [name, address, city, type, units, 0, null, unitNamesJson, userId, is_tourism || false, max_guests || 0, tourismUnitsJson]
       );
     });
     
@@ -107,7 +113,7 @@ export const createProperty = async (req: Request, res: Response) => {
 export const updateProperty = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { name, address, city, type, units, is_tourism, max_guests } = req.body;
+    const { name, address, city, type, units, is_tourism, max_guests, tourismUnits, unitNames } = req.body;
     // Ottengo l'user_id dall'utente autenticato
     const userId = req.user?.id;
     
@@ -121,9 +127,21 @@ export const updateProperty = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Property not found or not owned by user' });
     }
     
+    // Preparo i nomi delle unità come array JSON
+    let unitNamesJson: string | null = null;
+    if (unitNames && Array.isArray(unitNames) && unitNames.length > 0) {
+      unitNamesJson = JSON.stringify(unitNames);
+    }
+    
+    // Preparo le unità in locazione turistica come array JSON
+    let tourismUnitsJson: string | null = null;
+    if (is_tourism && tourismUnits && Array.isArray(tourismUnits) && tourismUnits.length > 0) {
+      tourismUnitsJson = JSON.stringify(tourismUnits);
+    }
+    
     const result = await pool.query(
-      'UPDATE properties SET name = $1, address = $2, city = $3, type = $4, units = $5, value = $6, is_tourism = $7, max_guests = $8, updated_at = CURRENT_TIMESTAMP WHERE id = $9 AND user_id = $10 RETURNING *',
-      [name, address, city, type, units, 0, is_tourism || false, max_guests || 0, id, userId]
+      'UPDATE properties SET name = $1, address = $2, city = $3, type = $4, units = $5, value = $6, is_tourism = $7, max_guests = $8, unit_names = $9, tourism_units = $10, updated_at = CURRENT_TIMESTAMP WHERE id = $11 AND user_id = $12 RETURNING *',
+      [name, address, city, type, units, 0, is_tourism || false, max_guests || 0, unitNamesJson, tourismUnitsJson, id, userId]
     );
     
     res.json(result.rows[0]);

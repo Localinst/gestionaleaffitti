@@ -66,6 +66,7 @@ export default function PropertiesPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteAllDialogOpen, setDeleteAllDialogOpen] = useState(false);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -258,7 +259,10 @@ export default function PropertiesPage() {
           {/* Form per aggiungere proprietà */}
           <AddPropertyForm 
             open={openAddForm} 
-            onOpenChange={setOpenAddForm} 
+            onOpenChange={setOpenAddForm}
+            onSuccess={() => {
+              setRefreshTrigger(prev => prev + 1);
+            }}
           />
 
           {/* Form per modificare proprietà */}
@@ -267,6 +271,9 @@ export default function PropertiesPage() {
               open={openEditForm} 
               onOpenChange={setOpenEditForm} 
               property={selectedProperty}
+              onSuccess={() => {
+                setRefreshTrigger(prev => prev + 1);
+              }}
             />
           )}
 
