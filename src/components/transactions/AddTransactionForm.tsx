@@ -518,6 +518,7 @@ export function AddTransactionForm({
                             <SelectItem value="Insurance">{t("transactions.categories.expense.insurance")}</SelectItem>
                             <SelectItem value="Mortgage">{t("transactions.categories.expense.mortgage")}</SelectItem>
                             <SelectItem value="Pulizie">Pulizie</SelectItem>
+                            <SelectItem value="Condominio">Condominio</SelectItem>
                             <SelectItem value="Lavanderia">Lavanderia</SelectItem>
                             <SelectItem value="Other">{t("transactions.categories.expense.other")}</SelectItem>
                           </>
