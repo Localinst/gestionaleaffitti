@@ -773,6 +773,33 @@ export function ExcelImportWizard() {
 
       console.log(`[Import Step 4/5] Dati finali pronti per l'invio (${dataToImport.length} righe)`); 
 
+      // DEDUPLICAZIONE: Per le proprietà, rimuovi i duplicati basandoti su name, address, city
+      if (entityType === 'property') {
+        const uniquePropertiesMap: Record<string, any> = {};
+        let duplicateCount = 0;
+        
+        dataToImport.forEach((property) => {
+          // Crea una chiave unica basata su nome + indirizzo + città
+          const key = `${(property.name || '').toLowerCase().trim()}|${(property.address || '').toLowerCase().trim()}|${(property.city || '').toLowerCase().trim()}`;
+          
+          if (uniquePropertiesMap[key]) {
+            duplicateCount++;
+            console.warn(`[Import Step 4/5] Proprietà duplicata trovata: "${property.name}" in "${property.city}". Mantieni la prima occorrenza.`);
+          } else {
+            uniquePropertiesMap[key] = property;
+          }
+        });
+        
+        // Sostituisci dataToImport con solo le proprietà uniche
+        const originalCount = dataToImport.length;
+        dataToImport = Object.values(uniquePropertiesMap);
+        
+        if (duplicateCount > 0) {
+          console.log(`[Import Step 4/5] Deduplicazione proprietà: ${originalCount} record → ${dataToImport.length} uniche (${duplicateCount} duplicate rimosse)`);
+          toast.info(`Deduplicazione: ${duplicateCount} proprietà duplicate rimosse. Importerai ${dataToImport.length} proprietà uniche.`);
+        }
+      }
+
       if (dataToImport.length === 0) {
         toast.warning("Nessun dato valido trovato da importare dopo la validazione. Controlla la mappatura e il contenuto del file.");
         setIsImporting(false);
@@ -798,8 +825,9 @@ export function ExcelImportWizard() {
         console.log(`[Import Step 4/5] Normalizzato tipo entità a '${importEntityType}'`);
       }
 
-      // Usa una dimensione di blocco ottimizzata
-      const blockSize = importEntityType === 'transaction' ? 100 : 50;
+      // Usa una dimensione di blocco ottimizzata - maggiore per velocità
+      // Proprietà: 300, Transazioni: 300, Inquilini/Contratti: 250
+      const blockSize = importEntityType === 'transaction' ? 300 : (importEntityType === 'property' ? 300 : 250);
       console.log(`[Import Step 4/5] Dimensione blocco impostata a ${blockSize} per ${importEntityType}`);
 
       // Mostra messaggio all'utente per importazioni grandi

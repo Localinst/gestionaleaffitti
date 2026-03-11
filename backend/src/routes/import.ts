@@ -324,15 +324,19 @@ router.post('/:entityType/chunk', async (req, res) => {
     let importedCount = 0;
     switch (entityType) {
       case 'properties':
+      case 'property':
         importedCount = await importProperties(dataWithUserId);
         break;
       case 'tenants':
+      case 'tenant':
         importedCount = await importTenants(dataWithUserId);
         break;
       case 'contracts':
+      case 'contract':
         importedCount = await importContracts(dataWithUserId);
         break;
       case 'transactions':
+      case 'transaction':
         importedCount = await importTransactions(dataWithUserId);
         break;
       default:
@@ -454,11 +458,15 @@ async function importProperties(data: any[]): Promise<number> {
           // Se city è mancante, usa un valore predefinito
           city: property.city || "Città non specificata",
           // Se type è mancante, usa un valore predefinito
-          type: property.type || "Altro"
+          type: property.type || "Altro",
+          // Se units è mancante o non valido, usa il valore predefinito 1
+          units: property.units && !isNaN(Number(property.units)) && Number(property.units) > 0 ? Number(property.units) : 1,
+          // Se value è mancante o non valido, usa il valore predefinito 0
+          value: property.value ? (isNaN(Number(property.value)) ? 0 : Number(property.value)) : 0
         };
         
         // Mappa solo i campi presenti nei dati
-        const possibleFields = ['name', 'address', 'city', 'postal_code', 'type', 'rooms', 'bathrooms', 'area', 'price', 'notes'];
+        const possibleFields = ['name', 'address', 'city', 'postal_code', 'type', 'units', 'value', 'rooms', 'bathrooms', 'area', 'price', 'notes'];
         
         possibleFields.forEach(field => {
           if (propertyWithDefaults[field] !== undefined && propertyWithDefaults[field] !== null) {

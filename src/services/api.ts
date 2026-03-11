@@ -1184,92 +1184,25 @@ export const importDataInChunks = async (entityType: string, data: any[], chunkS
     
     let totalImported = 0;
     
-    // OTTIMIZZAZIONE: Usa invio parallelo per transazioni
-    if (normalizedEntityType === 'transaction') {
-      // Per transazioni, usiamo processamento parallelo con concurrency limit
-      const concurrencyLimit = 3; // Numero di richieste parallele massime
-      console.log(`Utilizzo processamento parallelo per transazioni (concurrency: ${concurrencyLimit})`);
+    // OTTIMIZZAZIONE: Usa invio parallelo aggressivo per tutte le entità
+    const concurrencyLimit = 4; // 4 richieste parallele massime per tutte le entità
+    console.log(`Utilizzo processamento parallelo per ${normalizedEntityType} (concurrency: ${concurrencyLimit}, chunk size: ${chunkSize})`);
+    
+    // Prepara array per tenere traccia delle promesse attive
+    let activePromises = [];
+    let completedChunksCount = 0;
+    
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
+      const chunkIndex = i;
       
-      // Prepara array per tenere traccia delle promesse attive
-      let activePromises = [];
-      let completedChunksCount = 0;
-      
-      for (let i = 0; i < chunks.length; i++) {
-        const chunk = chunks[i];
-        const chunkIndex = i;
-        
-        // Crea una funzione di processamento per questo chunk
-        const processChunk = async () => {
-          try {
-            console.log(`Elaborazione parallela blocco ${chunkIndex+1}/${chunks.length} (${chunk.length} record)`);
-            
-            // Usa l'endpoint standard per le transazioni
-            const apiUrl = `${API_URL}/import/${normalizedEntityType}`;
-            
-            const response = await fetch(apiUrl, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                ...getAuthHeaders()
-              },
-              body: JSON.stringify({ data: chunk }),
-              credentials: 'include'
-            });
-            
-            if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.error || `Errore nel blocco ${chunkIndex+1}`);
-            }
-            
-            const result = await response.json();
-            completedChunksCount++;
-            
-            // Aggiorna progresso
-            if (onProgress) {
-              const currentProgress = Math.round((completedChunksCount / chunks.length) * 100);
-              onProgress(currentProgress);
-            }
-            
-            return result.importedCount || 0;
-          } catch (error) {
-            console.error(`Errore nel blocco ${chunkIndex+1}:`, error);
-            completedChunksCount++;
-            // Aggiorna comunque il progresso
-            if (onProgress) {
-              const currentProgress = Math.round((completedChunksCount / chunks.length) * 100);
-              onProgress(currentProgress);
-            }
-            return 0;
-          }
-        };
-        
-        // Aggiungi questo processo alla lista delle promesse attive
-        activePromises.push(processChunk());
-        
-        // Se raggiunto il limite di concorrenza o ultimo chunk, attendi che alcune finiscano
-        if (activePromises.length >= concurrencyLimit || i === chunks.length - 1) {
-          const results = await Promise.all(activePromises);
-          totalImported += results.reduce((sum, count) => sum + count, 0);
-          // Svuota l'array per il prossimo batch
-          activePromises = [];
-        }
-      }
-    } else {
-      // Per le altre entità, usa processamento sequenziale
-      for (let i = 0; i < chunks.length; i++) {
+      // Crea una funzione di processamento per questo chunk
+      const processChunk = async () => {
         try {
-          const chunk = chunks[i];
-          console.log(`Elaborazione sequenziale blocco ${i+1}/${chunks.length} (${chunk.length} record)`);
+          console.log(`Elaborazione parallela blocco ${chunkIndex+1}/${chunks.length} (${chunk.length} record)`);
           
-          // MODIFICA: Usa l'endpoint standard /api/import/:entityType invece di /chunk per le transazioni
-          let apiUrl;
-          if (normalizedEntityType === 'transaction') {
-            // Usa l'endpoint standard per le transazioni
-            apiUrl = `${API_URL}/import/${normalizedEntityType}`;
-          } else {
-            // Usa l'endpoint /chunk per le altre entità
-            apiUrl = `${API_URL}/import/${normalizedEntityType}/chunk`;
-          }
+          // Usa l'endpoint standard per tutte le entità
+          const apiUrl = `${API_URL}/import/${normalizedEntityType}`;
           
           const response = await fetch(apiUrl, {
             method: 'POST',
@@ -1287,23 +1220,43 @@ export const importDataInChunks = async (entityType: string, data: any[], chunkS
               errorData = await response.json();
             } catch (e) {
               const errorText = await response.text();
-              console.error(`Errore nel blocco ${i+1} (non JSON):`, response.status, errorText);
+              console.error(`Errore nel blocco ${chunkIndex+1} (non JSON):`, response.status, errorText);
             }
             
-            throw new Error(errorData?.error || `Errore nell'importazione del blocco ${i+1} (${response.status}: ${response.statusText})`);
+            throw new Error(errorData?.error || `Errore nell'importazione del blocco ${chunkIndex+1} (${response.status})`);
           }
           
           const result = await response.json();
-          totalImported += result.importedCount || 0;
+          completedChunksCount++;
           
-          // Aggiorna il progresso
+          // Aggiorna progresso
           if (onProgress) {
-            onProgress(Math.round((i + 1) / chunks.length * 100));
+            const currentProgress = Math.round((completedChunksCount / chunks.length) * 100);
+            onProgress(currentProgress);
           }
-        } catch (chunkError) {
-          console.error(`Errore nell'elaborazione del blocco ${i+1}:`, chunkError);
-          // Continua con il blocco successivo invece di interrompere tutto il processo
+          
+          return result.importedCount || 0;
+        } catch (error) {
+          console.error(`Errore nel blocco ${chunkIndex+1}:`, error);
+          completedChunksCount++;
+          // Aggiorna comunque il progresso
+          if (onProgress) {
+            const currentProgress = Math.round((completedChunksCount / chunks.length) * 100);
+            onProgress(currentProgress);
+          }
+          return 0;
         }
+      };
+      
+      // Aggiungi questo processo alla lista delle promesse attive
+      activePromises.push(processChunk());
+      
+      // Se raggiunto il limite di concorrenza o ultimo chunk, attendi che alcune finiscano
+      if (activePromises.length >= concurrencyLimit || i === chunks.length - 1) {
+        const results = await Promise.all(activePromises);
+        totalImported += results.reduce((sum, count) => sum + count, 0);
+        // Svuota l'array per il prossimo batch
+        activePromises = [];
       }
     }
     
