@@ -505,21 +505,22 @@ export function AddTransactionForm({
                       <SelectContent>
                         {form.watch("type") === "income" ? (
                           <>
-                            <SelectItem value="Rent">{t("transactions.categories.income.rent")}</SelectItem>
-                            <SelectItem value="Deposit">{t("transactions.categories.income.deposit")}</SelectItem>
-                            <SelectItem value="Late Payment">{t("transactions.categories.income.latePayment")}</SelectItem>
-                            <SelectItem value="Other">{t("transactions.categories.income.other")}</SelectItem>
+                            <SelectItem value="{t("transactions.categories.income.rent")}">{t("transactions.categories.income.rent")}</SelectItem>
+                            <SelectItem value="{t("transactions.categories.income.deposit")}">{t("transactions.categories.income.deposit")}</SelectItem>
+                            <SelectItem value="{t("transactions.categories.income.latePayment")}">{t("transactions.categories.income.latePayment")}</SelectItem>
+                            <SelectItem value="{t("transactions.categories.income.other")}">{t("transactions.categories.income.other")}</SelectItem>
                           </>
                         ) : (
                           <>
-                            <SelectItem value="Maintenance">{t("transactions.categories.expense.maintenance")}</SelectItem>
-                            <SelectItem value="Utilities">{t("transactions.categories.expense.utilities")}</SelectItem>
-                            <SelectItem value="Tax">{t("transactions.categories.expense.tax")}</SelectItem>
-                            <SelectItem value="Insurance">{t("transactions.categories.expense.insurance")}</SelectItem>
-                            <SelectItem value="Mortgage">{t("transactions.categories.expense.mortgage")}</SelectItem>
+                            <SelectItem value="{t("transactions.categories.expense.manteinance")}">{t("transactions.categories.expense.maintenance")}</SelectItem>
+                            <SelectItem value="{t("transactions.categories.expense.utilities")}">{t("transactions.categories.expense.utilities")}</SelectItem>
+                            <SelectItem value="{t("transactions.categories.expense.tax")}">{t("transactions.categories.expense.tax")}</SelectItem>
+                            <SelectItem value="{t("transactions.categories.expense.insurance")}">{t("transactions.categories.expense.insurance")}</SelectItem>
+                            <SelectItem value="{t("transactions.categories.expense.mortgage")}">{t("transactions.categories.expense.mortgage")}</SelectItem>
                             <SelectItem value="Pulizie">Pulizie</SelectItem>
+                            <SelectItem value="Condominio">Condominio</SelectItem>
                             <SelectItem value="Lavanderia">Lavanderia</SelectItem>
-                            <SelectItem value="Other">{t("transactions.categories.expense.other")}</SelectItem>
+                            <SelectItem value="{t("transactions.categories.expense.other")}">{t("transactions.categories.expense.other")}</SelectItem>
                           </>
                         )}
                       </SelectContent>
